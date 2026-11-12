@@ -113,7 +113,8 @@ def _yt_first(query: str, live: bool) -> tuple[str, str] | None:
 @tool(
     "YouTube: procura um video, musica, canal ou LIVE e ja toca o primeiro resultado, reaproveitando a aba do "
     "YouTube que ja estiver aberta (nao abre outra janela). Use para 'abre/toca/coloca X no YouTube', "
-    "'abre uma live de X' (ao_vivo=true). Sem busca: so abre o YouTube.",
+    "'abre uma live de X' (ao_vivo=true). Sem busca: so traz o YouTube para a frente. NAO use para pausar, "
+    "continuar, pular ou volume do que ja esta tocando: para isso use midia.",
     {"busca": {"type": "string", "x-optional": True, "description": "o que procurar (vazio = pagina inicial)"},
      "ao_vivo": {"type": "boolean", "x-optional": True, "description": "true para lives/transmissoes ao vivo"},
      "so_resultados": {"type": "boolean", "x-optional": True,
@@ -125,6 +126,10 @@ async def youtube(busca: str = "", ao_vivo: bool = False, so_resultados: bool = 
     from urllib.parse import quote_plus
     busca = (busca or "").strip()
     if not busca:
+        # sem busca: se o YouTube ja esta aberto, so traz para a frente (nunca troca o video que esta tocando)
+        out = await _do("focus", title="YouTube")
+        if not out.startswith("Nao consegui"):
+            return f"O YouTube ja estava aberto: trouxe para a frente ({out})."
         url, what = "https://www.youtube.com/", "o YouTube"
     else:
         hit = None if so_resultados else await asyncio.to_thread(_yt_first, busca, ao_vivo)
@@ -174,7 +179,7 @@ async def teclas(atalho: str) -> str:
     return await _do("keys", combo=atalho)
 
 
-@tool("Tira um print da tela e mostra no chat.", available=_ready)
+@tool("Tira um print da tela e mostra no chat. So quando o usuario pedir um print/captura da tela.", available=_ready)
 async def tirar_print() -> str:
     ok, out = await hostbridge.run("screenshot", timeout=30)
     if not ok or not out.startswith("data:image/jpeg;base64,"):
@@ -187,7 +192,9 @@ async def tirar_print() -> str:
 
 
 @tool(
-    "Controla volume e midia do computador.",
+    "Pausa/continua (play_pause), pula (next) ou volta (previous) a musica ou video que esta tocando em QUALQUER "
+    "programa (YouTube no navegador, Spotify, VLC...) e controla o volume do PC. Use para 'pausa a musica', "
+    "'pausa o YouTube', 'continua', 'proxima', 'aumenta/abaixa o volume', 'muta'.",
     {"acao": {"type": "string", "enum": ["volume_up", "volume_down", "mute", "play_pause", "next", "previous"]},
      "vezes": {"type": "integer", "description": "Quantas vezes (volume), ate 10", "x-optional": True}},
     available=_ready,
