@@ -1,0 +1,119 @@
+name: aura
+
+services:
+  # Modelo local, usando a GPU NVIDIA via WSL2
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=30m
+      - OLLAMA_CONTEXT_LENGTH=${OLLAMA_CONTEXT_LENGTH:-8192}   # cabe o prompt + ~25 ferramentas
+      # memoria: 1 conversa por vez, cache de contexto em 8 bits (metade do tamanho) e no maximo 2 modelos
+      # carregados (o de conversa + o de busca na memoria). Sem isso o Linux do Docker matava o Ollama por falta
+      # de RAM e o modelo tinha de recarregar (~11 s) no meio do pedido.
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_KV_CACHE_TYPE=q8_0
+      - OLLAMA_MAX_LOADED_MODELS=2
+      # copia de prompts em RAM do llama-server: o padrao (8 GB) e maior que a maquina do Docker e causava
+      # "Out of memory" e 2-6 s salvando estado a cada troca de tarefa. 1 GB guarda o prompt do chat.
+      - LLAMA_ARG_CACHE_RAM=1024
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  # Baixa os modelos na primeira subida (depois so confere e sai):
+  # o de conversa e o de embeddings (busca por significado na memoria)
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    entrypoint: ["sh", "-c", "ollama pull ${OLLAMA_MODEL:-qwen3:4b-instruct} && ollama pull ${EMBED_MODEL:-paraphrase-multilingual} && ollama pull ${VISION_MODEL:-qwen3-vl:2b-instruct}"]
+    restart: "no"
+
+  aura:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"   # so acessivel desta maquina
+    environment:
+      - TZ=${TZ:-America/Sao_Paulo}
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:4b-instruct}
+      - EMBED_MODEL=${EMBED_MODEL:-paraphrase-multilingual}
+      - VISION_MODEL=${VISION_MODEL:-qwen3-vl:2b-instruct}        # le imagens e PDFs escaneados (local)
+      - AGENT_TIMEOUT=${AGENT_TIMEOUT:-600}
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}          # Motor Vivo (opcional): chave do Google AI Studio
+      - GEMINI_LIVE_MODEL=${GEMINI_LIVE_MODEL:-gemini-3.1-flash-live-preview}
+      - HOST_AGENT_TOKEN=${HOST_AGENT_TOKEN:-}          # o agente do Windows se identifica com esta chave
+      - HOST_ROOT_WIN=${WORK_ROOT:-}                    # para mostrar caminhos como o Windows ve
+      - AURA_DIR_WIN=${AURA_DIR_WIN:-}              # pasta do projeto no Windows (vazio = descobre sozinho)
+      - AURA_POWER_DRYRUN=${AURA_POWER_DRYRUN:-0}   # 1 = simula desligar/reiniciar/Wi-Fi
+    volumes:
+      - aura-data:/data
+      - ./workspace:/workspace          # arquivos do Claude/Codex visiveis no Windows
+      - ./aura/web:/app/aura/web:ro # edicao ao vivo da interface (F5 para ver)
+      - ./plugins:/app/plugins          # plugins: um .py aqui = habilidade nova (envie/exclua pela tela em Plugins)
+      - ${WORK_ROOT:-./workspace}:/host # sua pasta de usuario: dentro dela voce escolhe a pasta de trabalho
+      - ./backups:/backups              # backups do banco (conversas, memoria...), visiveis no Windows
+      - ./memoria:/memoria              # INSTRUCOES.md, SOBRE-MIM.md e skills/ (edite no Windows ou na tela)
+      - claude-auth:/home/node/.claude  # login do Claude Code
+      - codex-auth:/home/node/.codex    # login do Codex
+      - tool-cache:/home/node/.cache    # servidores MCP baixados pelo uvx (nao baixa de novo a cada subida)
+      - npm-cache:/home/node/.npm       # idem para os do npx
+      # pasta "Inicializar" do Windows: o botao "Iniciar com o Windows" (Geral) grava/apaga a Aura.vbs aqui
+      - "${APPDATA:-./.sem-windows}/Microsoft/Windows/Start Menu/Programs/Startup:/startup"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Casa inteligente: Home Assistant (tela em http://127.0.0.1:8123). A Aura fala com ele pela rede interna.
+  # No Windows a busca automatica na rede local (mDNS) nao atravessa o Docker: aparelhos locais entram pelo IP;
+  # integracoes pela nuvem (Tuya/Smart Life, etc.) funcionam normalmente.
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    ports:
+      - "127.0.0.1:8123:8123"
+    environment:
+      - TZ=${TZ:-America/Sao_Paulo}
+    volumes:
+      - homeassistant:/config
+    restart: unless-stopped
+
+  # Voz: palavra de ativacao ("Aura" pelo Whisper ou "Hey Jarvis" pelo openWakeWord) + Whisper (transcricao) + Kokoro (fala). Roda na CPU.
+  voice:
+    build: ./voice
+    ports:
+      - "127.0.0.1:8767:8767"   # o navegador manda o audio do microfone direto para ca
+    environment:
+      - TZ=${TZ:-America/Sao_Paulo}
+      - WHISPER_MODEL=${WHISPER_MODEL:-small}
+      - TTS_VOICE=${TTS_VOICE:-pf_dora}
+      - WAKE_THRESHOLD=${WAKE_THRESHOLD:-0.5}
+    volumes:
+      - piper-voices:/models/piper   # vozes do Piper baixadas sob demanda (outras linguas)
+    restart: unless-stopped
+
+volumes:
+  homeassistant:
+  piper-voices:
+  ollama:
+  aura-data:
+  claude-auth:
+  codex-auth:
+  tool-cache:
+  npm-cache:

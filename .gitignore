@@ -1,0 +1,10 @@
+.venv/
+.env
+data/
+workspace/
+backups/
+__pycache__/
+memoria/
+iniciar.log
+.sem-windows/
+*.log

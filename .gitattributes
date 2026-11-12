@@ -1,0 +1,7 @@
+# Quebras de linha fixas: o codigo roda no Linux (Docker), entao LF; scripts do Windows ficam em CRLF.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.vbs text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
