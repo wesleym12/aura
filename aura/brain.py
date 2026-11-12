@@ -121,8 +121,9 @@ async def _think(s: Session) -> dict:
         extra = f"\n\n[contexto deste pedido: {now_line()}{s.recall_text}{lang_rule(turn_lang(s))}]"
         msgs[i] = {**msgs[i], "content": str(msgs[i].get("content") or "") + extra}
     tools = [t.schema() for t in active_tools()]
-    if not s.model and llm.live_mode() and not cfg.get("local"):
-        # Gemini com reservas (Flash -> Flash-Lite -> PC); quem comecou o pedido vai ate o fim dele
+    if not s.model and cfg.get("provider") == "gemini" and cfg.get("model") == llm.LIVE_CHAT_MODEL:
+        # padrao no Gemini (Live ligado ou instalacao "so Gemini"): com reservas (Flash -> Flash-Lite -> PC, se houver);
+        # quem comecou o pedido vai ate o fim dele
         msg, s.turn_cfg = await llm.chat_live_default(msgs, tools, getattr(s, "turn_cfg", None))
         return msg
     return await llm.chat(msgs, tools, cfg=cfg)

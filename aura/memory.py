@@ -5,8 +5,9 @@ Tipos (kind):
   nota   -> o que o usuario pediu para anotar (ferramenta `lembrar`)
   claude / codex -> resultados de pesquisas e tarefas delegadas
 
-Busca hibrida: por significado (embeddings locais no Ollama, modelo multilingue) + por palavra (SQLite FTS5).
-Sem limite de tamanho: so o que e relevante para a pergunta entra no prompt; o resto fica consultavel.
+Busca hibrida: por significado (embeddings) + por palavra (SQLite FTS5). Os embeddings vem do Ollama local
+(modelo multilingue) ou, na instalacao "so Gemini" (sem Ollama), do Gemini. Sem nenhum dos dois, fica so a busca
+por palavra. Sem limite de tamanho: so o que e relevante para a pergunta entra no prompt; o resto fica consultavel.
 """
 import array
 import logging
@@ -18,10 +19,19 @@ from contextlib import closing
 
 import httpx
 
-from .config import DB_PATH, OLLAMA_URL
+from .config import DB_PATH, LOCAL_LLM, OLLAMA_URL
 
 log = logging.getLogger("uvicorn.error")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "paraphrase-multilingual")
+GEMINI_EMBED = "gemini-embedding-001"
+PROVIDER = "ollama" if LOCAL_LLM else "gemini"
+EMBED_ID = f"ollama:{EMBED_MODEL}" if PROVIDER == "ollama" else f"gemini:{GEMINI_EMBED}:768"
+# cortes de similaridade: cada modelo tem a sua escala (calibrados com perguntas reais em portugues)
+CUTS = {"ollama": {"recall": 0.24, "list": 0.25, "search": 0.30, "dup": 0.86, "skill": 0.42},
+        # Gemini: escala bem mais alta e mais separada (medido: relacionadas 0,77-0,82; ruido ate 0,74;
+        # duplicatas 0,99 x parecidas-mas-diferentes ate 0,94; skill certa 0,85-0,86 x errada ate 0,75)
+        "gemini": {"recall": 0.755, "list": 0.755, "search": 0.76, "dup": 0.97, "skill": 0.80}}[PROVIDER]
+_warned = {"t": 0.0}
 KINDS = {"fato": "Fatos sobre você", "nota": "Anotações", "claude": "Pesquisas (Claude)", "codex": "Tarefas (Codex)"}
 
 
@@ -58,22 +68,56 @@ def init():
             c.execute("ALTER TABLE notes ADD COLUMN embedding BLOB")
         if "conv_id" not in cols:
             c.execute("ALTER TABLE notes ADD COLUMN conv_id TEXT")    # conversa onde foi aprendido
+        # trocou o gerador de embeddings (ex.: local -> so Gemini)? os vetores antigos nao servem: refaz todos
+        c.execute("CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT)")
+        old = c.execute("SELECT value FROM meta WHERE key = 'embed_id'").fetchone()
+        if not old or old[0] != EMBED_ID:
+            c.execute("UPDATE notes SET embedding = NULL")
+            c.execute("INSERT OR REPLACE INTO meta(key, value) VALUES ('embed_id', ?)", (EMBED_ID,))
     threading.Thread(target=backfill, daemon=True).start()
 
 
 # ---------- embeddings ----------
-def embed(texts: list[str]) -> list[list[float]] | None:
-    """Vetores normalizados (produto escalar = similaridade). None se o Ollama nao responder."""
-    try:
-        r = httpx.post(f"{OLLAMA_URL}/api/embed", json={"model": EMBED_MODEL, "input": texts}, timeout=60)
+def _ollama(texts: list[str]) -> list[list[float]]:
+    r = httpx.post(f"{OLLAMA_URL}/api/embed", json={"model": EMBED_MODEL, "input": texts}, timeout=60)
+    r.raise_for_status()
+    return r.json()["embeddings"]
+
+
+def _gemini(texts: list[str]) -> list[list[float]] | None:
+    from . import secrets
+    key = secrets.get("gemini")
+    if not key:
+        return None                                   # sem chave: so a busca por palavra
+    out = []
+    for i in range(0, len(texts), 100):               # ate 100 por pedido
+        r = httpx.post(f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_EMBED}:batchEmbedContents",
+                       headers={"x-goog-api-key": key}, timeout=60,
+                       json={"requests": [{"model": f"models/{GEMINI_EMBED}", "content": {"parts": [{"text": t}]},
+                                           "taskType": "SEMANTIC_SIMILARITY", "outputDimensionality": 768}
+                                          for t in texts[i:i + 100]]})
         r.raise_for_status()
+        out += [e["values"] for e in r.json()["embeddings"]]
+    return out
+
+
+def embed(texts: list[str]) -> list[list[float]] | None:
+    """Vetores normalizados (produto escalar = similaridade). None se o gerador nao responder (a busca segue
+    so por palavra)."""
+    import time
+    try:
+        vecs = _ollama(texts) if PROVIDER == "ollama" else _gemini(texts)
+        if vecs is None:
+            return None
         out = []
-        for v in r.json()["embeddings"]:
+        for v in vecs:
             n = math.sqrt(sum(x * x for x in v)) or 1.0
             out.append([x / n for x in v])
         return out
     except Exception as e:
-        log.warning("Embeddings indisponiveis: %s", e)
+        if time.time() - _warned["t"] > 300:          # avisa no log no maximo a cada 5 min
+            _warned["t"] = time.time()
+            log.warning("Embeddings indisponiveis (%s): %s", PROVIDER, e)
         return None
 
 
@@ -161,21 +205,21 @@ def search(query: str, limit: int = 5, kinds: tuple[str, ...] | None = None, min
     return scored[:limit]
 
 
-def recall(query: str, k: int = 5, min_score: float = 0.24) -> list[dict]:
+def recall(query: str, k: int = 5, min_score: float | None = None) -> list[dict]:
     """O que entra no prompt para esta pergunta: so as memorias relacionadas.
-    Corte calibrado com o modelo paraphrase-multilingual: perguntas relacionadas ficam em 0,28-0,66 e
-    o ruido ate ~0,22. Um item a mais no prompt custa pouco; esquecer algo custa mais."""
-    return search(query, k, min_score=min_score)
+    Corte calibrado por modelo (CUTS): acima dele ficam as perguntas relacionadas, abaixo o ruido.
+    Um item a mais no prompt custa pouco; esquecer algo custa mais."""
+    return search(query, k, min_score=CUTS["recall"] if min_score is None else min_score)
 
 
-def is_duplicate(text: str, kind: str = "fato", threshold: float = 0.86) -> bool:
+def is_duplicate(text: str, kind: str = "fato", threshold: float | None = None) -> bool:
     hits = search(text, 1, kinds=(kind,))
-    return bool(hits) and hits[0]["score"] >= threshold
+    return bool(hits) and hits[0]["score"] >= (CUTS["dup"] if threshold is None else threshold)
 
 
 def list_items(kind: str | None = None, q: str | None = None, limit: int = 500) -> list[dict]:
     if q and q.strip():
-        return search(q, limit, kinds=(kind,) if kind else None, min_score=0.25)
+        return search(q, limit, kinds=(kind,) if kind else None, min_score=CUTS["list"])
     where, args = ("WHERE kind = ?", [kind]) if kind else ("", [])
     with closing(_conn()) as c:
         rows = c.execute(f"SELECT id, created, kind, title, content, conv_id FROM notes {where} ORDER BY id DESC LIMIT ?",

@@ -44,6 +44,11 @@ if ($Completar) {
         Set-EnvVal "COMPOSE_FILE" $f
         if (-not (Select-String -Path $envFile -Pattern '^COMPOSE_PROFILES=' -Quiet)) { Set-EnvVal "COMPOSE_PROFILES" "casa" }
     }
+    # modo local precisa do perfil "local" (Ollama); instalacoes de antes dele so tinham "casa"
+    $prof = Get-EnvVal "COMPOSE_PROFILES"
+    if ((Get-EnvVal "AURA_LOCAL_LLM") -ne "0" -and $prof -notmatch '(^|,)local(,|$)') {
+        Set-EnvVal "COMPOSE_PROFILES" ((@("local") + ($prof -split ',' | Where-Object { $_ })) -join ',')
+    }
     return
 }
 
@@ -86,7 +91,8 @@ $ha = Ask "Instalar o Home Assistant junto (casa inteligente)? (s/n)" $(if ($cur
 $files = "docker-compose.yml;docker-compose.windows.yml"
 if ($local -eq "1" -and $gpuName) { $files += ";docker-compose.gpu.yml" }
 Set-EnvVal "COMPOSE_FILE" $files
-Set-EnvVal "COMPOSE_PROFILES" $(if ($ha -match "^[sSyY]") { "casa" } else { "" })
+$profiles = @(); if ($local -eq "1") { $profiles += "local" }; if ($ha -match "^[sSyY]") { $profiles += "casa" }
+Set-EnvVal "COMPOSE_PROFILES" ($profiles -join ",")
 Set-EnvVal "AURA_LOCAL_LLM" $local
 Set-EnvVal "OLLAMA_MODEL" $model
 Set-EnvVal "GEMINI_API_KEY" $key

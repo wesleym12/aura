@@ -21,7 +21,7 @@ def lembrar(titulo: str, conteudo: str) -> str:
     {"consulta": {"type": "string", "description": "O que procurar, em palavras naturais"}},
 )
 def buscar_memoria(consulta: str) -> str:
-    hits = memory.search(consulta, limit=6, min_score=0.3)
+    hits = memory.search(consulta, limit=6, min_score=memory.CUTS["search"])
     if not hits:
         return "Nada encontrado na memoria."
     return "\n\n".join(

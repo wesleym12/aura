@@ -178,7 +178,7 @@ def match_skill(query: str) -> dict | None:
         sim = sum(a * b for a, b in zip(q[0], _desc_cache[s["id"]][1]))
         if sim > score:
             best, score = s, sim
-    return best if score >= SKILL_MATCH else None
+    return best if score >= memory.CUTS.get("skill", SKILL_MATCH) else None
 
 
 def auto_skill_block(query: str) -> str:

@@ -9,7 +9,7 @@ local pesquisável.
 
 O instalador **analisa o computador** (processador, memória, disco, placa NVIDIA) e recomenda um modo:
 - **Modelo local:** tudo no seu computador, privado e funciona sem internet. Precisa de placa de vídeo para ficar rápido.
-- **Só Gemini:** o Google responde. É rápido em qualquer máquina, mas precisa de internet e de uma [chave grátis do Gemini](https://aistudio.google.com/apikey).
+- **Só Gemini:** o Google responde, e a busca por significado na memória também é feita por ele. O Ollama nem é instalado, então a instalação fica bem mais leve (vários GB a menos). É rápido em qualquer máquina, mas precisa de internet e de uma [chave grátis do Gemini](https://aistudio.google.com/apikey). Se o Gemini Flash estiver lotado, ela responde pelo Flash-Lite. Sem a chave, a memória continua funcionando pela busca por palavras.
 
 Você escolhe o modo, cola a chave do Gemini (opcional no modo local) e decide se o Home Assistant sobe junto.
 
@@ -54,8 +54,8 @@ bash instalar.sh
 | Serviço | Papel |
 |---|---|
 | `aura` | API, chat web e CLIs `claude`/`codex`. Porta 8765: só nesta máquina (Windows) ou pela rede, com senha e HTTPS (Linux) |
-| `ollama` | Modelo local, na GPU com `docker-compose.gpu.yml` (não fica exposto fora do Docker). No modo só Gemini, só a busca na memória |
-| `ollama-pull` | Baixa os modelos na primeira subida e sai |
+| `ollama` | Modelo local, na GPU com `docker-compose.gpu.yml` (não fica exposto fora do Docker). Só no modo local (`COMPOSE_PROFILES=local`) |
+| `ollama-pull` | Baixa os modelos na primeira subida e sai (modo local) |
 | `voice` | Palavra de ativação, transcrição (Whisper) e fala (Kokoro/Piper). CPU, offline; a tela fala com ele pela A.U.R.A. (`/voice`) |
 | `homeassistant` | Casa inteligente, porta 8123 (opcional: `COMPOSE_PROFILES=casa`) |
 | agente do Windows | `host-agent\agent.ps1` (fora do Docker): métricas, Ctrl+Espaço, controle do PC. Só em `127.0.0.1:8766` |

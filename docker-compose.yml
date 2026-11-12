@@ -5,12 +5,15 @@ name: aura
 #   docker-compose.gpu.yml      placa NVIDIA para o modelo local
 #   docker-compose.windows.yml  "Iniciar com o Windows"
 #   docker-compose.linux.yml    metricas do servidor Linux
+#   COMPOSE_PROFILES=local      modelo local (Ollama). Sem ele = "so Gemini": nem instala o Ollama
 #   COMPOSE_PROFILES=casa       Home Assistant junto (deixe de fora se ja tiver um, como o app do Umbrel)
+#   (os dois: COMPOSE_PROFILES=local,casa)
 
 services:
-  # Modelo local (na CPU; com docker-compose.gpu.yml, na placa NVIDIA)
+  # Modelo local (na CPU; com docker-compose.gpu.yml, na placa NVIDIA). So no perfil "local".
   ollama:
     image: ollama/ollama:latest
+    profiles: ["local"]
     volumes:
       - ollama:/root/.ollama
     environment:
@@ -29,16 +32,16 @@ services:
       retries: 20
     restart: unless-stopped
 
-  # Baixa os modelos na primeira subida (depois so confere e sai). O de busca na memoria sempre (pequeno);
-  # o de conversa e o de visao so no modo local (AURA_LOCAL_LLM=1).
+  # Baixa os modelos na primeira subida (depois so confere e sai): conversa, busca na memoria e visao.
   ollama-pull:
     image: ollama/ollama:latest
+    profiles: ["local"]
     depends_on:
       ollama:
         condition: service_healthy
     environment:
       - OLLAMA_HOST=ollama:11434
-    entrypoint: ["sh", "-c", "ollama pull ${EMBED_MODEL:-paraphrase-multilingual} && if [ '${AURA_LOCAL_LLM:-1}' != '0' ]; then ollama pull ${OLLAMA_MODEL:-qwen3:4b-instruct} && ollama pull ${VISION_MODEL:-qwen3-vl:2b-instruct}; fi"]
+    entrypoint: ["sh", "-c", "ollama pull ${OLLAMA_MODEL:-qwen3:4b-instruct} && ollama pull ${EMBED_MODEL:-paraphrase-multilingual} && ollama pull ${VISION_MODEL:-qwen3-vl:2b-instruct}"]
     restart: "no"
 
   aura:
@@ -51,7 +54,7 @@ services:
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:4b-instruct}
       - EMBED_MODEL=${EMBED_MODEL:-paraphrase-multilingual}
       - VISION_MODEL=${VISION_MODEL:-qwen3-vl:2b-instruct}        # le imagens e PDFs escaneados (local)
-      - AURA_LOCAL_LLM=${AURA_LOCAL_LLM:-1}         # 0 = "so Gemini": o cerebro e o Gemini (o Ollama so faz a busca na memoria)
+      - AURA_LOCAL_LLM=${AURA_LOCAL_LLM:-1}         # 0 = "so Gemini": cerebro e busca na memoria pelo Gemini, sem Ollama
       - AGENT_TIMEOUT=${AGENT_TIMEOUT:-600}
       - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
@@ -81,6 +84,7 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+        required: false          # no "so Gemini" o Ollama nem existe
     restart: unless-stopped
 
   # Casa inteligente: Home Assistant junto (perfil "casa"). Quem ja tem um HA (ex.: o app do umbrelOS) deixa de

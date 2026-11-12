@@ -148,7 +148,9 @@ NAME="$([ $UMBREL = 1 ] && echo umbrel.local || echo "$HOSTN.local")"
 FILES="docker-compose.yml:docker-compose.linux.yml"
 [ $LOCAL = 1 ] && [ -n "$GPU_NAME" ] && [ $NV_RUNTIME = 1 ] && FILES="$FILES:docker-compose.gpu.yml"
 envset COMPOSE_FILE "$FILES"
-envset COMPOSE_PROFILES "$([ $HA = 1 ] && echo casa)"
+PROFILES="$([ $LOCAL = 1 ] && echo local)"                # "local" = Ollama; no so Gemini ele nem e instalado
+[ $HA = 1 ] && PROFILES="${PROFILES:+$PROFILES,}casa"
+envset COMPOSE_PROFILES "$PROFILES"
 envset AURA_LOCAL_LLM "$LOCAL"
 envset OLLAMA_MODEL "$MODEL"
 envset GEMINI_API_KEY "$KEY"
@@ -170,7 +172,7 @@ if ! "${DOCKER[@]}" compose up -d --build; then
   # o Docker as vezes "perde" uma imagem recem-baixada ao criar os containers: tudo ja esta baixado, tenta de novo
   warn "O Docker falhou ao criar os containers; tentando de novo (agora é rápido)..."
   sleep 5
-  "${DOCKER[@]}" compose pull --ignore-buildable 2>/dev/null || "${DOCKER[@]}" pull ollama/ollama:latest
+  "${DOCKER[@]}" compose pull --ignore-buildable 2>/dev/null || { [ $LOCAL = 1 ] && "${DOCKER[@]}" pull ollama/ollama:latest; } || true
   "${DOCKER[@]}" compose up -d || fail "Não consegui subir. Rode de novo: ${DOCKER[*]} compose up -d"
 fi
 say "  Aguardando a A.U.R.A. responder..."
