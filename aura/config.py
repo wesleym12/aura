@@ -17,6 +17,9 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:8b")
 WORKSPACE = _path("AURA_WORKSPACE", "./workspace")
 DB_PATH = _path("AURA_DB", "./data/aura.db")
 AGENT_TIMEOUT = int(os.getenv("AGENT_TIMEOUT", "600"))
+# 0 = instalacao "so Gemini" (computador sem forca para o modelo local): o cerebro padrao e o Gemini e o Ollama
+# fica so com o modelo pequeno de busca na memoria
+LOCAL_LLM = os.getenv("AURA_LOCAL_LLM", "1") != "0"
 
 WORKSPACE.mkdir(parents=True, exist_ok=True)
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)

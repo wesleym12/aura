@@ -39,6 +39,11 @@ DEFAULTS = {
 
 NATIVE_VOICES = {"pm_alex", "pm_santa", "pf_dora"}
 
+# instalacao "so Gemini": o cerebro padrao e o Gemini (o usuario ainda pode trocar em Configuracoes -> Modelos)
+from .config import LOCAL_LLM  # noqa: E402
+if not LOCAL_LLM:
+    DEFAULTS.update(llm_provider="gemini", llm_model="gemini-flash-latest")
+
 # Jeitos de ser: cada um vira um trecho do prompt de sistema
 PERSONALITIES = {
     "equilibrado": ("Equilibrado", "Direto e cordial. O padrão.",

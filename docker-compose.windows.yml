@@ -1,0 +1,5 @@
+# So no Windows: pasta "Inicializar", onde o botao "Iniciar com o Windows" (Geral) grava/apaga o Aura.vbs.
+services:
+  aura:
+    volumes:
+      - "${APPDATA}/Microsoft/Windows/Start Menu/Programs/Startup:/startup"

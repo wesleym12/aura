@@ -11,7 +11,10 @@ from pathlib import Path, PurePosixPath
 from .config import WORKSPACE
 
 HOST = Path("/host")
-HOST_WIN = os.getenv("HOST_ROOT_WIN", "").replace("/", "\\").rstrip("\\")
+_RAW = os.getenv("HOST_ROOT_WIN", "").strip()
+# como os caminhos aparecem no computador: Windows (C:\Users\voce) ou Linux (/home/umbrel)
+SEP = "/" if _RAW.startswith("/") else "\\"
+HOST_WIN = _RAW.rstrip("/") if SEP == "/" else _RAW.replace("/", "\\").rstrip("\\")
 BLOCKED = {"appdata", ".ssh", ".aws", ".azure", ".gnupg", ".docker", ".config", ".kube", "ntuser.dat",
            # atalhos antigos do Windows que apontam para AppData e pastas de sistema
            "application data", "local settings", "cookies", "nethood", "printhood", "recent", "sendto",
@@ -60,21 +63,22 @@ def to_windows(p: Path) -> str:
     """Como o caminho aparece no Windows (para mostrar na tela)."""
     p = Path(p)
     if _in_host(p):
-        rel = str(PurePosixPath(p.relative_to(HOST))).replace("/", "\\")
+        rel = str(PurePosixPath(p.relative_to(HOST))).replace("/", SEP)
         win = HOST_WIN or "pasta do usuario"
-        return win + ("\\" + rel if rel != "." else "")
+        return win + (SEP + rel if rel != "." else "")
     if p == WORKSPACE or WORKSPACE in p.parents:
-        return "aura\\workspace" + ("\\" + str(p.relative_to(WORKSPACE)).replace("/", "\\") if p != WORKSPACE else "")
+        return f"aura{SEP}workspace" + (SEP + str(p.relative_to(WORKSPACE)).replace("/", SEP) if p != WORKSPACE else "")
     return str(p)
 
 
 def from_windows(path: str) -> Path | None:
-    """C:\\Users\\voce\\Projetos\\x.txt -> /host/Projetos/x.txt (so dentro da pasta de usuario)."""
-    p = str(path or "").strip().strip('"').replace("/", "\\")
+    """C:\\Users\\voce\\Projetos\\x.txt (ou /home/umbrel/x.txt) -> /host/... (so dentro da pasta de usuario)."""
+    p = str(path or "").strip().strip('"').replace("/" if SEP == "\\" else "\\", SEP)
     w = HOST_WIN
-    if w and HOST.is_dir() and (p.lower() == w.lower() or p.lower().startswith(w.lower() + "\\")):
-        rest = p[len(w):].lstrip("\\")
-        return HOST / PurePosixPath(*rest.split("\\")) if rest else HOST
+    same = (lambda a, b: a.lower() == b.lower()) if SEP == "\\" else (lambda a, b: a == b)   # Linux diferencia maiusculas
+    if w and HOST.is_dir() and (same(p, w) or same(p[:len(w) + 1], w + SEP)):
+        rest = p[len(w):].lstrip(SEP)
+        return HOST / PurePosixPath(*rest.split(SEP)) if rest else HOST
     return None
 
 

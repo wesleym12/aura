@@ -7,19 +7,11 @@ $log = Join-Path $PSScriptRoot "iniciar.log"
 function Say($msg) { $line = "$(Get-Date -Format 'dd/MM HH:mm:ss')  $msg"; Write-Host $msg; Add-Content -Path $log -Value $line -Encoding utf8 }
 if ((Test-Path $log) -and (Get-Item $log).Length -gt 200KB) { Remove-Item $log }
 
-# primeira vez: cria o .env e preenche o que da para descobrir sozinho (pasta de usuario e chave do agente)
+# primeira vez: o instalador analisa o PC e pergunta (modelo local ou so Gemini, Home Assistant...).
+# Nas outras vezes (e no inicio automatico, escondido) so completa o que faltar no .env, sem perguntar.
 $envFile = Join-Path $PSScriptRoot ".env"
-if (-not (Test-Path $envFile)) { Copy-Item (Join-Path $PSScriptRoot ".env.example") $envFile; Say "Criei o .env a partir do .env.example." }
-$lines = [System.Collections.Generic.List[string]](Get-Content $envFile -Encoding utf8)
-function Set-EnvIfEmpty($name, $value) {
-    $i = $lines.FindIndex({ param($l) $l -match "^$name=" })
-    if ($i -lt 0) { $lines.Add("$name=$value"); return $true }
-    if ($lines[$i] -match "^$name=\s*$") { $lines[$i] = "$name=$value"; return $true }
-    return $false
-}
-$changed = (Set-EnvIfEmpty "WORK_ROOT" $env:USERPROFILE)
-$changed = (Set-EnvIfEmpty "HOST_AGENT_TOKEN" (-join ((1..32) | ForEach-Object { '{0:x2}' -f (Get-Random -Maximum 256) }))) -or $changed
-if ($changed) { [IO.File]::WriteAllLines($envFile, $lines, (New-Object Text.UTF8Encoding($false))); Say "Configuracao inicial do .env preenchida." }
+if (-not (Test-Path $envFile) -and -not $SemNavegador) { & (Join-Path $PSScriptRoot "instalar.ps1"); Say "Instalacao configurada." }
+& (Join-Path $PSScriptRoot "instalar.ps1") -Completar
 
 docker info --format "{{.ServerVersion}}" 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) {

@@ -2,7 +2,7 @@
 FROM node:22-bookworm-slim
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates git ripgrep tzdata \
+ && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates git ripgrep tzdata openssl \
  && rm -rf /var/lib/apt/lists/*
 
 # CLIs que a Aura usa para delegar tarefas (o login fica em volumes, nao na imagem)
@@ -27,4 +27,5 @@ RUN mkdir -p /data /workspace /memoria /home/node/.claude /home/node/.codex /hom
 USER node
 
 EXPOSE 8765
-CMD ["uvicorn", "aura.server:app", "--host", "0.0.0.0", "--port", "8765"]
+# HTTP so nesta maquina (Windows) ou HTTPS na rede (AURA_TLS=1, Linux/umbrelOS): ver aura/run.py
+CMD ["python", "-m", "aura.run"]

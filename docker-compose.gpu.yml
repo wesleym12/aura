@@ -1,0 +1,10 @@
+# Placa NVIDIA para o modelo local (Windows com WSL2 ou Linux com o NVIDIA Container Toolkit).
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

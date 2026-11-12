@@ -18,8 +18,10 @@ from . import secrets
 
 API = "https://api.spotify.com/v1"
 ACCOUNTS = "https://accounts.spotify.com"
-# o Spotify so aceita http em endereco de loopback por IP (127.0.0.1), nunca "localhost"
-REDIRECT = "http://127.0.0.1:8765/api/spotify/callback"
+# o Spotify so aceita http em endereco de loopback por IP (127.0.0.1, nunca "localhost") ou HTTPS. Num servidor
+# (umbrelOS) o endereco publico vem de AURA_PUBLIC_URL (ex.: https://umbrel.local:8765), ja em HTTPS.
+import os as _os
+REDIRECT = (_os.getenv("AURA_PUBLIC_URL", "").rstrip("/") or "http://127.0.0.1:8765") + "/api/spotify/callback"
 SCOPES = ("user-read-playback-state user-modify-playback-state user-read-currently-playing "
           "playlist-read-private playlist-read-collaborative user-library-read user-read-private")
 

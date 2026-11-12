@@ -14,7 +14,7 @@ import time
 import httpx
 
 from . import secrets, settings
-from .config import OLLAMA_MODEL, OLLAMA_URL
+from .config import LOCAL_LLM, OLLAMA_MODEL, OLLAMA_URL
 from .textutil import strip_reasoning
 
 _log = logging.getLogger("uvicorn.error")
@@ -111,7 +111,7 @@ async def chat_live_default(messages: list, tools: list | None, pinned: dict | N
             if m == LIVE_CHAT_MODEL:
                 _live_bad["until"] = time.time() + 300
     local = current()
-    if local.get("local") and _ollama_up():
+    if LOCAL_LLM and local.get("local") and _ollama_up():
         _log.warning("Gemini indisponivel: respondendo com o modelo do PC (sai da memoria de novo em 3 min)")
         _live_local_used["t"] = time.time()
         asyncio.get_running_loop().create_task(_unload_if_idle())
@@ -245,10 +245,12 @@ async def unload_local():
 def _local_internal() -> dict | None:
     """Config para tarefas internas: o Ollama local (gratis, privado), ou o Gemini quando o Live esta ligado
     (o modelo local fica descarregado para liberar memoria e a conversa ja passa pelo Gemini)."""
-    if live_mode():
+    if live_mode() or not LOCAL_LLM:                 # Live ligado ou instalacao "so Gemini"
         g = _gemini_internal()
         if g:
             return g
+        if not LOCAL_LLM:
+            return None                              # sem modelo local instalado: usa o cerebro configurado
     if not _ollama_up():
         return None
     return {"provider": "ollama", "label": PROVIDERS["ollama"]["label"], "base": f"{OLLAMA_URL}/v1",

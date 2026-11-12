@@ -1371,7 +1371,10 @@ const saveSid = () => { try { localStorage.auraSid = sid; } catch {} };
 const log = $('log'), t = $('t'), send = $('send');
 var hostAgent = true;                                   // agente do Windows conectado? (controle do PC depende dele)
 const hhmm = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-const METRICS_URL = 'http://127.0.0.1:8766/metrics';
+// aberta no proprio PC? (o agente do Windows so e alcancavel daqui; de outro aparelho/servidor Linux usa /api/metrics)
+const LOCAL_PAGE = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+const WS_BASE = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
+const AGENT_METRICS = 'http://127.0.0.1:8766/metrics';
 
 function setState(state, text) {
   document.body.classList.toggle('thinking', state === 'thinking');
@@ -2230,7 +2233,8 @@ async function sendText(text, viaVoice = false, lang = null) {
 }
 
 // ===== Voz: palavra de ativacao, botao de microfone e fala das respostas =====
-const VOICE_HTTP = 'http://127.0.0.1:8767', VOICE_WS = 'ws://127.0.0.1:8767/ws';
+// o servico de voz e alcancado atraves do servidor da A.U.R.A. (funciona de outro aparelho, com HTTPS e login)
+const VOICE_HTTP = '/voice', VOICE_WS = WS_BASE + '/voice/ws';
 const voice = {
   ws: null, ctx: null, stream: null, analyser: null, playCtx: null, speakingSrc: null,
   recording: false, busy: false, lastVoice: false, available: false,
@@ -2390,6 +2394,7 @@ document.addEventListener('keyup', (e) => { if (voice.ptt && (e.code === 'Space'
 
 // atalho global: o agente do Windows avisa quando Ctrl+Espaco e pressionado em qualquer janela
 function connectGlobalPtt() {
+  if (!LOCAL_PAGE) return;                       // o agente do Windows so existe no proprio PC
   try {
     const es = new EventSource('http://127.0.0.1:8766/ptt');
     es.onmessage = (e) => { const d = JSON.parse(e.data); d.down ? pttDown() : pttUp(); };
@@ -2615,7 +2620,7 @@ function liveOpen() {
   live.opening = (async () => {
     await micOpen();
     await new Promise((ok, fail) => {
-      const ws = new WebSocket(`ws://${location.host}/ws/live`); ws.binaryType = 'arraybuffer';
+      const ws = new WebSocket(WS_BASE + '/ws/live'); ws.binaryType = 'arraybuffer';
       live.ws = ws; live.ready = false;
       ws.onopen = () => ws.send(JSON.stringify({ type: 'start', session: sid, project: convProject, context: hostOs ? { host_os: hostOs } : {} }));
       ws.onmessage = (e) => {
@@ -3634,13 +3639,19 @@ function gauge(id, pct) {
 function setV(id, text) { const el = $('v-' + id); el.textContent = text ?? 'N/D'; el.classList.toggle('na', text == null); }
 function fmtNet(kbs) { return kbs >= 1024 ? (kbs / 1024).toFixed(1) + 'MB/s' : Math.round(kbs) + 'KB/s'; }
 let hostOs = null;   // nome do sistema (vem do agente do Windows) — vai para o autoconhecimento
+let metricsFrom = LOCAL_PAGE ? 'agent' : 'server';   // Windows: agente; Linux/outro aparelho: o servidor
 async function loadMetrics() {
   let m = null;
-  try { const r = await fetch(METRICS_URL, { cache: 'no-store' }); if (r.ok) m = await r.json(); } catch {}
+  const get = async (url) => { try { const r = await fetch(url, { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch { return null; } };
+  if (metricsFrom === 'agent') m = await get(AGENT_METRICS);
+  if (!m?.cpu && m?.cpu !== 0) {
+    const s = await get('/api/metrics');
+    if (s && (s.cpu || s.cpu === 0)) { m = s; if (s.os === 'LINUX') metricsFrom = 'server'; }   // servidor Linux: nao tenta mais o agente
+  }
   if (m?.os_name) hostOs = m.os_name;
   const down = !m || m.cpu == null;
   $('metrics').classList.toggle('down', down);
-  $('metrics').title = down ? 'Agente de métricas desligado: rode host-agent\\start.ps1' : 'Métricas do Windows';
+  $('metrics').title = down ? 'Métricas indisponíveis (no Windows, rode host-agent\\start.ps1)' : `Métricas de ${m.os_name || 'este computador'}`;
   if (down) {
     for (const id of ['cpu', 'ram', 'gpu', 'net', 'temp']) setV(id, '--');
     for (const id of ['cpu', 'ram', 'gpu']) gauge(id, 0);
@@ -3650,7 +3661,8 @@ async function loadMetrics() {
   setV('ram', m.ram + '%'); gauge('ram', m.ram);
   setV('gpu', m.gpu == null ? null : m.gpu + '%'); gauge('gpu', m.gpu);
   setV('net', fmtNet(m.net_kbs));
-  setV('temp', m.gpu_temp == null ? null : m.gpu_temp + '°C');
+  const temp = m.gpu_temp ?? m.cpu_temp;
+  setV('temp', temp == null ? null : temp + '°C');
 }
 
 async function loadStatus() {
@@ -4396,7 +4408,9 @@ async function renderAutostart() {
   b.setAttribute('aria-pressed', String(!!s?.enabled));
   b.textContent = s?.enabled ? 'Ligado' : 'Desligado';
   h.textContent = !s?.available
-    ? 'Disponível só no Windows com o Docker Desktop (recrie o container para montar a pasta Inicializar).'
+    ? (hostOs && !/windows/i.test(hostOs)
+        ? 'No Linux/umbrelOS não precisa: ela já sobe sozinha junto com o Docker quando o servidor liga.'
+        : 'Disponível só no Windows com o Docker Desktop (recrie o container para montar a pasta Inicializar).')
     : s.enabled ? 'Ao entrar no Windows, sobe o Docker, a Aura e o agente do Windows escondidos. O registro fica em iniciar.log.'
     : 'Ao entrar no Windows, sobe o Docker, a Aura e o agente do Windows escondidos (sem abrir o navegador).';
 }

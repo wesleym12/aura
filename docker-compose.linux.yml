@@ -1,0 +1,7 @@
+# So no Linux (servidor, umbrelOS): deixa a A.U.R.A. medir a maquina inteira (CPU, RAM, temperatura, rede)
+# para o painel do topo. Somente leitura.
+services:
+  aura:
+    volumes:
+      - /proc:/host_proc:ro
+      - /etc/os-release:/host_os_release:ro

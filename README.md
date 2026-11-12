@@ -7,24 +7,57 @@ local pesquisável.
 
 ## Instalação
 
-Precisa de Windows com **Docker Desktop** (WSL2) e, de preferência, uma GPU NVIDIA.
+O instalador **analisa o computador** (processador, memória, disco, placa NVIDIA) e recomenda um modo:
+- **Modelo local:** tudo no seu computador, privado e funciona sem internet. Precisa de placa de vídeo para ficar rápido.
+- **Só Gemini:** o Google responde. É rápido em qualquer máquina, mas precisa de internet e de uma [chave grátis do Gemini](https://aistudio.google.com/apikey).
+
+Você escolhe o modo, cola a chave do Gemini (opcional no modo local) e decide se o Home Assistant sobe junto.
+
+### Windows
+
+Precisa do **Docker Desktop** (WSL2).
 
 ```powershell
 .\iniciar.ps1
 ```
 
-- Na primeira vez, ele cria o `.env` a partir do `.env.example`, preenche a sua pasta de usuário (`WORK_ROOT`) e a chave do agente do Windows (`HOST_AGENT_TOKEN`).
-- Depois sobe o Docker Desktop, os containers e o agente do Windows, e abre http://127.0.0.1:8765.
-- A primeira subida baixa os modelos (vários GB). Chaves de API, contas e o resto se configuram pela tela.
-- **Iniciar com o Windows:** Configurações → Geral (detalhes abaixo).
+- Na primeira vez, chama o `instalar.ps1`: faz a análise e as perguntas, e grava o `.env`.
+- Depois sobe o Docker Desktop, os containers e o agente do Windows, e abre http://127.0.0.1:8765. Só esta máquina acessa, sem senha.
+- Para reconfigurar: `.\instalar.ps1`. Para só ver a análise: `.\instalar.ps1 -Analisar`.
+- **Iniciar com o Windows:** Configurações → Geral.
+
+### Linux e umbrelOS (via SSH)
+
+Precisa de Docker com o plugin compose. O umbrelOS já tem.
+
+```bash
+git clone https://github.com/wesleym12/aura.git && cd aura
+bash instalar.sh
+```
+
+- O instalador grava o `.env`, gera uma **senha de acesso** e liga o **HTTPS**, e depois sobe tudo. A primeira vez leva de 10 a 30 min.
+- No fim, ele mostra o endereço (ex.: `https://umbrel.local:8765`) e a senha.
+- **Acesso pela rede, com senha:** de qualquer aparelho da casa (celular, notebook). A senha fica no `.env` (`AURA_PASSWORD`).
+- **HTTPS próprio:** o navegador avisa do certificado uma vez (Avançado → Continuar). Sem HTTPS o navegador bloqueia o microfone fora do `localhost`.
+- **No umbrelOS:**
+  - O Home Assistant do próprio Umbrel é detectado e não é instalado de novo. Conecte o dele em Plugins → Casa inteligente → "Usar outro Home Assistant", com o endereço `http://umbrel.local:8123` e um token de longa duração.
+  - A pasta padrão de arquivos é a do app Arquivos (`~/umbrel/home`).
+- **Sobe sozinha** quando o servidor liga (o Docker reinicia os containers). Atualizar: `./atualizar.sh`. Reconfigurar: `bash instalar.sh`.
+- **O que é só do Windows:** controle do computador (abrir programas, YouTube na mesma aba, clicar), Ctrl+Espaço global e "Iniciar com o Windows". No Linux, as métricas do topo vêm do próprio servidor.
+- **Logins do Google e de conectores MCP:** esses serviços só aceitam retorno em `localhost`. Faça esses logins uma vez por um túnel SSH, que encaminha uma porta do seu computador para o servidor:
+  ```bash
+  ssh -L 8765:localhost:8765 umbrel@umbrel.local
+  ```
+  Com o túnel aberto, acesse http://localhost:8765. O Spotify, o Home Assistant e as contas do Claude e do Codex funcionam direto pelo endereço da rede.
+- **Spotify no servidor:** cadastre como Redirect URI o endereço mostrado no card (ex.: `https://umbrel.local:8765/api/spotify/callback`).
 
 | Serviço | Papel |
 |---|---|
-| `aura` | API, chat web e CLIs `claude`/`codex`. Só em `127.0.0.1:8765` |
-| `ollama` | Modelo local na GPU (não fica exposto fora do Docker) |
+| `aura` | API, chat web e CLIs `claude`/`codex`. Porta 8765: só nesta máquina (Windows) ou pela rede, com senha e HTTPS (Linux) |
+| `ollama` | Modelo local, na GPU com `docker-compose.gpu.yml` (não fica exposto fora do Docker). No modo só Gemini, só a busca na memória |
 | `ollama-pull` | Baixa os modelos na primeira subida e sai |
-| `voice` | Palavra de ativação, transcrição (Whisper) e fala (Kokoro/Piper). CPU, offline, `127.0.0.1:8767` |
-| `homeassistant` | Casa inteligente, `127.0.0.1:8123` |
+| `voice` | Palavra de ativação, transcrição (Whisper) e fala (Kokoro/Piper). CPU, offline; a tela fala com ele pela A.U.R.A. (`/voice`) |
+| `homeassistant` | Casa inteligente, porta 8123 (opcional: `COMPOSE_PROFILES=casa`) |
 | agente do Windows | `host-agent\agent.ps1` (fora do Docker): métricas, Ctrl+Espaço, controle do PC. Só em `127.0.0.1:8766` |
 
 ## Voz

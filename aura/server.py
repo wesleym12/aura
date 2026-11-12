@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -8,7 +9,7 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile, WebSocket
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
-from . import (accounts, actions, attachments, autostart, backup, brain, conversations, facts, gcal, homeassistant, hostbridge,
+from . import (access, accounts, actions, attachments, autostart, backup, metrics, brain, conversations, facts, gcal, homeassistant, hostbridge,
                instructions, live, spotify,
                llm, mcpclient, memory, scheduler, secrets, settings, telegram, workdir)
 from .tools import desktop
@@ -41,27 +42,113 @@ def _persist(sid: str, res: dict):
 app = FastAPI(title="Aura")
 WEB = Path(__file__).parent / "web"
 
-# ---- protecao: so a propria pagina da Aura pode mandar ordens ----
-# Sem isto, qualquer site aberto no navegador poderia enviar pedidos para localhost (CSRF) ou se
-# passar por localhost trocando o DNS (DNS rebinding).
-ALLOWED_HOSTS = {"localhost:8765", "127.0.0.1:8765"}
-ALLOWED_ORIGINS = {"http://localhost:8765", "http://127.0.0.1:8765"}
-
-
-def origin_ok(headers) -> bool:
-    if headers.get("host") not in ALLOWED_HOSTS:
-        return False
-    origin = headers.get("origin")
-    return origin is None or origin in ALLOWED_ORIGINS   # sem Origin = nao e um navegador (ex.: agente, testes)
+# ---- protecao: quem pode falar com a A.U.R.A. (ver access.py) ----
+origin_ok = access.origin_ok
 
 
 @app.middleware("http")
 async def guard(request, call_next):
-    if request.headers.get("host") not in ALLOWED_HOSTS:
+    if not access.host_ok(request.headers.get("host")):
         return JSONResponse({"detail": "host nao permitido"}, status_code=403)
     if request.method not in ("GET", "HEAD", "OPTIONS") and not origin_ok(request.headers):
         return JSONResponse({"detail": "origem nao permitida"}, status_code=403)
+    if access.needs_login(request.url.path, request.cookies):
+        if request.method == "GET" and not request.url.path.startswith("/api/"):
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse("/login")
+        return JSONResponse({"detail": "faca login"}, status_code=401)
     return await call_next(request)
+
+
+@app.get("/login")
+def login_page(erro: str = ""):
+    from fastapi.responses import HTMLResponse, RedirectResponse
+    if not access.PASSWORD:
+        return RedirectResponse("/")
+    msg = '<div class="err">Senha incorreta (ou muitas tentativas: espere 1 minuto).</div>' if erro else ""
+    return HTMLResponse(access.LOGIN_PAGE.replace("__ERRO__", msg))
+
+
+@app.post("/login")
+async def login(request: Request):
+    from fastapi.responses import RedirectResponse
+    from urllib.parse import parse_qs
+    senha = (parse_qs((await request.body()).decode("utf-8", "replace")).get("senha") or [""])[0]
+    tok = access.check_password(senha)
+    if not tok:
+        await asyncio.sleep(1)                         # freio contra tentativas em sequencia
+        return RedirectResponse("/login?erro=1", status_code=303)
+    r = RedirectResponse("/", status_code=303)
+    r.set_cookie(access.COOKIE, tok, max_age=365 * 86400, httponly=True, samesite="lax",
+                 secure=request.url.scheme == "https")
+    return r
+
+
+@app.post("/logout")
+def logout():
+    r = JSONResponse({"ok": True})
+    r.delete_cookie(access.COOKIE)
+    return r
+
+
+def ws_allowed(sock: WebSocket) -> bool:
+    """WebSockets nao passam pelo middleware: mesma checagem (host, origem e login)."""
+    return origin_ok(sock.headers) and access.authed(sock.cookies)
+
+
+# ---- voz: a tela fala com o servico de voz ATRAVES daqui (funciona de outro aparelho, com HTTPS e login) ----
+VOICE = os.getenv("VOICE_URL", "http://voice:8767").rstrip("/")
+
+
+@app.websocket("/voice/ws")
+async def voice_ws(sock: WebSocket):
+    import websockets
+    if not ws_allowed(sock):
+        await sock.close(code=1008)
+        return
+    await sock.accept()
+    try:
+        async with websockets.connect(VOICE.replace("http", "ws", 1) + "/ws", max_size=None) as up:
+            async def to_voice():
+                while True:
+                    m = await sock.receive()
+                    if m["type"] == "websocket.disconnect":
+                        break
+                    await up.send(m["bytes"] if m.get("bytes") is not None else m.get("text") or "")
+
+            async def to_page():
+                async for m in up:
+                    await (sock.send_bytes(m) if isinstance(m, bytes) else sock.send_text(m))
+            tasks = [asyncio.create_task(to_voice()), asyncio.create_task(to_page())]
+            await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+            for t in tasks:
+                t.cancel()
+    except (OSError, websockets.WebSocketException):
+        pass
+    finally:
+        try:
+            await sock.close()
+        except RuntimeError:
+            pass
+
+
+@app.api_route("/voice/{path:path}", methods=["GET", "POST"])
+async def voice_http(path: str, request: Request):
+    if path not in ("health", "voices", "tts", "stt"):
+        raise HTTPException(404)
+    async with httpx.AsyncClient(timeout=120) as c:
+        try:
+            r = await c.request(request.method, f"{VOICE}/{path}", content=await request.body(),
+                                headers={"content-type": request.headers.get("content-type", "application/json")})
+        except httpx.HTTPError:
+            raise HTTPException(503, "servico de voz indisponivel")
+    return Response(r.content, status_code=r.status_code, media_type=r.headers.get("content-type"))
+
+
+@app.get("/api/metrics")
+def host_metrics():
+    """CPU/RAM/temperatura do servidor (Linux). No Windows a tela usa o agente do Windows."""
+    return metrics.snapshot()
 
 
 @app.on_event("startup")
@@ -157,9 +244,9 @@ def spotify_client(body: dict):
 @app.get("/api/spotify/auth")
 def spotify_auth(request: Request):
     from fastapi.responses import RedirectResponse
-    host = request.headers.get("host", "127.0.0.1:8765")
-    back = f"http://{host}" if host.split(":")[0] in ("localhost", "127.0.0.1") else ""
-    return RedirectResponse(_sp(spotify.auth_url, back))
+    # volta para o mesmo endereco de onde o login saiu (localhost x 127.0.0.1, ou o nome do servidor)
+    back = f"{request.url.scheme}://{request.headers.get('host', '127.0.0.1:8765')}"
+    return RedirectResponse(_sp(spotify.auth_url, back if access.host_ok(request.headers.get("host")) else ""))
 
 
 @app.get("/api/spotify/callback")
@@ -790,7 +877,7 @@ async def tts_gemini(body: dict):
 
 @app.websocket("/ws/live")
 async def ws_live(sock: WebSocket):
-    if not origin_ok(sock.headers):
+    if not ws_allowed(sock):
         await sock.close(code=1008)
         return
     await live.handle(sock)
