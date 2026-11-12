@@ -72,7 +72,6 @@ bash instalar.sh
 - **Português fixo** (padrão): silêncio e ruído não viram texto, e as frases-fantasma do Whisper ("Thanks for watching"...) são descartadas.
 - **A voz te segue** (desligada por padrão; Configurações → Modelos): ela responde na língua em que você falou, com uma voz nativa dela.
 - **Vozes** (Voz e jeito): locais `pf_dora` (padrão), `pm_alex` e `pm_santa`; com o Gemini Live, as vozes do Gemini (padrão `Kore`).
-- "Hey Jarvis" continua disponível como palavra de ativação, usando um detector dedicado mais leve (Configurações → Geral).
 
 ## Motor e modelos (Configurações → Modelos)
 

@@ -72,9 +72,7 @@ def write(key: str, text: str):
 
 
 def project_file() -> Path:
-    p = workdir.current() / PROJECT_FILE
-    old = workdir.current() / "JARVIS.md"                 # nome antigo: continua valendo ate ser renomeado
-    return old if not p.exists() and old.exists() else p
+    return workdir.current() / PROJECT_FILE
 
 
 def read_project() -> str:

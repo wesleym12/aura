@@ -2,7 +2,7 @@
 
 O docker-compose monta a pasta "Inicializar" do Windows em /startup. Ligar = gravar ali um Aura.vbs
 que roda o iniciar.ps1 escondido no logon (Docker Desktop, containers e agente do Windows, sem abrir o
-navegador). Desligar = apagar o Aura.vbs (e o Jarvis.vbs/Jarvis.lnk antigos, se houver).
+navegador). Desligar = apagar o Aura.vbs.
 O conteudo e sempre este script fixo: nada vindo de fora entra nele.
 """
 import os
@@ -11,7 +11,6 @@ from pathlib import Path
 
 STARTUP = Path("/startup")
 VBS = STARTUP / "Aura.vbs"
-LEGACY = (STARTUP / "Jarvis.vbs", STARTUP / "Jarvis.lnk")   # de quando o projeto se chamava Jarvis
 
 
 def _project_dir_win() -> str:
@@ -31,15 +30,10 @@ def _project_dir_win() -> str:
     return ""
 
 
-def _present() -> list[Path]:
-    return [f for f in (VBS, *LEGACY) if f.exists()]
-
-
 def status() -> dict:
     available = STARTUP.is_dir()
-    found = _present() if available else []
-    return {"available": available, "enabled": bool(found), "project": _project_dir_win(),
-            "file": found[0].name if found else ""}
+    on = available and VBS.exists()
+    return {"available": available, "enabled": on, "project": _project_dir_win(), "file": VBS.name if on else ""}
 
 
 def enable() -> dict:
@@ -54,13 +48,9 @@ def enable() -> dict:
            'CreateObject("WScript.Shell").Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden '
            f'-File ""{ps1}"" -SemNavegador", 0, False\r\n')
     VBS.write_bytes(b"\xff\xfe" + vbs.encode("utf-16-le"))     # UTF-16 com BOM: aceita acentos no caminho
-    for f in LEGACY:                                            # um so jeito de iniciar (evita subir duas vezes)
-        if f.exists():
-            f.unlink()
     return status()
 
 
 def disable() -> dict:
-    for f in _present():
-        f.unlink()
+    VBS.unlink(missing_ok=True)
     return status()

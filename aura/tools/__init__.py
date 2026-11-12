@@ -87,11 +87,6 @@ async def run_tool(name: str, args: dict) -> str:
         return f"Erro ao executar {name}: {e}"
 
 
-# plugins antigos escritos com `from jarvis.tools import tool` continuam funcionando
-import aura as _aura  # noqa: E402
-sys.modules.setdefault("jarvis", _aura)
-sys.modules.setdefault("jarvis.tools", sys.modules[__name__])
-
 _plugin_mtimes: dict[str, float] = {}
 plugin_errors: dict[str, str] = {}      # arquivo -> erro ao carregar (a tela mostra)
 

@@ -12,8 +12,6 @@
   // tema antes de pintar (evita piscar). Claro e Escuro (o antigo "Virtual" virou o Claro).
   window.THEMES = ['claro', 'escuro'];
   try {
-    // preferencias salvas quando o projeto se chamava Jarvis (jarvisTheme, jarvisSid...) passam para aura*
-    for (const k of Object.keys(localStorage)) if (k.startsWith('jarvis') && localStorage.getItem('aura' + k.slice(6)) === null) localStorage.setItem('aura' + k.slice(6), localStorage.getItem(k));
     let t = localStorage.getItem('auraTheme');
     if (t === 'virtual') t = 'claro';
     document.documentElement.dataset.theme = THEMES.includes(t) ? t : THEMES[0];

@@ -23,13 +23,6 @@ LOCAL_LLM = os.getenv("AURA_LOCAL_LLM", "1") != "0"
 
 WORKSPACE.mkdir(parents=True, exist_ok=True)
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-# o banco se chamava jarvis.db: renomeia uma vez (com os arquivos -wal/-shm do SQLite)
-_old = DB_PATH.with_name("jarvis.db")
-if not DB_PATH.exists() and _old.exists():
-    for suf in ("", "-wal", "-shm"):
-        src = Path(str(_old) + suf)
-        if src.exists():
-            src.rename(str(DB_PATH) + suf)
 
 # {name}, {user} e {personality} vem das configuracoes (aura/settings.py);
 # {profile} e gerado do sistema real a cada chamada (aura/selfinfo.py)
