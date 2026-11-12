@@ -63,9 +63,11 @@ CORES="$(nproc 2>/dev/null || echo 1)"
 RAM_GB="$(awk '/MemTotal/ {printf "%d", $2/1024/1024 + 0.5}' /proc/meminfo)"
 DISK_GB="$(df -Pk . | awk 'NR==2 {printf "%d", $4/1024/1024}')"
 GPU_NAME=""; VRAM_GB=0
-if command -v nvidia-smi >/dev/null; then
-  IFS=',' read -r GPU_NAME VRAM_MB < <(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits 2>/dev/null | head -n1) || true
-  VRAM_GB=$(( ${VRAM_MB:-0} / 1024 ))
+# so conta a placa se o nvidia-smi funcionar de verdade (no umbrelOS ele existe mesmo sem placa e so imprime um erro)
+if command -v nvidia-smi >/dev/null && SMI="$(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits 2>/dev/null)" \
+   && [[ "$(head -n1 <<<"$SMI")" =~ ^[^,]+,\ *[0-9]+ ]]; then
+  IFS=',' read -r GPU_NAME VRAM_MB <<<"$(head -n1 <<<"$SMI")"
+  GPU_NAME="$(echo "$GPU_NAME" | xargs)"; VRAM_GB=$(( ${VRAM_MB// /} / 1024 ))
 fi
 NV_RUNTIME=0; "${DOCKER[@]}" info 2>/dev/null | grep -qi nvidia && NV_RUNTIME=1
 HAVE_DOCKER=0; "${DOCKER[@]}" compose version >/dev/null 2>&1 && HAVE_DOCKER=1
@@ -129,8 +131,15 @@ ROOT="$(ask 'Pasta que a A.U.R.A. pode usar (arquivos, projetos)' "$DEF_ROOT")"
 
 PASS="$(envget AURA_PASSWORD)"
 if [ -z "$PASS" ]; then PASS="$(head -c 18 /dev/urandom | base64 | tr -d '/+=' | head -c 16)"; fi
-NEWPASS="$(ask 'Senha de acesso (Enter mantém a gerada)' "")"
+NEWPASS="$(ask 'Senha de acesso (Enter mantém a atual/gerada)' "")"
 [ -n "$NEWPASS" ] && PASS="$NEWPASS"
+if [ ${#PASS} -lt 10 ] || [[ "${PASS,,}" =~ ^(admin|senha|password|123456|umbrel|aura) ]]; then
+  warn "Senha fraca: ela protege um assistente que lê seus arquivos e controla a casa. Use 10+ caracteres (rode o instalador de novo para trocar)."
+fi
+
+# voz: em processador fraco o Whisper "small" demora para entender cada frase; o "base" e bem mais leve
+DEF_WH="$(envget WHISPER_MODEL | grep . || { [ "$CORES" -le 4 ] && echo base || echo small; })"
+[ "$DEF_WH" = base ] && [ -z "$(envget WHISPER_MODEL)" ] && ok "Voz: processador com $CORES núcleos, vou usar o Whisper 'base' (mais leve)."
 
 NAME="$([ $UMBREL = 1 ] && echo umbrel.local || echo "$HOSTN.local")"
 [ $AURA_PORT = 1 ] && ! "${DOCKER[@]}" compose ps aura 2>/dev/null | grep -q aura && warn "A porta 8765 já está em uso por outro programa."
@@ -143,6 +152,7 @@ envset COMPOSE_PROFILES "$([ $HA = 1 ] && echo casa)"
 envset AURA_LOCAL_LLM "$LOCAL"
 envset OLLAMA_MODEL "$MODEL"
 envset GEMINI_API_KEY "$KEY"
+envset WHISPER_MODEL "$DEF_WH"
 envset WORK_ROOT "$ROOT"
 envset TZ "$(timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo America/Sao_Paulo)"
 envset AURA_BIND 0.0.0.0
@@ -156,7 +166,13 @@ ok ".env gravado (chaves e senha ficam só nele; não compartilhe)."
 
 # ---------- sobe ----------
 say ""; say "${B}Subindo os containers${N} ${D}(a primeira vez baixa e monta as imagens: pode levar de 10 a 30 min)${N}"
-"${DOCKER[@]}" compose up -d --build
+if ! "${DOCKER[@]}" compose up -d --build; then
+  # o Docker as vezes "perde" uma imagem recem-baixada ao criar os containers: tudo ja esta baixado, tenta de novo
+  warn "O Docker falhou ao criar os containers; tentando de novo (agora é rápido)..."
+  sleep 5
+  "${DOCKER[@]}" compose pull --ignore-buildable 2>/dev/null || "${DOCKER[@]}" pull ollama/ollama:latest
+  "${DOCKER[@]}" compose up -d || fail "Não consegui subir. Rode de novo: ${DOCKER[*]} compose up -d"
+fi
 say "  Aguardando a A.U.R.A. responder..."
 for _ in $(seq 1 90); do
   curl -sk -o /dev/null https://localhost:8765/login && break

@@ -99,7 +99,10 @@ services:
   # Voz: palavra de ativacao + Whisper (transcricao) + Kokoro/Piper (fala). Roda na CPU.
   # A tela fala com ele atraves da A.U.R.A. (/voice), entao nao precisa de porta propria.
   voice:
-    build: ./voice
+    build:
+      context: ./voice
+      args:
+        WHISPER_MODEL: ${WHISPER_MODEL:-small}   # o modelo ja vem dentro da imagem (funciona sem internet)
     environment:
       - TZ=${TZ:-America/Sao_Paulo}
       - WHISPER_MODEL=${WHISPER_MODEL:-small}
