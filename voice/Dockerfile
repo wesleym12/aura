@@ -1,5 +1,4 @@
-# Voz da Aura: palavra de ativacao (openWakeWord), transcricao (faster-whisper)
-# e fala (Kokoro). Tudo local, na CPU.
+# Voz da A.U.R.A.: palavra de ativacao e transcricao (faster-whisper) e fala (Kokoro/Piper). Tudo local, na CPU.
 FROM python:3.11-slim
 
 RUN apt-get update \
@@ -13,7 +12,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Modelos baixados na construcao da imagem (depois funciona sem internet)
 ENV HF_HOME=/models/hf
 ARG WHISPER_MODEL=small
-RUN python -c "import openwakeword.utils as u; u.download_models(['hey_jarvis'])"
 RUN python -c "from faster_whisper import WhisperModel; WhisperModel('${WHISPER_MODEL}', device='cpu', compute_type='int8')"
 RUN mkdir -p /models \
  && curl -fsSL -o /models/kokoro-v1.0.onnx https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx \

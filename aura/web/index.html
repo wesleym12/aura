@@ -1363,7 +1363,6 @@ const $ = (id) => document.getElementById(id);
 // configuracoes atuais (carregadas de /api/settings logo no inicio)
 const cfg = { assistant_name: 'A.U.R.A.', user_name: 'Wesley', voice: 'pf_dora', voice_speed: 1.05, voice_names: {}, personality: 'equilibrado',
               greeting: true, greeting_text: '{saudacao}, {usuario}. {assistente} online.', wake_word: 'Aura' };
-const isDedicatedWake = (w) => w.toLowerCase().replace(/[^a-z ]/g, '').trim() === 'hey jarvis';
 let sid = (() => { try { return localStorage.auraSid ||= crypto.randomUUID(); } catch { return crypto.randomUUID(); } })();
 const saveSid = () => { try { localStorage.auraSid = sid; } catch {} };
 const log = $('log'), t = $('t'), send = $('send');
@@ -2995,9 +2994,7 @@ function renderSettings() {
   $('cfg-assistant').value = cfg.assistant_name;
   $('cfg-user').value = cfg.user_name;
   $('cfg-wake').value = cfg.wake_word;
-  $('cfg-wake-hint').textContent = isDedicatedWake(cfg.wake_word)
-    ? '“Hey Jarvis” usa o detector dedicado: leve e preciso. Diga a palavra, espere o bip e faça o pedido.'
-    : 'Palavra livre: o Whisper procura essa palavra no começo do que você fala. Pode falar tudo junto ("' + cfg.wake_word + ', que horas são?"). Usa mais processador enquanto a escuta está ligada.';
+  $('cfg-wake-hint').textContent = 'O Whisper procura essa palavra no começo do que você fala. Pode falar tudo junto ("' + cfg.wake_word + ', que horas são?") ou dizer a palavra, esperar o bip e fazer o pedido.';
   $('cfg-greeting-text').value = cfg.greeting_text;
   $('cfg-desktop').setAttribute('aria-pressed', String(!!cfg.desktop_control));
   $('cfg-desktop').textContent = cfg.desktop_control ? 'Ligado' : 'Desligado';

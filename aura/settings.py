@@ -16,7 +16,7 @@ DEFAULTS = {
     "greeting": True,           # saudacao falada ao abrir o Command Center
     # {saudacao} = Bom dia/Boa tarde/Boa noite, {usuario}, {assistente}
     "greeting_text": "{saudacao}, {usuario}. {assistente} online.",
-    "wake_word": "Aura",        # "Hey Jarvis" usa o detector dedicado; qualquer outra (ex.: "Aura") usa o Whisper
+    "wake_word": "Aura",        # palavra de ativacao (o Whisper procura no comeco da fala)
     "engine": "local",          # motor de voz: local (privado, offline) | live (Gemini Live, nuvem)
     "live_voice": "Kore",       # voz do Gemini Live (aba Microfone e som)
     "auto_learn": True,         # aprender fatos sobre o usuario sozinha (aba Memoria)

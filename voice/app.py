@@ -1,8 +1,8 @@
 """Servico de voz da Aura.
 
 - WebSocket /ws: o navegador manda audio do microfone (PCM 16 kHz, int16 mono).
-  Com a escuta ligada, detecta "Hey Jarvis"; depois grava ate voce parar de
-  falar e devolve o texto transcrito.
+  Com a escuta ligada, o Whisper procura a palavra de ativacao ("Aura") no comeco do que
+  voce fala; depois grava ate voce parar de falar e devolve o texto transcrito.
 - POST /tts: transforma a resposta em fala (WAV).
 """
 import asyncio
@@ -24,7 +24,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from faster_whisper import WhisperModel
 from kokoro_onnx import Kokoro
-from openwakeword.model import Model as WakeModel
 from piper import PiperVoice
 from piper.config import SynthesisConfig
 from pydantic import BaseModel
@@ -32,11 +31,9 @@ from pydantic import BaseModel
 log = logging.getLogger("uvicorn.error")
 
 SR = 16000
-CHUNK = 1280                      # 80 ms: tamanho que o openWakeWord espera
 VAD_FRAME = 480                   # 30 ms para o webrtcvad
-WAKE_THRESHOLD = float(os.getenv("WAKE_THRESHOLD", "0.5"))
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
-TTS_VOICE = os.getenv("TTS_VOICE", "pm_alex")
+TTS_VOICE = os.getenv("TTS_VOICE", "pf_dora")
 TTS_SPEED = float(os.getenv("TTS_SPEED", "1.05"))
 END_SILENCE = float(os.getenv("END_SILENCE", "0.9"))   # segundos de silencio que encerram a fala
 LANG_MIN_PROB = float(os.getenv("LANG_MIN_PROB", "0.6"))  # certeza minima para trocar de lingua
@@ -151,10 +148,6 @@ def norm(s: str) -> str:
     return re.sub(r"[^a-z0-9 ]", "", "".join(c for c in s if not unicodedata.combining(c))).strip()
 
 
-# palavras com detector dedicado (openWakeWord); as demais usam o Whisper
-OWW_WORDS = {"hey jarvis": "hey_jarvis"}
-
-
 def match_wake(text: str, word: str) -> tuple[bool, str]:
     """A palavra de ativacao aparece no comeco da frase? Devolve (achou, resto da frase).
     Tolera pequenas diferencas de escrita ("Aura" -> "Áurea", "Sexta-feira" -> "Sexta feira")."""
@@ -180,19 +173,17 @@ def match_wake(text: str, word: str) -> tuple[bool, str]:
 
 @app.get("/health")
 def health():
-    return {"ok": True, "wake": "hey_jarvis", "stt": WHISPER_MODEL, "tts": TTS_VOICE}
+    return {"ok": True, "wake": "whisper", "stt": WHISPER_MODEL, "tts": TTS_VOICE}
 
 
 @app.websocket("/ws")
 async def ws(sock: WebSocket):
     await sock.accept()
-    wake = WakeModel(wakeword_models=["hey_jarvis"], inference_framework="onnx")
     wake_on = False
     follow = False                           # a voz te segue: so detecta a lingua se a tela pedir (padrao: portugues)
     word = "Aura"
-    spotter: Recorder | None = None          # usado so no modo palavra livre (Whisper)
+    spotter: Recorder | None = None          # trechos falados que o Whisper confere se comecam com a palavra
     rec: Recorder | None = None
-    pending = np.zeros(0, np.int16)
     try:
         while True:
             msg = await sock.receive()
@@ -204,8 +195,7 @@ async def ws(sock: WebSocket):
                     wake_on = bool(cmd.get("enabled"))
                     word = (cmd.get("word") or word).strip() or "Aura"
                     follow = bool(cmd.get("follow", follow))
-                    wake.reset()
-                    spotter = None if norm(word) in OWW_WORDS else Recorder(.6, 8, None, spot=True)
+                    spotter = Recorder(.6, 8, None, spot=True)
                 elif cmd.get("cmd") == "listen":
                     # botao do microfone, ou modo conversa (timeout = quanto tempo esperar alguem falar)
                     follow = bool(cmd.get("follow", follow))
@@ -245,12 +235,9 @@ async def ws(sock: WebSocket):
                 await sock.send_json({"event": "transcribing"})
                 text, lang = await asyncio.to_thread(transcribe, audio, None, follow)
                 await sock.send_json({"event": "transcript", "text": text, "lang": lang} if text else {"event": "no_speech"})
-                wake.reset()
-                pending = np.zeros(0, np.int16)
-                if spotter is not None:
-                    spotter = Recorder(.6, 8, None, spot=True)
+                spotter = Recorder(.6, 8, None, spot=True)
             elif wake_on and spotter is not None:
-                # palavra livre: cada trecho falado vai para o Whisper
+                # escuta continua: cada trecho falado vai para o Whisper, que confere se comeca com a palavra
                 if spotter.feed(pcm) is None:
                     continue
                 audio, spotter = spotter.audio(), Recorder(.6, 8, None, spot=True)
@@ -266,17 +253,6 @@ async def ws(sock: WebSocket):
                     await sock.send_json({"event": "transcript", "text": rest, "lang": lang})
                 else:
                     rec = Recorder()
-            elif wake_on:
-                pending = np.concatenate([pending, pcm])
-                while len(pending) >= CHUNK:
-                    frame, pending = pending[:CHUNK], pending[CHUNK:]
-                    score = max(wake.predict(frame).values())
-                    if score >= WAKE_THRESHOLD:
-                        log.info("Hey Jarvis detectado (%.2f)", score)
-                        wake.reset()
-                        rec, pending = Recorder(), np.zeros(0, np.int16)
-                        await sock.send_json({"event": "wake", "score": round(float(score), 2)})
-                        break
     except WebSocketDisconnect:
         pass
 
