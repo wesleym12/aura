@@ -270,5 +270,3 @@ A interface (`aura/web/index.html`) é montada ao vivo: basta F5.
 - Ações sensíveis (enviar e-mail, fechadura, clicar, desligar o PC...) só rodam depois do seu clique em **Autorizar**.
 - O agente do Windows só executa uma lista fechada de comandos, com a chave `HOST_AGENT_TOKEN`.
 - Conteúdo de e-mails, páginas e documentos é tratado como dado, nunca como ordem.
-
-> O projeto se chamava Jarvis. Plugins antigos com `from jarvis.tools import tool` continuam funcionando.

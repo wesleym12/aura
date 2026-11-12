@@ -9,6 +9,22 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# este instalador e so para Linux: no Windows e no macOS orienta em vez de falhar no meio
+case "$(uname -s)" in
+  Linux) ;;
+  MINGW*|MSYS*|CYGWIN*)
+    echo "Este é o instalador do Linux. No Windows, abra o PowerShell nesta pasta e rode:  .\\iniciar.ps1"; exit 1 ;;
+  Darwin)
+    echo "macOS ainda não é suportado pela A.U.R.A. (ela usa recursos do Linux e do Windows)."; exit 1 ;;
+  *)
+    echo "Sistema '$(uname -s)' não suportado: a A.U.R.A. roda em Linux e Windows."; exit 1 ;;
+esac
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  echo "Você está no WSL (Linux dentro do Windows). Para usar no próprio Windows, rode no PowerShell:  .\\iniciar.ps1"
+  read -r -p "Continuar mesmo assim instalando como servidor Linux? (s/n) [n]: " a </dev/tty || true
+  [[ "${a:-n}" =~ ^[sSyY] ]] || exit 1
+fi
+
 B=$'\e[1m'; D=$'\e[2m'; G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; C=$'\e[36m'; N=$'\e[0m'
 say()  { printf '%s\n' "$*"; }
 ok()   { printf '  %s✓%s %s\n' "$G" "$N" "$*"; }
