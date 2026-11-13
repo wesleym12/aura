@@ -298,8 +298,12 @@ segurança crítica (fechaduras, alarmes, saúde) sem um meio alternativo de con
 ## Apoie o projeto
 
 A A.U.R.A. é gratuita e feita por hobby. Se ela te ajuda, doações são bem-vindas e ajudam a manter o projeto:
-<!-- adicione aqui o seu link (GitHub Sponsors, PIX, Buy Me a Coffee...) -->
-- *(link de doação em breve)*
+- **PIX** (chave aleatória, em nome de Wesley Ferreira Martins): `c45e2220-eed0-4be1-89f4-65c08d9ae4f4`
+- **Pelo link:** [doar pelo Nubank](https://nubank.com.br/cobrar/2wc5xp/6af7148f-0e4d-4ca2-8d84-3533d7db3aed) (abre o QR Code)
+- **Pix Copia e Cola** (você escolhe o valor):
+  ```
+  00020126580014BR.GOV.BCB.PIX0136c45e2220-eed0-4be1-89f4-65c08d9ae4f45204000053039865802BR5923Wesley Ferreira Martins6009SAO PAULO62140510NV1dYB5uZH63045FDB
+  ```
 
 Contribuições também são bem-vindas: abra uma *issue* com bugs e ideias, ou um *pull request*.
 
