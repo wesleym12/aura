@@ -1,7 +1,7 @@
 """Memoria central da Aura.
 
 Tipos (kind):
-  fato   -> algo duradouro sobre o usuario, aprendido sozinho nas conversas ("Wesley torce para o Flamengo")
+  fato   -> algo duradouro sobre o usuario, aprendido sozinho nas conversas ("Ana torce para o Flamengo")
   nota   -> o que o usuario pediu para anotar (ferramenta `lembrar`)
   claude / codex -> resultados de pesquisas e tarefas delegadas
 

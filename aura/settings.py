@@ -8,7 +8,7 @@ from .config import DB_PATH
 
 DEFAULTS = {
     "assistant_name": "A.U.R.A.",
-    "user_name": "Wesley",
+    "user_name": "Usuário",     # troque em Configuracoes -> Geral
     "voice": "pf_dora",         # voz local (so as nativas do portugues: pm_alex, pm_santa, pf_dora)
     "voice_speed": 1.05,
     "voice_names": {},          # apelidos que voce deu para as vozes: {"pm_alex": "Meu Aura"}

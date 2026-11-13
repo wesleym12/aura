@@ -316,6 +316,7 @@
   .tg-req { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
   .tg-req span { flex: 1; min-width: 200px; font-size: 13px; } .tg-req .btn { margin: 0; padding: 5px 12px; }
   #tg-body > .btn { margin: 0; align-self: flex-start; }
+  .yt-key { margin-top: 6px; } .yt-key .acct-row { margin-top: 4px; max-width: 520px; } .yt-key .btn { margin: 0; }
   .pl-tg { margin-top: 4px; margin-bottom: 14px; }
   .ha-alt summary { cursor: pointer; font-size: 13px; color: var(--dim); }
   .ha-alt .acct-row { flex-wrap: wrap; } .ha-alt .acct-row input { min-width: 160px; }
@@ -1080,12 +1081,15 @@
         <div class="mem-item pl-native">
           <div class="txt"><b>Controle do computador</b>
             <div class="meta">Abrir programas e sites, listar e focar janelas, ler a tela, prints, volume e mídia. Clicar, digitar e atalhos sempre pedem o seu Autorizar. Só age quando você pede.</div>
-            <div class="meta" id="pl-agent"></div></div>
+            <div class="meta" id="pl-agent"></div>
+            <div class="meta yt-key"><b>YouTube:</b> <span id="yt-st"></span>
+              <span class="acct-row"><input id="yt-key" type="password" autocomplete="off" placeholder="chave da API do YouTube (opcional)">
+                <button class="btn ghost" id="yt-save" type="button">Salvar</button></span></div></div>
           <button class="toggle" id="cfg-desktop" aria-pressed="false">Desligado</button>
         </div>
         <div class="acct pl-tg" id="sp-card">
           <div class="acct-head"><b>Spotify</b><span class="acct-st" id="sp-st"></span></div>
-          <p class="hint" style="margin:0">"Toca a minha playlist WFM", "pula essa", "abaixa o volume", "o que está tocando?". Toca no PC, no celular ou no Echo. Controlar a reprodução exige Spotify Premium.</p>
+          <p class="hint" style="margin:0">"Toca a minha playlist Treino", "pula essa", "abaixa o volume", "o que está tocando?". Toca no PC, no celular ou no Echo. Controlar a reprodução exige Spotify Premium.</p>
           <div class="acct-body" id="sp-body"></div>
         </div>
         <div class="acct pl-tg" id="ha-card">
@@ -1379,7 +1383,7 @@
 <script>
 const $ = (id) => document.getElementById(id);
 // configuracoes atuais (carregadas de /api/settings logo no inicio)
-const cfg = { assistant_name: 'A.U.R.A.', user_name: 'Wesley', voice: 'pf_dora', voice_speed: 1.05, voice_names: {}, personality: 'equilibrado',
+const cfg = { assistant_name: 'A.U.R.A.', user_name: '', voice: 'pf_dora', voice_speed: 1.05, voice_names: {}, personality: 'equilibrado',
               greeting: true, greeting_text: '{saudacao}, {usuario}. {assistente} online.', wake_word: 'Aura' };
 let sid = (() => { try { return localStorage.auraSid ||= crypto.randomUUID(); } catch { return crypto.randomUUID(); } })();
 const saveSid = () => { try { localStorage.auraSid = sid; } catch {} };
@@ -4005,7 +4009,7 @@ async function renderTelegram() {
   if (!s.configured) {
     const steps = el('ol', '', `
       <li>No Telegram, abra o <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> e mande <code>/newbot</code>.</li>
-      <li>Escolha um nome (ex.: Aura do Wesley) e um usuário terminado em <b>bot</b>.</li>
+      <li>Escolha um nome (ex.: Minha A.U.R.A.) e um usuário terminado em <b>bot</b>.</li>
       <li>Ele devolve um <b>token</b> (algo como <code>123456:ABC...</code>). Cole aqui embaixo.</li>`);
     const row = el('div', 'acct-row');
     const inp = el('input'); inp.type = 'password'; inp.placeholder = 'token do @BotFather'; inp.autocomplete = 'off';
@@ -4261,7 +4265,22 @@ $('sk-save').onclick = async () => {
   try { await apiJSON('PUT', '/api/skills/' + id, { source: $('sk-src').value }); closeSkillEditor(); renderSkills(); flash('Skill salva.'); }
   catch (e) { $('sk-msg').textContent = e.message; }
 };
+// chave da API oficial do YouTube (busca "toca X no YouTube"); sem ela, abre a lista de resultados
+async function renderYouTube() {
+  const s = await fetch('/api/youtube').then(r => r.json()).catch(() => null);
+  $('yt-st').textContent = s?.configured
+    ? 'chave configurada: toca direto o melhor resultado.'
+    : 'sem chave: abre a lista de resultados para você escolher. Com uma chave grátis (YouTube Data API v3, console.cloud.google.com) ela toca direto.';
+  $('yt-key').placeholder = s?.configured ? 'chave salva (cole outra para trocar, ou deixe vazio e salve para apagar)' : 'chave da API do YouTube (opcional)';
+}
+$('yt-save').onclick = async () => {
+  try { await apiJSON('PUT', '/api/youtube/key', { key: $('yt-key').value }); $('yt-key').value = ''; flash('YouTube atualizado.'); }
+  catch (e) { alert('Chave do YouTube: ' + e.message); }
+  renderYouTube();
+};
+
 async function renderPlugins() {
+  renderYouTube();
   $('pl-agent').textContent = hostAgent ? '● Agente do Windows conectado.'
     : '○ Agente do Windows não está rodando: execute o iniciar.ps1 (ou host-agent\\start.ps1) no Windows.';
   $('pl-agent').style.color = hostAgent ? 'var(--ok)' : 'var(--warn)';

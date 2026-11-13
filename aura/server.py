@@ -1218,6 +1218,31 @@ async def llm_test():
         raise HTTPException(502, str(e))
 
 
+@app.get("/api/youtube")
+def youtube_status():
+    return {"configured": bool(secrets.get("youtube"))}
+
+
+@app.put("/api/youtube/key")
+def youtube_key(body: dict):
+    """Chave da API oficial do YouTube: testa com uma busca antes de salvar (vazia = apaga)."""
+    from .tools.desktop import YouTubeKeyError, yt_search
+    key = str(body.get("key") or "").strip()
+    if not key:
+        secrets.put("youtube", None)
+        return {"configured": False}
+    try:
+        yt_search("teste", False, key)
+    except YouTubeKeyError as e:
+        msg = {"accessNotConfigured": "ative a 'YouTube Data API v3' no projeto dessa chave (console.cloud.google.com)",
+               "keyInvalid": "chave invalida", "badRequest": "chave invalida", "quotaExceeded": "cota do dia esgotada (volta amanha)"}.get(str(e), "recusada: use uma chave de API do Google Cloud com a 'YouTube Data API v3' ativada")
+        raise HTTPException(400, msg)
+    except httpx.HTTPError as e:
+        raise HTTPException(502, f"sem conexao com o YouTube ({type(e).__name__})")
+    secrets.put("youtube", key)
+    return {"configured": True}
+
+
 @app.put("/api/secrets")
 def put_secrets(body: dict):
     """Salva (ou apaga, com valor vazio) chaves de API. Nunca devolve a chave inteira."""

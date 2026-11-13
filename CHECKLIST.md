@@ -14,7 +14,7 @@ Testes de uso real (com as suas contas e aparelhos). Marque com `[x]` quando pas
 - [ ] **Login do Claude** (Configurações → Contas) e conversar escolhendo "Claude" no chip do chat.
 - [ ] **Login do ChatGPT / Codex** (Configurações → Contas) e pedir uma tarefa de programação.
 - [ ] **Google Agenda com credencial real** (e depois Gmail, Drive, Docs e Sheets).
-- [ ] **Spotify:** criar o app no painel do Spotify, colar o Client ID, "toca a minha playlist WFM", "pula essa", "o que está tocando?".
+- [ ] **Spotify:** criar o app no painel do Spotify, colar o Client ID, "toca a minha playlist <nome>", "pula essa", "o que está tocando?".
 - [ ] **Casa inteligente:** criar a conta no Home Assistant, adicionar os aparelhos (Tuya/Smart Life), Conectar, "liga a luz da sala" e Desfazer.
 - [ ] **Conector MCP com login** (ex.: Notion): autorizar no site e usar uma ferramenta.
 - [ ] **YouTube na mesma aba:** com o YouTube aberto, "Aura, abre uma live de lofi no YouTube" troca o vídeo na mesma aba.

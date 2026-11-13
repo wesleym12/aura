@@ -57,7 +57,7 @@ def _resolve(o_que: str, tipo: str) -> tuple[str, str, dict]:
     return desc, item["uri"], {"track": kind == "track"}
 
 
-@tool("Toca no Spotify: uma playlist do usuario (pelo nome, ex.: 'WFM'), musica, album, artista ou as musicas "
+@tool("Toca no Spotify: uma playlist do usuario (pelo nome, ex.: 'Treino'), musica, album, artista ou as musicas "
       "curtidas. Abre o Spotify do PC sozinho se nenhum estiver aberto. Use para 'toca/abre/coloca X no Spotify'.",
       {"o_que": {"type": "string", "description": "nome da playlist, musica, album ou artista"},
        "tipo": {"type": "string", "enum": TIPOS, "x-optional": True,

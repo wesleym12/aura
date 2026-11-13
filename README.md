@@ -120,7 +120,8 @@ bash instalar.sh
 ### Computador (Configurações → Plugins → Nativos, desligado por padrão)
 - **Abrir programas** procura na lista de apps do Windows, inclusive os da Microsoft Store (Spotify, WhatsApp...). Sem o app instalado, ela avisa e não abre a versão web por conta própria.
 - **YouTube** ("abre uma live do Jornal da Globo", "toca Coldplay Yellow no YouTube"):
-  - Busca, com o filtro "Ao vivo" para lives, e escolhe o resultado que mais combina com o pedido.
+  - Com uma **chave grátis da API oficial do YouTube** (YouTube Data API v3, em Plugins → Controle do computador), ela busca, com o filtro "Ao vivo" para lives, e toca direto o resultado que mais combina com o pedido. A cota grátis dá ~100 buscas por dia.
+  - Sem a chave, ela abre a lista de resultados para você escolher.
   - Abre **na aba do YouTube que já estiver aberta**, e só digita depois de confirmar que a janela em foco é mesmo a do YouTube.
 - Listar e focar janelas, ler a tela (acessibilidade do Windows), print, volume e mídia.
 - **Clicar, digitar e atalhos sempre pedem Autorizar.**
@@ -166,7 +167,7 @@ Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Na
 1. Em https://developer.spotify.com/dashboard → **Create app**. Redirect URI: `http://127.0.0.1:8765/api/spotify/callback`; API: **Web API**.
 2. Cole o **Client ID** no card e clique em **Conectar** (PKCE: não precisa do Secret).
 
-- "Toca a minha playlist WFM" procura primeiro nas suas playlists, depois artista, música, álbum ou músicas curtidas.
+- "Toca a minha playlist Treino" procura primeiro nas suas playlists, depois artista, música, álbum ou músicas curtidas.
 - Toca no aparelho ativo (PC, celular, Echo). Se nenhum estiver aberto e o controle do computador estiver ligado, abre o Spotify do PC.
 - Também: pausar, pular, volume, aleatório e "o que está tocando?".
 
@@ -278,3 +279,27 @@ A interface (`aura/web/index.html`) é montada ao vivo: basta F5.
 - Ações sensíveis (enviar e-mail, fechadura, clicar, desligar o PC...) só rodam depois do seu clique em **Autorizar**.
 - O agente do Windows só executa uma lista fechada de comandos, com a chave `HOST_AGENT_TOKEN`.
 - Conteúdo de e-mails, páginas e documentos é tratado como dado, nunca como ordem.
+
+## Licença
+
+A A.U.R.A. é **software livre**: você pode usar, estudar, modificar e redistribuir sob a
+**[GNU Affero General Public License v3.0](LICENSE)** (AGPL-3.0-or-later). Quem distribuir uma versão modificada, ou
+oferecê-la como serviço pela rede, precisa disponibilizar o código-fonte dela sob a mesma licença.
+Componentes de terceiros e as licenças deles estão em [`NOTICE.md`](NOTICE.md); o que sai (ou não) da sua máquina está
+em [`PRIVACIDADE.md`](PRIVACIDADE.md).
+
+## Aviso
+
+A A.U.R.A. é fornecida **"no estado em que se encontra", sem garantia de qualquer tipo** (veja as seções 15 e 16 da
+licença). Ela pode controlar o computador, enviar e-mails, mexer em arquivos e em aparelhos da casa: as ações
+sensíveis pedem a sua confirmação, mas a responsabilidade pelo uso é de quem a instala e opera. Não use para
+segurança crítica (fechaduras, alarmes, saúde) sem um meio alternativo de controle.
+
+## Apoie o projeto
+
+A A.U.R.A. é gratuita e feita por hobby. Se ela te ajuda, doações são bem-vindas e ajudam a manter o projeto:
+<!-- adicione aqui o seu link (GitHub Sponsors, PIX, Buy Me a Coffee...) -->
+- *(link de doação em breve)*
+
+Contribuições também são bem-vindas: abra uma *issue* com bugs e ideias, ou um *pull request*.
+

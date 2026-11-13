@@ -62,37 +62,51 @@ async def abrir(alvo: str) -> str:
 YT_LIVE = "EgJAAQ%3D%3D"          # filtro "Ao vivo" da busca do YouTube
 
 
+YT_API = "https://www.googleapis.com/youtube/v3/search"
+
+
+class YouTubeKeyError(ValueError):
+    pass
+
+
+def yt_search(query: str, live: bool, key: str) -> list[dict]:
+    """Busca pela API oficial do YouTube (Data API v3). Cada busca gasta 100 da cota gratis de 10.000/dia."""
+    import html
+    import httpx
+    params = {"part": "snippet", "q": query, "type": "video", "maxResults": 10, "relevanceLanguage": "pt",
+              **({"eventType": "live"} if live else {})}
+    # a chave vai no cabecalho (nunca no endereco): assim nao aparece em erros nem em logs
+    r = httpx.get(YT_API, params=params, headers={"X-Goog-Api-Key": key}, timeout=10)
+    if r.status_code in (400, 401, 403):
+        try:
+            reason = r.json()["error"]["errors"][0]["reason"]
+        except (ValueError, KeyError, IndexError):
+            reason = str(r.status_code)
+        raise YouTubeKeyError(reason)
+    if r.status_code >= 400:
+        raise YouTubeKeyError(f"http {r.status_code}")      # sem raise_for_status: a mensagem dele repete o endereco
+    return [{"id": it["id"]["videoId"], "title": html.unescape(it["snippet"]["title"]),
+             "channel": html.unescape(it["snippet"].get("channelTitle", ""))} for it in r.json().get("items", [])]
+
+
+def yt_key() -> str:
+    from .. import secrets
+    return secrets.get("youtube")
+
+
 def _yt_first(query: str, live: bool) -> tuple[str, str] | None:
-    """Melhor video (ou live) da busca do YouTube: (id, titulo). Sem chave de API: le os dados da pagina de
-    resultados e, entre os primeiros, escolhe o que mais combina com o pedido (titulo + canal)."""
-    import json
+    """Melhor video (ou live) para o pedido, pela API oficial: entre os primeiros, o que mais combina com o pedido
+    (titulo + canal). Sem chave (ou chave recusada): None, e quem chamou abre a lista de resultados."""
     import re
     import unicodedata
-    from urllib.parse import quote_plus
     import httpx
-    url = f"https://www.youtube.com/results?search_query={quote_plus(query)}" + (f"&sp={YT_LIVE}" if live else "")
-    try:
-        page = httpx.get(url, timeout=10, headers={"Accept-Language": "pt-BR,pt;q=0.9",
-                                                   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}).text
-        m = re.search(r"var ytInitialData = (\{.*?\});</script>", page, re.S)
-        data = json.loads(m.group(1)) if m else None
-    except (httpx.HTTPError, ValueError):
+    key = yt_key()
+    if not key:
         return None
-    vids: list[dict] = []
-
-    def walk(o):
-        if len(vids) >= 10:
-            return
-        if isinstance(o, dict):
-            if "videoRenderer" in o:
-                vids.append(o["videoRenderer"])
-            else:
-                for v in o.values():
-                    walk(v)
-        elif isinstance(o, list):
-            for v in o:
-                walk(v)
-    walk(data)
+    try:
+        vids = yt_search(query, live, key)
+    except (YouTubeKeyError, httpx.HTTPError):
+        return None
     if not vids:
         return None
 
@@ -100,14 +114,11 @@ def _yt_first(query: str, live: bool) -> tuple[str, str] | None:
         return "".join(c for c in unicodedata.normalize("NFD", (s or "").lower()) if unicodedata.category(c) != "Mn")
     words = [w for w in re.findall(r"\w+", norm(query)) if len(w) > 2]
 
-    def text(v, key):
-        return "".join(r.get("text", "") for r in (v.get(key) or {}).get("runs", []))
-
     def score(i, v):
-        hay = norm(text(v, "title") + " " + text(v, "ownerText"))
+        hay = norm(v["title"] + " " + v["channel"])
         return (sum(w in hay for w in words), -i)        # mais palavras do pedido; empate = o mais bem colocado
     best = max(enumerate(vids), key=lambda p: score(*p))[1]
-    return best["videoId"], text(best, "title")
+    return best["id"], best["title"]
 
 
 @tool(
@@ -136,8 +147,11 @@ async def youtube(busca: str = "", ao_vivo: bool = False, so_resultados: bool = 
         if hit:
             url, what = f"https://www.youtube.com/watch?v={hit[0]}", f"'{hit[1]}'" + (" (ao vivo)" if ao_vivo else "")
         else:
+            # sem chave da API (ou se ela falhar): abre a lista de resultados e o usuario escolhe
             url = f"https://www.youtube.com/results?search_query={quote_plus(busca)}" + (f"&sp={YT_LIVE}" if ao_vivo else "")
             what = f"os resultados de '{busca}'" + (" ao vivo" if ao_vivo else "")
+            if not yt_key() and not so_resultados:
+                what += " (para tocar direto o melhor resultado, configure a chave da API do YouTube em Plugins)"
     out = await _do("open_in_tab", url=url, match="YouTube")
     return f"Abri {what} no YouTube. ({out})"
 
