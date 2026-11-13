@@ -535,6 +535,13 @@
   h3.sub b { color: var(--accent); }
   #cfg-live-wrap[hidden] { display: none; }
   .modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .modal-foot #cfg-msg { flex: 1; }
+  #cfg-quit { margin: 0; }
+  /* tela depois de "Encerrar A.U.R.A." */
+  .quit-screen { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; text-align: center; padding: 16px;
+                 background: var(--bg); color: var(--text); }
+  .quit-screen h1 { margin: 0 0 10px; font: 700 30px "Orbitron", sans-serif; letter-spacing: .3em; } .quit-screen h1 b { color: var(--accent); }
+  .quit-screen p { margin: 0 0 8px; } .quit-screen small { color: var(--dim); }
   .modal-foot .btn { margin: 0; }
   @media (max-width: 1000px) { .tabs { grid-template-columns: repeat(4, 1fr); } }
   @media (max-width: 700px) { .cols { grid-template-columns: 1fr; } .tabs { grid-template-columns: 1fr 1fr; } }
@@ -1257,6 +1264,7 @@
     </section>
 
     <div class="modal-foot">
+      <button class="btn ghost danger" id="cfg-quit" type="button" title="Para todos os serviços da A.U.R.A. (containers e agente do Windows)">⏻ Encerrar A.U.R.A.</button>
       <small class="hint" id="cfg-msg"></small>
       <button class="btn ghost" id="cfg-done">Fechar</button>
     </div>
@@ -3141,6 +3149,28 @@ $('orb-custom').onchange = async (e) => { await saveSettings({ orb_color: e.targ
 $('settings-btn').onclick = openSettings;
 // a janela so fecha pelo X ou pelo botao Fechar (clicar fora ou apertar Esc nao fecha)
 $('cfg-close').onclick = closeSettings; $('cfg-done').onclick = closeSettings;
+
+// ===== Encerrar a A.U.R.A. (desliga todos os servicos; o agente do Windows e quem para os containers) =====
+$('cfg-quit').onclick = async () => {
+  if (!hostAgent) {
+    alert('Para encerrar por aqui é preciso o agente do Windows.\n\nEm servidor Linux/umbrelOS, encerre pelo terminal, na pasta da A.U.R.A.:\n  docker compose --profile \'*\' stop\n\nPara ligar de novo:  docker compose up -d');
+    return;
+  }
+  if (!confirm('Encerrar a A.U.R.A.?\n\nPara todos os serviços dela (conversa, voz, modelos, casa inteligente) e o agente do Windows. Conversas e configurações ficam salvas.\n\nPara ligar de novo: rode o iniciar.ps1, ou espere o próximo logon (se "Iniciar com o Windows" estiver ligado).')) return;
+  const docker = confirm('Fechar também o Docker Desktop?\n\nLibera mais memória. Escolha "Cancelar" se você usa outros containers além da A.U.R.A.');
+  const btn = $('cfg-quit'); btn.disabled = true; btn.textContent = 'Encerrando…';
+  try {
+    const j = await apiJSON('POST', '/api/encerrar', { docker });
+    try { micClose(); } catch {}
+    try { liveSleep(); } catch {}
+    try { stopSpeech(); } catch {}
+    try { closeSettings(); } catch {}                 // o painel fica por cima de tudo: fecha antes de mostrar a tela final
+    const o = document.createElement('div'); o.className = 'quit-screen';
+    o.innerHTML = `<div><h1>A.U.R.A<b>.</b></h1><p>${j.dry ? 'Modo simulação (AURA_POWER_DRYRUN=1): nada foi desligado.' : 'Encerrada. Os serviços estão sendo desligados.'}</p>
+      <small>Para ligar de novo: rode <code>iniciar.ps1</code> na pasta da A.U.R.A.${docker ? '' : ' (ou <code>docker compose up -d</code>)'}.</small></div>`;
+    document.body.appendChild(o);
+  } catch (e) { alert('Não consegui encerrar: ' + e.message); btn.disabled = false; btn.textContent = '⏻ Encerrar A.U.R.A.'; }
+};
 // subtitulo de cada pagina das configuracoes
 const PANE_SUB = {
   geral: 'Nome, palavra de ativação e saudação.', aparencia: 'Tema, modelo e cor do orbe.', contas: 'Claude e ChatGPT como ajudantes, usando as suas assinaturas.',

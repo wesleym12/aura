@@ -14,8 +14,10 @@ TOKEN = os.getenv("HOST_AGENT_TOKEN", "")
 DRYRUN = os.getenv("AURA_POWER_DRYRUN", "0") == "1"
 ALLOWED = {"shutdown", "restart", "sleep", "lock", "abort", "wifi_off", "wifi_on",
            # controle do computador
-           "windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media"}
-DRY_CMDS = {"shutdown", "restart", "sleep", "lock", "abort", "wifi_off", "wifi_on", "click", "type", "keys", "media"}
+           "windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media",
+           "aura_stop"}    # botao "Encerrar A.U.R.A." (para os containers e o agente)
+DRY_CMDS = {"shutdown", "restart", "sleep", "lock", "abort", "wifi_off", "wifi_on", "click", "type", "keys", "media",
+            "aura_stop"}
 
 _queue: asyncio.Queue = asyncio.Queue()
 _waiting: dict[int, asyncio.Future] = {}

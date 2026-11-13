@@ -292,6 +292,28 @@ function Invoke-HostCommand($c) {
         if ($c.dry) { return @{ ok = $true; output = "SIMULACAO: $($c.cmd) $($c.args | ConvertTo-Json -Compress)" } }
         try { return (Invoke-Desktop $c) } catch { return @{ ok = $false; output = "erro: $_" } }
     }
+    if ($c.cmd -eq "aura_stop") {
+        # Encerrar a A.U.R.A. (botao nas Configuracoes): para todos os containers dela e, se pedido, o Docker Desktop.
+        # Roda num PowerShell separado depois de responder (os containers caem, entao a resposta tem de ir antes),
+        # e este agente sai logo em seguida.
+        $closeDocker = [bool]($c.args -and $c.args.docker)
+        if ($c.dry) { return @{ ok = $true; output = "SIMULACAO: pararia os containers da A.U.R.A.$(if ($closeDocker) { ', o Docker Desktop' }) e o agente" } }
+        $dir = Split-Path $PSScriptRoot -Parent
+        $log = Join-Path $dir "iniciar.log"
+        $script = @"
+Start-Sleep -Seconds 2
+Set-Location '$dir'
+Add-Content -Path '$log' -Value "`$(Get-Date -Format 'dd/MM HH:mm:ss')  A.U.R.A. encerrada pela tela." -Encoding utf8
+docker compose --profile '*' stop 2>`$null | Out-Null
+"@
+        if ($closeDocker) {
+            $script += "`ndocker desktop stop 2>`$null | Out-Null`nif (`$LASTEXITCODE -ne 0) { Get-Process 'Docker Desktop' -ErrorAction SilentlyContinue | Stop-Process -Force }"
+        }
+        $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($script))
+        Start-Process powershell.exe -WindowStyle Hidden -ArgumentList "-NoProfile -ExecutionPolicy Bypass -EncodedCommand $enc"
+        $script:quitAfter = $true
+        return @{ ok = $true; output = "encerrando a A.U.R.A." }
+    }
     $delay = 30
     if ($c.args -and $c.args.delay) { $delay = [int]$c.args.delay }
     $plan = switch ($c.cmd) {
@@ -358,6 +380,7 @@ while ($listener.IsListening) {
                     $content = New-Object System.Net.Http.StringContent($body, $utf8, "application/json")
                     [void]$http.PostAsync("$auraUrl/api/host/result", $content).Result
                 } catch {}
+                if ($script:quitAfter) { $listener.Stop(); break }      # "Encerrar A.U.R.A.": o agente sai junto
             } elseif (-not $resp -or [int]$resp.StatusCode -ne 204) {
                 $nextPoll = (Get-Date).AddSeconds(5)    # Aura fora do ar ou chave errada: tenta de novo em 5 s
             }

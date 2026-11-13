@@ -202,6 +202,10 @@ Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Na
 - **Lateral:** barra de ícones (Conversas, Agendados, Agenda, Conectores, Skills, Mais), **Criar** e **Procurar** (Ctrl+K).
 - **Backups:** automáticos ao ligar e a cada 6 h (se algo mudou), em `aura\backups`, com os 20 mais recentes. Contêm as suas chaves: não compartilhe a pasta.
 - **Iniciar com o Windows** (Geral): grava `Aura.vbs` na pasta Inicializar, que roda o `iniciar.ps1` escondido no logon. Desligar apaga o arquivo. Pelo terminal: `.\autostart.ps1`, `-Status` ou `-Remover`.
+- **⏻ Encerrar A.U.R.A.** (rodapé das Configurações): o agente do Windows para todos os containers dela e sai.
+  - Opcionalmente fecha também o Docker Desktop, que libera mais memória.
+  - Conversas e configurações ficam salvas. Para ligar de novo: `.\iniciar.ps1`.
+  - No Linux/umbrelOS não há agente: encerre pelo terminal com `docker compose --profile '*' stop`.
 
 ## Desempenho
 

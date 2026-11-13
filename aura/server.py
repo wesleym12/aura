@@ -1251,6 +1251,19 @@ def mem(q: str = "", kind: str = ""):
     return {"items": items, "counts": memory.counts(), "kinds": memory.KINDS}
 
 
+@app.post("/api/encerrar")
+async def encerrar(body: dict):
+    """Botao "Encerrar A.U.R.A." (Configuracoes): o agente do Windows para todos os containers (e o Docker Desktop,
+    se pedido) e sai. Sem agente (Linux/umbrelOS), so da para encerrar pelo terminal."""
+    if not hostbridge.agent_online():
+        raise HTTPException(409, "sem o agente do Windows: encerre pelo terminal, na pasta da A.U.R.A.: "
+                                 "docker compose --profile '*' stop")
+    ok, out = await hostbridge.run("aura_stop", timeout=15, docker=bool(body.get("docker")))
+    if not ok:
+        raise HTTPException(500, out)
+    return {"ok": True, "detail": out, "dry": out.startswith("SIMULACAO")}
+
+
 @app.post("/api/actions/{aid}/undo")
 def undo_action(aid: int, force: bool = False):
     try:
