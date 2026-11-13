@@ -3,9 +3,37 @@
 #   .\instalar.ps1              instala ou reconfigura (o que ja estiver no .env vira o padrao das perguntas)
 #   .\instalar.ps1 -Analisar    so mostra a analise
 #   .\instalar.ps1 -Completar   sem perguntas: so preenche o que faltar no .env (usado pelo iniciar.ps1)
-param([switch]$Analisar, [switch]$Completar)
+#   .\instalar.ps1 -Atalho      so cria/atualiza o atalho "A.U.R.A." na area de trabalho e no menu Iniciar
+param([switch]$Analisar, [switch]$Completar, [switch]$Atalho)
 Set-Location $PSScriptRoot
 $envFile = Join-Path $PSScriptRoot ".env"
+
+# navegador para abrir a A.U.R.A. como aplicativo (janela propria, sem abas): Edge ou Chrome
+function Get-AppBrowser {
+    foreach ($exe in "msedge.exe", "chrome.exe") {
+        foreach ($root in "HKLM:", "HKCU:") {
+            $p = (Get-ItemProperty "$root\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\$exe" -ErrorAction SilentlyContinue).'(default)'
+            if ($p -and (Test-Path $p)) { return $p }
+        }
+    }
+    return $null
+}
+function New-AuraShortcut {
+    $browser = Get-AppBrowser
+    if (-not $browser) { Write-Host "  ! Sem Edge/Chrome: atalho de aplicativo nao criado (abra http://127.0.0.1:8765 no navegador)." -ForegroundColor Yellow; return }
+    $icon = Join-Path $PSScriptRoot "aura\web\icons\aura.ico"
+    $sh = New-Object -ComObject WScript.Shell
+    foreach ($dir in [Environment]::GetFolderPath("Desktop"), (Join-Path ([Environment]::GetFolderPath("Programs")) "")) {
+        $s = $sh.CreateShortcut((Join-Path $dir "A.U.R.A..lnk"))
+        $s.TargetPath = $browser
+        $s.Arguments = "--app=http://127.0.0.1:8765"
+        $s.IconLocation = "$icon,0"
+        $s.Description = "A.U.R.A. - assistente pessoal"
+        $s.Save()
+    }
+    Write-Host "  Atalho 'A.U.R.A.' criado na area de trabalho e no menu Iniciar." -ForegroundColor Green
+}
+if ($Atalho) { New-AuraShortcut; return }
 
 function Get-EnvVal($k) {
     if (-not (Test-Path $envFile)) { return "" }
@@ -99,3 +127,4 @@ Set-EnvVal "GEMINI_API_KEY" $key
 if (-not (Get-EnvVal "WORK_ROOT")) { Set-EnvVal "WORK_ROOT" $env:USERPROFILE }
 if (-not (Get-EnvVal "HOST_AGENT_TOKEN")) { Set-EnvVal "HOST_AGENT_TOKEN" (-join ((1..32) | ForEach-Object { '{0:x2}' -f (Get-Random -Maximum 256) })) }
 Write-Host "  .env gravado (chaves ficam so nele; nao compartilhe)." -ForegroundColor Green
+New-AuraShortcut

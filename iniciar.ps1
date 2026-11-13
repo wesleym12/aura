@@ -38,5 +38,11 @@ until ($ok -or ((Get-Date) - $t0).TotalMinutes -gt 5)
 
 if ($ok) {
     Say "Aura online em http://127.0.0.1:8765"
-    if (-not $SemNavegador) { Start-Process "http://127.0.0.1:8765" }
+    if (-not $SemNavegador) {
+        # abre como aplicativo (janela propria, sem abas) no Edge/Chrome; sem eles, no navegador padrao
+        $b = foreach ($exe in "msedge.exe", "chrome.exe") { foreach ($r in "HKLM:", "HKCU:") {
+            (Get-ItemProperty "$r\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\$exe" -ErrorAction SilentlyContinue).'(default)' } }
+        $b = $b | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+        if ($b) { Start-Process $b "--app=http://127.0.0.1:8765" } else { Start-Process "http://127.0.0.1:8765" }
+    }
 } else { Say "A Aura nao respondeu em 5 minutos. Veja: docker compose logs aura" }

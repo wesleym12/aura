@@ -742,12 +742,37 @@ def index():
 
 @app.get("/icons/{name}")
 def icon(name: str):
-    """Logos dos conectores (Simple Icons, CC0), guardados em web/icons: nada vem da internet na hora."""
+    """Logos dos conectores (Simple Icons, CC0) e icones do aplicativo, guardados em web/icons."""
     import re
     p = WEB / "icons" / name
-    if not re.fullmatch(r"[a-z0-9-]+\.svg", name) or not p.is_file():
+    m = re.fullmatch(r"[a-z0-9-]+\.(svg|png|ico)", name)
+    if not m or not p.is_file():
         raise HTTPException(404)
-    return FileResponse(p, media_type="image/svg+xml", headers={"Cache-Control": "max-age=86400"})
+    mt = {"svg": "image/svg+xml", "png": "image/png", "ico": "image/x-icon"}[m.group(1)]
+    return FileResponse(p, media_type=mt, headers={"Cache-Control": "max-age=86400"})
+
+
+# ---- aplicativo instalavel (PWA): janela propria, icone no menu Iniciar / barra de tarefas ----
+@app.get("/manifest.webmanifest")
+def manifest():
+    return JSONResponse({
+        "name": "A.U.R.A.", "short_name": "A.U.R.A.", "id": "/",
+        "description": "Assistente pessoal: voz, chat, casa inteligente e computador.",
+        "start_url": "/", "scope": "/", "display": "standalone",
+        "background_color": "#eef1f5", "theme_color": "#eef1f5", "lang": "pt-BR",
+        "icons": [{"src": "/icons/aura-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                  {"src": "/icons/aura-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                  {"src": "/icons/aura-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}],
+    }, media_type="application/manifest+json")
+
+
+@app.get("/sw.js")
+def service_worker():
+    # so o minimo para o navegador oferecer "Instalar": nada fica em cache (a A.U.R.A. ja e local e muda sempre)
+    js = ("self.addEventListener('install', () => self.skipWaiting());\n"
+          "self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));\n"
+          "self.addEventListener('fetch', () => {});\n")
+    return Response(js, media_type="text/javascript", headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
 
 
 def _stream(sid: str, run, learn_from: str | None = None) -> StreamingResponse:

@@ -20,6 +20,8 @@ Testes de uso real (com as suas contas e aparelhos). Marque com `[x]` quando pas
 - [ ] **YouTube na mesma aba:** com o YouTube aberto, "Aura, abre uma live de lofi no YouTube" troca o vídeo na mesma aba.
 - [ ] **Autorizar pela voz no Gemini Live:** pedir uma ação sensível (ex.: clicar) e aprovar na tela.
 - [ ] **Modo conversa no motor próprio** (sem Gemini Live): responde e volta a esperar "Aura".
+- [ ] **Aplicativo na área de trabalho:** Configurações → Geral → Instalar (ou o atalho A.U.R.A.), voz funcionando na janela do app.
+- [ ] **Encerrar A.U.R.A.** com "Fechar também o Docker Desktop".
 - [ ] **Iniciar com o Windows:** reiniciar o PC e conferir se tudo sobe sozinho (`iniciar.log`).
-- [ ] **Instalação no umbrelOS:** `bash instalar.sh` via SSH, acesso com senha e HTTPS pelo celular, microfone funcionando.
+- [ ] **Instalação em Linux:** `bash instalar.sh`, acesso com senha e HTTPS pelo celular, microfone funcionando.
 - [ ] **Instalação limpa no Windows:** em outra máquina (ou pasta), rodar `.\iniciar.ps1` sem `.env` e conferir se ele se configura.

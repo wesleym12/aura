@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>A.U.R.A. · Command Center</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.35' stop-color='%23ffb84d'/%3E%3Cstop offset='1' stop-color='%23f08c00' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='31' fill='%23f4f6f9' stroke='%23d5dbe3' stroke-width='1.5'/%3E%3Ccircle cx='32' cy='32' r='24' fill='none' stroke='%23f08c00' stroke-width='3' stroke-dasharray='30 7.7'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23f08c00' stroke-width='1.5' opacity='.45'/%3E%3Ccircle cx='32' cy='32' r='14' fill='url(%23g)'/%3E%3C/svg%3E">
+<!-- aplicativo instalavel (PWA): janela propria, icone no menu Iniciar / barra de tarefas -->
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/aura-apple-180.png">
+<meta name="theme-color" content="#eef1f5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -16,6 +20,10 @@
     if (t === 'virtual') t = 'claro';
     document.documentElement.dataset.theme = THEMES.includes(t) ? t : THEMES[0];
   } catch { document.documentElement.dataset.theme = 'claro'; }
+  // barra de titulo do aplicativo instalado acompanha o tema
+  window.syncThemeColor = () => document.querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', document.documentElement.dataset.theme === 'escuro' ? '#12151b' : '#eef1f5');
+  syncThemeColor();
 </script>
 <style>
   /* ===== Temas (estilo de menu de realidade virtual: paineis de vidro, destaque laranja,
@@ -1176,6 +1184,8 @@
       <p class="hint">Use <code>{saudacao}</code> (bom dia / boa tarde / boa noite), <code>{usuario}</code> e <code>{assistente}</code>.</p>
       <div class="field row"><span><span class="label">Iniciar com o Windows</span><br><small class="hint" id="cfg-autostart-hint">Ao entrar no Windows, sobe o Docker, a Aura e o agente do Windows escondidos (sem abrir o navegador).</small></span>
         <button class="toggle" id="cfg-autostart" aria-pressed="false">Desligado</button></div>
+      <div class="field row"><span><span class="label">Aplicativo na área de trabalho</span><br><small class="hint" id="cfg-pwa-hint">Instala a A.U.R.A. como aplicativo: janela própria, sem abas nem barra do navegador, com ícone no menu Iniciar e na barra de tarefas.</small></span>
+        <button class="btn" id="cfg-pwa" type="button">Instalar</button></div>
     </section>
 
     <section class="pane" data-pane="voz" hidden>
@@ -3192,7 +3202,7 @@ function showPane(name) {
   // (o microfone so e consultado ao abrir "Microfone e som": nao pede permissao a toa)
   if (name !== 'aparencia') stopOrbPreviews();          // previas do orbe so rodam na pagina Aparencia
   ({ ins: renderInstructions, skills: renderSkills, plugins: () => { renderPlugins(); renderTelegram(); renderHome(); renderSpotify(); }, conn: renderConnections,
-     mic: renderMicTab, aparencia: renderAppearance, geral: renderAutostart })[name]?.();
+     mic: renderMicTab, aparencia: renderAppearance, geral: () => { renderAutostart(); renderPwa(); } })[name]?.();
 }
 document.querySelectorAll('.cfg-nav .tab').forEach(tab => tab.addEventListener('click', () => showPane(tab.dataset.tab)));
 // procurar no menu: filtra os itens (nome + palavras-chave) e esconde grupos vazios
@@ -3223,7 +3233,7 @@ $('cfg-greeting-play').onclick = () => {
 };
 $('cfg-theme').onclick = (e) => {
   const v = e.target.dataset?.v; if (!v || !THEMES.includes(v)) return;
-  document.documentElement.dataset.theme = v;
+  document.documentElement.dataset.theme = v; syncThemeColor();
   try { localStorage.setItem('auraTheme', v); } catch {}
   renderSettings();
 };
@@ -4426,6 +4436,32 @@ async function renderHome() {
 })();
 
 // ===================== Iniciar com o Windows (Geral) =====================
+// ===== Aplicativo instalavel (PWA) =====
+let installPrompt = null;
+const isAppWindow = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: window-controls-overlay)').matches;
+if ('serviceWorker' in navigator && isSecureContext) navigator.serviceWorker.register('/sw.js').catch(() => {});
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; renderPwa(); });
+window.addEventListener('appinstalled', () => { installPrompt = null; flash('A.U.R.A. instalada como aplicativo!'); renderPwa(); });
+function renderPwa() {
+  const b = $('cfg-pwa'), h = $('cfg-pwa-hint');
+  if (isAppWindow()) {
+    b.hidden = true; h.textContent = 'Você já está usando o aplicativo. Para desinstalar: menu ⋯ da janela → Desinstalar.';
+  } else if (!isSecureContext) {
+    b.hidden = true; h.textContent = 'Para instalar como aplicativo o endereço precisa ser HTTPS (ou localhost no próprio PC).';
+  } else if (installPrompt) {
+    b.hidden = false; b.disabled = false; h.textContent = 'Instala a A.U.R.A. como aplicativo: janela própria, sem abas nem barra do navegador, com ícone no menu Iniciar e na barra de tarefas.';
+  } else {
+    b.hidden = true;
+    h.textContent = 'Já instalada, ou o navegador não ofereceu a instalação. No Edge/Chrome: menu ⋯ → Aplicativos (ou "Transmitir, salvar e compartilhar") → Instalar A.U.R.A. Se já estiver instalada, abra pelo ícone.';
+  }
+}
+$('cfg-pwa').onclick = async () => {
+  if (!installPrompt) return renderPwa();
+  installPrompt.prompt();
+  await installPrompt.userChoice.catch(() => null);
+  installPrompt = null; renderPwa();
+};
+
 async function renderAutostart() {
   const s = await fetch('/api/autostart').then(r => r.json()).catch(() => null);
   const b = $('cfg-autostart'), h = $('cfg-autostart-hint');

@@ -181,6 +181,27 @@ for _ in $(seq 1 90); do
   sleep 4
 done
 
+# atalho de aplicativo (janela propria, sem abas) se esta maquina tiver area de trabalho e Chrome/Chromium/Edge
+if [ -n "${XDG_CURRENT_DESKTOP:-}${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]; then
+  BR="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || command -v microsoft-edge || true)"
+  if [ -n "$BR" ]; then
+    APPS="$HOME/.local/share/applications"; mkdir -p "$APPS"
+    cat >"$APPS/aura.desktop" <<DESK
+[Desktop Entry]
+Type=Application
+Name=A.U.R.A.
+Comment=Assistente pessoal
+Exec=$BR --app=https://localhost:8765
+Icon=$PWD/aura/web/icons/aura-512.png
+Terminal=false
+Categories=Utility;
+DESK
+    DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
+    [ -d "$DESKTOP_DIR" ] && cp "$APPS/aura.desktop" "$DESKTOP_DIR/" && chmod +x "$DESKTOP_DIR/aura.desktop"
+    ok "Atalho 'A.U.R.A.' criado no menu de aplicativos$([ -d "$DESKTOP_DIR" ] && echo ' e na área de trabalho')."
+  fi
+fi
+
 say ""
 say "${G}${B}Pronto!${N}"
 say "  Abra:  ${C}https://$NAME:8765${N}${IP:+   ou   ${C}https://$IP:8765${N}}"

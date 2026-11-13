@@ -202,6 +202,11 @@ Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Na
 - **Lateral:** barra de ícones (Conversas, Agendados, Agenda, Conectores, Skills, Mais), **Criar** e **Procurar** (Ctrl+K).
 - **Backups:** automáticos ao ligar e a cada 6 h (se algo mudou), em `aura\backups`, com os 20 mais recentes. Contêm as suas chaves: não compartilhe a pasta.
 - **Iniciar com o Windows** (Geral): grava `Aura.vbs` na pasta Inicializar, que roda o `iniciar.ps1` escondido no logon. Desligar apaga o arquivo. Pelo terminal: `.\autostart.ps1`, `-Status` ou `-Remover`.
+- **Aplicativo na área de trabalho:** a A.U.R.A. é um aplicativo instalável (PWA). Ela abre numa janela própria, sem abas nem barra do navegador, com ícone no menu Iniciar e na barra de tarefas. A voz funciona igual e as atualizações chegam sozinhas.
+  - Para instalar: Configurações → Geral → **Instalar**, ou pelo menu ⋯ do Edge/Chrome → Aplicativos → Instalar.
+  - Os instaladores também criam um atalho **A.U.R.A.** que abre direto na janela do aplicativo: na área de trabalho e no menu Iniciar (Windows; para recriar: `.\instalar.ps1 -Atalho`), ou no menu de aplicativos (Linux com área de trabalho e Chrome/Chromium/Edge).
+  - O `iniciar.ps1` também abre a A.U.R.A. nessa janela.
+  - No Linux acessado de outro aparelho, a instalação só é oferecida com HTTPS válido (domínio próprio). Com o certificado autogerado, use pelo navegador.
 - **⏻ Encerrar A.U.R.A.** (rodapé das Configurações): o agente do Windows para todos os containers dela e sai.
   - Opcionalmente fecha também o Docker Desktop, que libera mais memória.
   - Conversas e configurações ficam salvas. Para ligar de novo: `.\iniciar.ps1`.

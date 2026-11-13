@@ -20,7 +20,8 @@ COOKIE = "aura_session"
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 EXTRA_HOSTS = {h.strip().lower() for h in os.getenv("AURA_ALLOWED_HOSTS", "").split(",") if h.strip()}
 # rotas que funcionam sem login: a propria tela de login, o icone e o agente do Windows (que usa a chave dele)
-OPEN_PATHS = ("/login", "/favicon.svg", "/api/host/next", "/api/host/result")
+OPEN_PATHS = ("/login", "/favicon.svg", "/api/host/next", "/api/host/result",
+              "/manifest.webmanifest", "/sw.js", "/icons/")      # aplicativo instalavel: o navegador busca sem cookie
 _fails = {"t": 0.0, "n": 0}
 
 
