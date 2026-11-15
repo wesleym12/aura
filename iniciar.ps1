@@ -28,7 +28,7 @@ if ($LASTEXITCODE -ne 0) {
 Say "Subindo os containers..."
 docker compose up -d 2>&1 | Out-Null
 
-try { Invoke-WebRequest http://127.0.0.1:8766/metrics -UseBasicParsing -TimeoutSec 2 | Out-Null; Say "Agente do Windows ja estava rodando." }
+try { Invoke-WebRequest http://127.0.0.1:8766/metrics -UseBasicParsing -TimeoutSec 2 | Out-Null; Say "Agente do Windows ja estava rodando."; & "$PSScriptRoot\host-agent\start.ps1" -SoEntalhe }
 catch { & "$PSScriptRoot\host-agent\start.ps1" | Out-Null; Say "Agente do Windows iniciado." }
 
 Say "Aguardando a Aura responder..."

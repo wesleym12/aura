@@ -208,6 +208,8 @@ Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Na
   - Os instaladores também criam um atalho **A.U.R.A.** que abre direto na janela do aplicativo: na área de trabalho e no menu Iniciar (Windows; para recriar: `.\instalar.ps1 -Atalho`), ou no menu de aplicativos (Linux com área de trabalho e Chrome/Chromium/Edge).
   - O `iniciar.ps1` também abre a A.U.R.A. nessa janela.
   - No Linux acessado de outro aparelho, a instalação só é oferecida com HTTPS válido (domínio próprio). Com o certificado autogerado, use pelo navegador.
+- **Entalhe no topo da tela** (Windows, Geral): uma pílula discreta no alto da tela mostra se a A.U.R.A. está pronta, ouvindo, pensando, falando ou dormindo, mesmo com a janela fechada. Clique para abrir a A.U.R.A. (desligada, o clique liga tudo); passe o mouse para ver o estado; botão direito fecha. Some quando um programa está maximizado ou em tela cheia e volta quando ele sai. Sobe junto com o agente do Windows (`host-agent
+otch.ps1`).
 - **⏻ Encerrar A.U.R.A.** (rodapé das Configurações): o agente do Windows para todos os containers dela e sai.
   - Opcionalmente fecha também o Docker Desktop, que libera mais memória.
   - Conversas e configurações ficam salvas. Para ligar de novo: `.\iniciar.ps1`.

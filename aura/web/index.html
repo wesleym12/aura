@@ -1190,6 +1190,8 @@
         <button class="toggle" id="cfg-autostart" aria-pressed="false">Desligado</button></div>
       <div class="field row"><span><span class="label">Aplicativo na área de trabalho</span><br><small class="hint" id="cfg-pwa-hint">Instala a A.U.R.A. como aplicativo: janela própria, sem abas nem barra do navegador, com ícone no menu Iniciar e na barra de tarefas.</small></span>
         <button class="btn" id="cfg-pwa" type="button">Instalar</button></div>
+      <div class="field row"><span><span class="label">Entalhe no topo da tela</span><br><small class="hint">Uma pílula discreta no alto da tela do Windows mostra se a A.U.R.A. está ouvindo, pensando ou falando, mesmo com a janela fechada. Clique nela para abrir; ela some quando um programa está maximizado ou em tela cheia. Precisa do agente do Windows.</small></span>
+        <button class="toggle" id="cfg-notch" aria-pressed="true">Ligado</button></div>
     </section>
 
     <section class="pane" data-pane="voz" hidden>
@@ -1400,7 +1402,18 @@ function setState(state, text) {
   document.body.classList.toggle('speaking', state === 'speaking');
   orb.state = state;
   $('core-status').textContent = text;
+  reportState(state, text);
 }
+
+// conta o estado ao servidor (o entalhe do Windows le de la): na mudanca e a cada 10 s, como sinal de "pagina aberta"
+const uiState = { state: '', text: '', sent: 0 };
+function reportState(state, text) {
+  if (state === uiState.state && text === uiState.text && Date.now() - uiState.sent < 10000) return;
+  Object.assign(uiState, { state, text, sent: Date.now() });
+  fetch('/api/ui/state', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state, text }) }).catch(() => {});
+}
+setInterval(() => { if (uiState.state) reportState(uiState.state, uiState.text); }, 10000);
 
 // ===== Orbe: motor com varios modelos (esfera, aneis, galaxia, onda, enxame, holograma) =====
 // Todos reagem ao estado (ouvindo, pensando, falando) e ao volume real (microfone ou voz).
@@ -3206,7 +3219,7 @@ function showPane(name) {
   // (o microfone so e consultado ao abrir "Microfone e som": nao pede permissao a toa)
   if (name !== 'aparencia') stopOrbPreviews();          // previas do orbe so rodam na pagina Aparencia
   ({ ins: renderInstructions, skills: renderSkills, plugins: () => { renderPlugins(); renderTelegram(); renderHome(); renderSpotify(); }, conn: renderConnections,
-     mic: renderMicTab, aparencia: renderAppearance, geral: () => { renderAutostart(); renderPwa(); } })[name]?.();
+     mic: renderMicTab, aparencia: renderAppearance, geral: () => { renderAutostart(); renderPwa(); renderNotch(); } })[name]?.();
 }
 document.querySelectorAll('.cfg-nav .tab').forEach(tab => tab.addEventListener('click', () => showPane(tab.dataset.tab)));
 // procurar no menu: filtra os itens (nome + palavras-chave) e esconde grupos vazios
@@ -3596,6 +3609,11 @@ function renderConvo() {
   $('cfg-convo').setAttribute('aria-pressed', String(on)); $('cfg-convo').textContent = on ? 'Ligado' : 'Desligado';
 }
 $('cfg-convo').onclick = async () => { await saveSettings({ conversation_mode: cfg.conversation_mode !== true }); renderConvo(); };
+function renderNotch() {
+  const on = cfg.notch !== false;
+  $('cfg-notch').setAttribute('aria-pressed', String(on)); $('cfg-notch').textContent = on ? 'Ligado' : 'Desligado';
+}
+$('cfg-notch').onclick = async () => { await saveSettings({ notch: cfg.notch === false }); renderNotch(); };
 
 async function renderMicTab() {
   renderConvo();

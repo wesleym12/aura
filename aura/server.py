@@ -925,6 +925,36 @@ async def host_result(request: Request, body: dict):
     return {"ok": True}
 
 
+# ---- entalhe do Windows: a pagina conta o estado (ouvindo, pensando, falando) e o entalhe le daqui ----
+UI_STATE = {"state": "idle", "text": "", "at": 0.0}
+UI_STATES = {"idle", "listening", "thinking", "speaking"}
+
+
+class UiState(BaseModel):
+    state: str
+    text: str = ""
+
+
+@app.post("/api/ui/state")
+def ui_state(body: UiState):
+    if body.state in UI_STATES:
+        UI_STATE.update(state=body.state, text=body.text[:90], at=__import__("time").time())
+    return {"ok": True}
+
+
+@app.get("/api/host/notch")
+def host_notch(request: Request):
+    if not hostbridge.token_ok(request.headers.get("x-agent-token")):
+        raise HTTPException(401, "chave do agente invalida")
+    s = settings.get()
+    page = __import__("time").time() - UI_STATE["at"] < 25     # a pagina manda sinal a cada 10 s
+    text = UI_STATE["text"] if page else "Clique para abrir"
+    state = UI_STATE["state"] if page else "closed"
+    if state == "idle" and text.startswith("Dormindo"):
+        state = "sleeping"
+    return {"enabled": s.get("notch", True), "state": state, "text": text, "name": s.get("assistant_name") or "A.U.R.A."}
+
+
 @app.get("/api/host/status")
 def host_status():
     p = hostbridge.pending_shutdown
