@@ -1,12 +1,12 @@
 name: aura
 
-# Base comum (Windows, Linux, umbrelOS). Partes opcionais entram pelo COMPOSE_FILE / COMPOSE_PROFILES do .env,
+# Base comum (Windows e Linux). Partes opcionais entram pelo COMPOSE_FILE / COMPOSE_PROFILES do .env,
 # que o instalador (instalar.ps1 / instalar.sh) preenche conforme o computador:
 #   docker-compose.gpu.yml      placa NVIDIA para o modelo local
 #   docker-compose.windows.yml  "Iniciar com o Windows"
 #   docker-compose.linux.yml    metricas do servidor Linux
 #   COMPOSE_PROFILES=local      modelo local (Ollama). Sem ele = "so Gemini": nem instala o Ollama
-#   COMPOSE_PROFILES=casa       Home Assistant junto (deixe de fora se ja tiver um, como o app do Umbrel)
+#   COMPOSE_PROFILES=casa       Home Assistant junto (deixe de fora se ja tiver um)
 #   (os dois: COMPOSE_PROFILES=local,casa)
 
 services:
@@ -63,7 +63,7 @@ services:
       - HOST_ROOT_WIN=${WORK_ROOT:-}                    # para mostrar os caminhos como no computador
       - AURA_DIR_WIN=${AURA_DIR_WIN:-}                  # pasta do projeto no Windows (vazio = descobre sozinho)
       - AURA_POWER_DRYRUN=${AURA_POWER_DRYRUN:-0}       # 1 = simula desligar/reiniciar/Wi-Fi
-      # acesso pela rede (servidor Linux/umbrelOS): senha, HTTPS e o endereco usado nos logins (Spotify)
+      # acesso pela rede (servidor Linux): senha, HTTPS e o endereco usado nos logins (Spotify)
       - AURA_PASSWORD=${AURA_PASSWORD:-}
       - AURA_TLS=${AURA_TLS:-0}
       - AURA_TLS_NAMES=${AURA_TLS_NAMES:-}
@@ -87,7 +87,7 @@ services:
         required: false          # no "so Gemini" o Ollama nem existe
     restart: unless-stopped
 
-  # Casa inteligente: Home Assistant junto (perfil "casa"). Quem ja tem um HA (ex.: o app do umbrelOS) deixa de
+  # Casa inteligente: Home Assistant junto (perfil "casa"). Quem ja tem um HA deixa de
   # fora e conecta o dele em Plugins -> Casa inteligente -> "Usar outro Home Assistant".
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:stable

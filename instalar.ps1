@@ -4,7 +4,8 @@
 #   .\instalar.ps1 -Analisar    so mostra a analise
 #   .\instalar.ps1 -Completar   sem perguntas: so preenche o que faltar no .env (usado pelo iniciar.ps1)
 #   .\instalar.ps1 -Atalho      so cria/atualiza o atalho "A.U.R.A." na area de trabalho e no menu Iniciar
-param([switch]$Analisar, [switch]$Completar, [switch]$Atalho)
+#   .\instalar.ps1 -App         so instala o app de mesa (modo janela/entalhe; precisa do Python)
+param([switch]$Analisar, [switch]$Completar, [switch]$Atalho, [switch]$App)
 Set-Location $PSScriptRoot
 $envFile = Join-Path $PSScriptRoot ".env"
 
@@ -18,23 +19,66 @@ function Get-AppBrowser {
     }
     return $null
 }
+# ---------- app de mesa (desktop\aura_app.py): janela propria ou entalhe no topo da tela ----------
+$appDir = Join-Path $PSScriptRoot "desktop"
+$appPyw = Join-Path $appDir ".venv\Scripts\pythonw.exe"
+function Get-Python {
+    # Python 3 de verdade (o "python" da pasta WindowsApps so abre a Microsoft Store)
+    if (Get-Command py -ErrorAction SilentlyContinue) {
+        $p = (& py -3 -c "import sys; print(sys.executable)" 2>$null)
+        if ($p -and (Test-Path $p)) { return $p }
+    }
+    $py = Get-Command python -ErrorAction SilentlyContinue
+    if ($py -and $py.Source -notlike "*WindowsApps*") { return $py.Source }
+    return $null
+}
+function Install-DesktopApp([switch]$Quiet) {
+    if (Test-Path $appPyw) { return $true }
+    $python = Get-Python
+    if (-not $python -and -not $Quiet) {
+        $a = Ask "O app de mesa (janela propria e modo entalhe) precisa do Python. Instalar agora pelo winget? (s/n)" "s"
+        if ($a -match "^[sSyY]") {
+            winget install -e --id Python.Python.3.13 --scope user --silent --accept-package-agreements --accept-source-agreements | Out-Null
+            $env:Path = [Environment]::GetEnvironmentVariable("Path", "User") + ";" + [Environment]::GetEnvironmentVariable("Path", "Machine")
+            $python = Get-Python
+        }
+    }
+    if (-not $python) {
+        if (-not $Quiet) { Write-Host "  ! Sem Python: a A.U.R.A. abre no Edge/Chrome como aplicativo (sem o modo entalhe)." -ForegroundColor Yellow }
+        return $false
+    }
+    if (-not $Quiet) { Write-Host "  Instalando o app de mesa (pywebview)..." }
+    & $python -m venv (Join-Path $appDir ".venv") 2>$null
+    & (Join-Path $appDir ".venv\Scripts\python.exe") -m pip install -q --disable-pip-version-check -r (Join-Path $appDir "requirements.txt") 2>$null
+    $ok = Test-Path $appPyw
+    if (-not $Quiet) {
+        if ($ok) { Write-Host "  App de mesa instalado." -ForegroundColor Green }
+        else { Write-Host "  ! Nao consegui instalar o app de mesa; a A.U.R.A. abre no Edge/Chrome." -ForegroundColor Yellow }
+    }
+    return $ok
+}
 function New-AuraShortcut {
     $browser = Get-AppBrowser
-    if (-not $browser) { Write-Host "  ! Sem Edge/Chrome: atalho de aplicativo nao criado (abra http://127.0.0.1:8765 no navegador)." -ForegroundColor Yellow; return }
+    if (-not (Test-Path $appPyw) -and -not $browser) { Write-Host "  ! Sem Edge/Chrome: atalho de aplicativo nao criado (abra http://127.0.0.1:8765 no navegador)." -ForegroundColor Yellow; return }
     $icon = Join-Path $PSScriptRoot "aura\web\icons\aura.ico"
     $sh = New-Object -ComObject WScript.Shell
     foreach ($dir in [Environment]::GetFolderPath("Desktop"), (Join-Path ([Environment]::GetFolderPath("Programs")) "")) {
         $s = $sh.CreateShortcut((Join-Path $dir "A.U.R.A..lnk"))
-        $s.TargetPath = $browser
-        $s.Arguments = "--app=http://127.0.0.1:8765"
+        if (Test-Path $appPyw) {
+            # o atalho roda o iniciar.ps1: liga o Docker e a A.U.R.A. se estiverem parados e abre o app de mesa
+            $s.TargetPath = "powershell.exe"
+            $s.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$(Join-Path $PSScriptRoot 'iniciar.ps1')`""
+            $s.WindowStyle = 7
+        } else {
+            $s.TargetPath = $browser
+            $s.Arguments = "--app=http://127.0.0.1:8765"
+        }
         $s.IconLocation = "$icon,0"
         $s.Description = "A.U.R.A. - assistente pessoal"
         $s.Save()
     }
     Write-Host "  Atalho 'A.U.R.A.' criado na area de trabalho e no menu Iniciar." -ForegroundColor Green
 }
-if ($Atalho) { New-AuraShortcut; return }
-
 function Get-EnvVal($k) {
     if (-not (Test-Path $envFile)) { return "" }
     $l = Get-Content $envFile -Encoding utf8 | Where-Object { $_ -match "^$k=" } | Select-Object -Last 1
@@ -48,6 +92,8 @@ function Set-EnvVal($k, $v) {
     [IO.File]::WriteAllLines($envFile, $lines, (New-Object Text.UTF8Encoding($false)))
 }
 function Ask($q, $def) { $a = Read-Host "  $q$(if ($def) { " [$def]" })"; if ($a) { $a } else { $def } }
+if ($Atalho) { New-AuraShortcut; return }
+if ($App) { [void](Install-DesktopApp); New-AuraShortcut; return }
 
 # ---------- analise ----------
 $os = Get-CimInstance Win32_OperatingSystem
@@ -77,6 +123,7 @@ if ($Completar) {
     if ((Get-EnvVal "AURA_LOCAL_LLM") -ne "0" -and $prof -notmatch '(^|,)local(,|$)') {
         Set-EnvVal "COMPOSE_PROFILES" ((@("local") + ($prof -split ',' | Where-Object { $_ })) -join ',')
     }
+    [void](Install-DesktopApp -Quiet)       # instalacoes antigas ganham o app de mesa (se ja houver Python)
     return
 }
 
@@ -127,4 +174,5 @@ Set-EnvVal "GEMINI_API_KEY" $key
 if (-not (Get-EnvVal "WORK_ROOT")) { Set-EnvVal "WORK_ROOT" $env:USERPROFILE }
 if (-not (Get-EnvVal "HOST_AGENT_TOKEN")) { Set-EnvVal "HOST_AGENT_TOKEN" (-join ((1..32) | ForEach-Object { '{0:x2}' -f (Get-Random -Maximum 256) })) }
 Write-Host "  .env gravado (chaves ficam so nele; nao compartilhe)." -ForegroundColor Green
+[void](Install-DesktopApp)
 New-AuraShortcut

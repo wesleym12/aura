@@ -22,34 +22,37 @@ Precisa do **Docker Desktop** (WSL2).
 ```
 
 - Na primeira vez, chama o `instalar.ps1`: faz a análise e as perguntas, e grava o `.env`.
-- Depois sobe o Docker Desktop, os containers e o agente do Windows, e abre http://127.0.0.1:8765. Só esta máquina acessa, sem senha.
+- Depois sobe o Docker Desktop, os containers e o agente do Windows, e abre o **app de mesa** da A.U.R.A. (veja abaixo). Só esta máquina acessa, sem senha.
+- O app de mesa precisa do Python: se não houver, o instalador oferece instalar pelo `winget`. Sem ele, a A.U.R.A. abre no Edge/Chrome como aplicativo. Para instalar o app depois: `.\instalar.ps1 -App`.
 - Para reconfigurar: `.\instalar.ps1`. Para só ver a análise: `.\instalar.ps1 -Analisar`.
 - **Iniciar com o Windows:** Configurações → Geral.
 
-### Linux e umbrelOS (via SSH)
+### Linux
 
-Precisa de Docker com o plugin compose. O umbrelOS já tem.
+Precisa de Docker com o plugin compose.
 
 ```bash
 git clone https://github.com/wesleym12/aura.git && cd aura
 bash instalar.sh
 ```
 
-- O instalador grava o `.env`, gera uma **senha de acesso** e liga o **HTTPS**, e depois sobe tudo. A primeira vez leva de 10 a 30 min.
-- No fim, ele mostra o endereço (ex.: `https://umbrel.local:8765`) e a senha.
-- **Acesso pela rede, com senha:** de qualquer aparelho da casa (celular, notebook). A senha fica no `.env` (`AURA_PASSWORD`).
-- **HTTPS próprio:** o navegador avisa do certificado uma vez (Avançado → Continuar). Sem HTTPS o navegador bloqueia o microfone fora do `localhost`.
-- **No umbrelOS:**
-  - O Home Assistant do próprio Umbrel é detectado e não é instalado de novo. Conecte o dele em Plugins → Casa inteligente → "Usar outro Home Assistant", com o endereço `http://umbrel.local:8123` e um token de longa duração.
-  - A pasta padrão de arquivos é a do app Arquivos (`~/umbrel/home`).
-- **Sobe sozinha** quando o servidor liga (o Docker reinicia os containers). Atualizar: `./atualizar.sh`. Reconfigurar: `bash instalar.sh`.
-- **O que é só do Windows:** controle do computador (abrir programas, YouTube na mesma aba, clicar), Ctrl+Espaço global e "Iniciar com o Windows". No Linux, as métricas do topo vêm do próprio servidor.
-- **Logins do Google e de conectores MCP:** esses serviços só aceitam retorno em `localhost`. Faça esses logins uma vez por um túnel SSH, que encaminha uma porta do seu computador para o servidor:
-  ```bash
-  ssh -L 8765:localhost:8765 umbrel@umbrel.local
-  ```
-  Com o túnel aberto, acesse http://localhost:8765. O Spotify, o Home Assistant e as contas do Claude e do Codex funcionam direto pelo endereço da rede.
-- **Spotify no servidor:** cadastre como Redirect URI o endereço mostrado no card (ex.: `https://umbrel.local:8765/api/spotify/callback`).
+O instalador faz a mesma análise e pergunta **como você vai usar**:
+
+- **Neste computador** (Linux com área de trabalho): instala o **app de mesa**, igual ao do Windows, com o atalho no menu de aplicativos e o início automático no logon. Só esta máquina acessa, sem senha (http://127.0.0.1:8765).
+  - O app usa Python com o Qt (o instalador baixa uns 150 MB). No Debian/Ubuntu pode faltar `sudo apt install python3-venv` (e, para o Qt, `libxcb-cursor0`).
+  - Para o entalhe sumir com programa maximizado é preciso o `xprop` (pacote `x11-utils`). No Wayland o app roda pelo XWayland.
+- **Servidor na rede:** celular e outros computadores acessam pelo navegador.
+  - O instalador gera uma **senha de acesso** e liga o **HTTPS**. No fim, mostra o endereço (ex.: `https://meuservidor.local:8765`) e a senha (fica no `.env`, em `AURA_PASSWORD`).
+  - **HTTPS próprio:** o navegador avisa do certificado uma vez (Avançado → Continuar). Sem HTTPS o navegador bloqueia o microfone fora do `localhost`.
+  - **Logins do Google e de conectores MCP:** esses serviços só aceitam retorno em `localhost`. Faça esses logins uma vez por um túnel SSH:
+    ```bash
+    ssh -L 8765:localhost:8765 usuario@meuservidor.local
+    ```
+    Com o túnel aberto, acesse http://localhost:8765. O Spotify, o Home Assistant e as contas do Claude e do Codex funcionam direto pelo endereço da rede.
+  - **Spotify no servidor:** cadastre como Redirect URI o endereço mostrado no card (ex.: `https://meuservidor.local:8765/api/spotify/callback`).
+- A primeira instalação leva de 10 a 30 min. A A.U.R.A. **sobe sozinha** quando a máquina liga (o Docker reinicia os containers). Atualizar: `./atualizar.sh`. Reconfigurar: `bash instalar.sh`.
+- Se já houver um Home Assistant na máquina (porta 8123), ele não é instalado de novo: conecte o seu em Plugins → Casa inteligente → "Usar outro Home Assistant".
+- **O que é só do Windows:** controle do computador (abrir programas, YouTube na mesma aba, clicar), Ctrl+Espaço global e "Iniciar com o Windows". No Linux, as métricas do topo vêm da própria máquina.
 
 | Serviço | Papel |
 |---|---|
@@ -203,17 +206,20 @@ Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Na
 - **Lateral:** barra de ícones (Conversas, Agendados, Agenda, Conectores, Skills, Mais), **Criar** e **Procurar** (Ctrl+K).
 - **Backups:** automáticos ao ligar e a cada 6 h (se algo mudou), em `aura\backups`, com os 20 mais recentes. Contêm as suas chaves: não compartilhe a pasta.
 - **Iniciar com o Windows** (Geral): grava `Aura.vbs` na pasta Inicializar, que roda o `iniciar.ps1` escondido no logon. Desligar apaga o arquivo. Pelo terminal: `.\autostart.ps1`, `-Status` ou `-Remover`.
-- **Aplicativo na área de trabalho:** a A.U.R.A. é um aplicativo instalável (PWA). Ela abre numa janela própria, sem abas nem barra do navegador, com ícone no menu Iniciar e na barra de tarefas. A voz funciona igual e as atualizações chegam sozinhas.
+- **App de mesa** (Windows e Linux, `desktop/aura_app.py`): a A.U.R.A. fora do navegador, em dois modos (Geral → **Modo de exibição**):
+  - **Janela:** uma janela própria, como um aplicativo comum.
+  - **Entalhe:** uma pílula no topo da tela, sempre visível, com a cor do estado (verde pronta, azul ouvindo, roxo pensando, laranja falando). Clique nela e a A.U.R.A. inteira abre ali mesmo, descendo do entalhe; clique fora (ou na setinha ▲) e ela volta a ser pílula. Some quando um programa está maximizado ou em tela cheia. A voz e a palavra de ativação continuam funcionando com ela recolhida, e um pedido de Autorizar abre o entalhe sozinho.
+  - Abrir o atalho de novo traz a janela para a frente (ou abre o entalhe). No logon, só o modo entalhe aparece sozinho.
+- **Aplicativo pelo navegador (PWA):** para quem não usa o app de mesa (ou acessa de outro aparelho): a A.U.R.A. é instalável pelo Edge/Chrome, numa janela própria com ícone no menu Iniciar.
   - Para instalar: Configurações → Geral → **Instalar**, ou pelo menu ⋯ do Edge/Chrome → Aplicativos → Instalar.
   - Os instaladores também criam um atalho **A.U.R.A.** que abre direto na janela do aplicativo: na área de trabalho e no menu Iniciar (Windows; para recriar: `.\instalar.ps1 -Atalho`), ou no menu de aplicativos (Linux com área de trabalho e Chrome/Chromium/Edge).
   - O `iniciar.ps1` também abre a A.U.R.A. nessa janela.
   - No Linux acessado de outro aparelho, a instalação só é oferecida com HTTPS válido (domínio próprio). Com o certificado autogerado, use pelo navegador.
-- **Entalhe no topo da tela** (Windows, Geral): uma pílula discreta no alto da tela mostra se a A.U.R.A. está pronta, ouvindo, pensando, falando ou dormindo, mesmo com a janela fechada. Clique para abrir a A.U.R.A. (desligada, o clique liga tudo); passe o mouse para ver o estado; botão direito fecha. Some quando um programa está maximizado ou em tela cheia e volta quando ele sai. Sobe junto com o agente do Windows (`host-agent
 otch.ps1`).
 - **⏻ Encerrar A.U.R.A.** (rodapé das Configurações): o agente do Windows para todos os containers dela e sai.
   - Opcionalmente fecha também o Docker Desktop, que libera mais memória.
   - Conversas e configurações ficam salvas. Para ligar de novo: `.\iniciar.ps1`.
-  - No Linux/umbrelOS não há agente: encerre pelo terminal com `docker compose --profile '*' stop`.
+  - No Linux não há agente: feche o app de mesa e encerre pelo terminal com `docker compose --profile '*' stop`.
 
 ## Desempenho
 
@@ -271,6 +277,7 @@ A interface (`aura/web/index.html`) é montada ao vivo: basta F5.
 | `aura/gcal.py`, `aura/connectors.py`, `aura/mcpclient.py` | Google, catálogo de conectores e cliente MCP |
 | `aura/spotify.py`, `aura/homeassistant.py`, `aura/telegram.py` | Plugins nativos |
 | `aura/hostbridge.py`, `host-agent/agent.ps1` | Ponte com o agente do Windows |
+| `desktop/aura_app.py` | App de mesa (Windows e Linux): modo janela e modo entalhe |
 | `aura/workdir.py`, `aura/attachments.py`, `aura/docreader.py`, `aura/imagegen.py` | Pasta de trabalho, anexos, documentos e imagens |
 | `aura/scheduler.py`, `aura/backup.py`, `aura/autostart.py` | Agendados, backups e início com o Windows |
 | `voice/app.py` | Serviço de voz (ativação, Whisper, Kokoro/Piper) |

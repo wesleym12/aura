@@ -12,7 +12,7 @@ from .config import WORKSPACE
 
 HOST = Path("/host")
 _RAW = os.getenv("HOST_ROOT_WIN", "").strip()
-# como os caminhos aparecem no computador: Windows (C:\Users\voce) ou Linux (/home/umbrel)
+# como os caminhos aparecem no computador: Windows (C:\Users\voce) ou Linux (/home/voce)
 SEP = "/" if _RAW.startswith("/") else "\\"
 HOST_WIN = _RAW.rstrip("/") if SEP == "/" else _RAW.replace("/", "\\").rstrip("\\")
 BLOCKED = {"appdata", ".ssh", ".aws", ".azure", ".gnupg", ".docker", ".config", ".kube", "ntuser.dat",
@@ -72,7 +72,7 @@ def to_windows(p: Path) -> str:
 
 
 def from_windows(path: str) -> Path | None:
-    """C:\\Users\\voce\\Projetos\\x.txt (ou /home/umbrel/x.txt) -> /host/... (so dentro da pasta de usuario)."""
+    """C:\\Users\\voce\\Projetos\\x.txt (ou /home/voce/x.txt) -> /host/... (so dentro da pasta de usuario)."""
     p = str(path or "").strip().strip('"').replace("/" if SEP == "\\" else "\\", SEP)
     w = HOST_WIN
     same = (lambda a, b: a.lower() == b.lower()) if SEP == "\\" else (lambda a, b: a == b)   # Linux diferencia maiusculas

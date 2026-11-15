@@ -27,5 +27,5 @@ RUN mkdir -p /data /workspace /memoria /home/node/.claude /home/node/.codex /hom
 USER node
 
 EXPOSE 8765
-# HTTP so nesta maquina (Windows) ou HTTPS na rede (AURA_TLS=1, Linux/umbrelOS): ver aura/run.py
+# HTTP so nesta maquina (Windows) ou HTTPS na rede (AURA_TLS=1, servidor Linux): ver aura/run.py
 CMD ["python", "-m", "aura.run"]

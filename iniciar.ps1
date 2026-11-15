@@ -28,7 +28,7 @@ if ($LASTEXITCODE -ne 0) {
 Say "Subindo os containers..."
 docker compose up -d 2>&1 | Out-Null
 
-try { Invoke-WebRequest http://127.0.0.1:8766/metrics -UseBasicParsing -TimeoutSec 2 | Out-Null; Say "Agente do Windows ja estava rodando."; & "$PSScriptRoot\host-agent\start.ps1" -SoEntalhe }
+try { Invoke-WebRequest http://127.0.0.1:8766/metrics -UseBasicParsing -TimeoutSec 2 | Out-Null; Say "Agente do Windows ja estava rodando." }
 catch { & "$PSScriptRoot\host-agent\start.ps1" | Out-Null; Say "Agente do Windows iniciado." }
 
 Say "Aguardando a Aura responder..."
@@ -36,7 +36,13 @@ $t0 = Get-Date
 do { Start-Sleep 2; try { $ok = (Invoke-WebRequest http://127.0.0.1:8765/ -UseBasicParsing -TimeoutSec 2).StatusCode -eq 200 } catch { $ok = $false } }
 until ($ok -or ((Get-Date) - $t0).TotalMinutes -gt 5)
 
-if ($ok) {
+$appPyw = Join-Path $PSScriptRoot "desktop\.venv\Scripts\pythonw.exe"
+if ($ok -and (Test-Path $appPyw)) {
+    # app de mesa (janela ou entalhe). No logon (-SemNavegador) so aparece sozinho no modo entalhe.
+    Say "Aura online em http://127.0.0.1:8765"
+    $app = Join-Path $PSScriptRoot "desktop\aura_app.py"
+    Start-Process $appPyw -ArgumentList "`"$app`"$(if ($SemNavegador) { ' --fundo' })" -WorkingDirectory (Split-Path $app)
+} elseif ($ok) {
     Say "Aura online em http://127.0.0.1:8765"
     if (-not $SemNavegador) {
         # abre como aplicativo (janela propria, sem abas) no Edge/Chrome; sem eles, no navegador padrao

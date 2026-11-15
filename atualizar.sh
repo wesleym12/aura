@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Atualiza a A.U.R.A. (Linux/umbrelOS): baixa a versao nova do GitHub e reconstroi os containers.
+# Atualiza a A.U.R.A. (Linux): baixa a versao nova do GitHub e reconstroi os containers.
 # Conversas, memoria, chaves e configuracoes ficam nos volumes e no .env: nada se perde.
 set -euo pipefail
 cd "$(dirname "$0")"

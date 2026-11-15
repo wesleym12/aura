@@ -1,4 +1,4 @@
-"""Metricas do servidor (Linux/umbrelOS): CPU, RAM, temperatura, rede e GPU NVIDIA (se houver).
+"""Metricas do servidor (Linux): CPU, RAM, temperatura, rede e GPU NVIDIA (se houver).
 
 No Linux o container enxerga a maquina inteira quando o /proc do host esta montado em /host_proc
 (docker-compose.linux.yml). Mesmo formato do agente do Windows, para a tela tratar igual.

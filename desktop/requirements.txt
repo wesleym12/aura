@@ -1,0 +1,3 @@
+# app de mesa da A.U.R.A. (desktop/aura_app.py): no Windows usa o WebView2 do sistema; no Linux, o Qt WebEngine
+pywebview>=6.0; sys_platform == "win32"
+pywebview[qt]>=6.0; sys_platform == "linux"

@@ -872,10 +872,27 @@
     footer > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .history { width: min(330px, 88vw); }
   }
+
+  /* ===== App de mesa no modo entalhe (?ui=entalhe): pilula no topo da tela que abre a A.U.R.A. inteira ===== */
+  #notch-pill, #notch-collapse { display: none; }
+  html.notch.mini body > *:not(#notch-pill) { display: none !important; }
+  html.notch.mini, html.notch.mini body { background: #050608 !important; overflow: hidden; }
+  html.notch.mini #notch-pill { display: flex; position: fixed; inset: 0; align-items: center; justify-content: center; gap: 9px;
+    color: #e8eef5; cursor: pointer; user-select: none; font: 600 11px "Exo 2", "Segoe UI", sans-serif; letter-spacing: .14em; }
+  #notch-pill .np-core { --np: #3ddc84; width: 10px; height: 10px; border-radius: 50%; background: var(--np);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--np) 28%, transparent); transition: background .2s; }
+  #notch-pill .np-time { color: #b8c2cc; font: 500 11px "JetBrains Mono", monospace; letter-spacing: 0; }
+  body[data-state="listening"] #notch-pill .np-core { --np: #3ec7ff; animation: np-pulse 1s ease-in-out infinite; }
+  body[data-state="thinking"] #notch-pill .np-core { --np: #a66bff; animation: np-pulse .7s ease-in-out infinite; }
+  body[data-state="speaking"] #notch-pill .np-core { --np: #f08c00; animation: np-pulse .5s ease-in-out infinite; }
+  body[data-sleep] #notch-pill .np-core { opacity: .5; }
+  @keyframes np-pulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--np) 10%, transparent); } }
+  html.notch:not(.mini) #notch-collapse { display: inline-grid; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
+<div id="notch-pill" title="Abrir a A.U.R.A."><span class="np-core"></span><b id="np-name">A.U.R.A.</b><span class="np-time" id="np-time">--:--</span></div>
 <header>
   <button class="icon-btn" id="history-btn" title="Conversas" aria-label="Abrir conversas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -894,6 +911,9 @@
     <div class="metric t-net"><span class="orb pulse"></span><span class="k">REDE</span><span class="v" id="v-net">--</span></div>
   </div>
   <div class="sep"></div>
+  <button class="icon-btn" id="notch-collapse" title="Recolher para o entalhe" aria-label="Recolher para o entalhe">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg>
+  </button>
   <div class="clock" id="clock">--:--:--</div>
   <div class="settings">
     <button class="icon-btn" id="settings-btn" title="Configurações" aria-label="Configurações" aria-haspopup="dialog">
@@ -1190,8 +1210,8 @@
         <button class="toggle" id="cfg-autostart" aria-pressed="false">Desligado</button></div>
       <div class="field row"><span><span class="label">Aplicativo na área de trabalho</span><br><small class="hint" id="cfg-pwa-hint">Instala a A.U.R.A. como aplicativo: janela própria, sem abas nem barra do navegador, com ícone no menu Iniciar e na barra de tarefas.</small></span>
         <button class="btn" id="cfg-pwa" type="button">Instalar</button></div>
-      <div class="field row"><span><span class="label">Entalhe no topo da tela</span><br><small class="hint">Uma pílula discreta no alto da tela do Windows mostra se a A.U.R.A. está ouvindo, pensando ou falando, mesmo com a janela fechada. Clique nela para abrir; ela some quando um programa está maximizado ou em tela cheia. Precisa do agente do Windows.</small></span>
-        <button class="toggle" id="cfg-notch" aria-pressed="true">Ligado</button></div>
+      <div class="field row" id="cfg-desk-row" hidden><span><span class="label">Modo de exibição</span><br><small class="hint">Janela: a A.U.R.A. numa janela comum. Entalhe: uma pílula no topo da tela mostra se ela está ouvindo, pensando ou falando; clique nela e a A.U.R.A. abre ali mesmo. Ela some quando um programa está maximizado ou em tela cheia.</small></span>
+        <span class="with-btn"><button class="btn ghost" type="button" data-desk="janela">Janela</button><button class="btn ghost" type="button" data-desk="entalhe">Entalhe</button></span></div>
     </section>
 
     <section class="pane" data-pane="voz" hidden>
@@ -1402,18 +1422,45 @@ function setState(state, text) {
   document.body.classList.toggle('speaking', state === 'speaking');
   orb.state = state;
   $('core-status').textContent = text;
-  reportState(state, text);
+  document.body.dataset.state = state;
+  document.body.toggleAttribute('data-sleep', state === 'idle' && /^Dormindo/.test(text));
+  if (text === 'Aguardando autorização') notchExpand();      // pedido de Autorizar: abre o entalhe para voce ver
 }
 
-// conta o estado ao servidor (o entalhe do Windows le de la): na mudanca e a cada 10 s, como sinal de "pagina aberta"
-const uiState = { state: '', text: '', sent: 0 };
-function reportState(state, text) {
-  if (state === uiState.state && text === uiState.text && Date.now() - uiState.sent < 10000) return;
-  Object.assign(uiState, { state, text, sent: Date.now() });
-  fetch('/api/ui/state', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ state, text }) }).catch(() => {});
+// ===== App de mesa (desktop/aura_app.py): modo janela ou entalhe =====
+const NOTCH = new URLSearchParams(location.search).get('ui') === 'entalhe';
+if (NOTCH) document.documentElement.classList.add('notch', 'mini');
+const desk = { api: null, picking: false };
+function notchExpand() {
+  if (!NOTCH || !document.documentElement.classList.contains('mini')) return;
+  document.documentElement.classList.remove('mini'); desk.api?.expand();
 }
-setInterval(() => { if (uiState.state) reportState(uiState.state, uiState.text); }, 10000);
+function notchCollapse() {
+  if (!NOTCH || document.documentElement.classList.contains('mini')) return;
+  try { closeSettings(); } catch {}
+  document.documentElement.classList.add('mini'); desk.api?.collapse();
+}
+window.addEventListener('pywebviewready', () => { desk.api = window.pywebview.api; renderDesk(); });
+document.addEventListener('click', (e) => { if (e.target.matches?.('input[type=file]')) desk.picking = true; }, true);
+window.addEventListener('focus', () => { desk.picking = false; });
+// clicou fora do entalhe aberto: recolhe (menos enquanto escolhe um arquivo)
+window.addEventListener('blur', () => {
+  if (!NOTCH || desk.picking) return;
+  setTimeout(() => { if (!document.hasFocus() && !desk.picking) notchCollapse(); }, 250);
+});
+setInterval(() => {
+  if (!NOTCH) return;
+  $('np-time').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  $('np-name').textContent = $('hdr-name').textContent;
+}, 1000);
+async function renderDesk() {
+  if (!desk.api) return;
+  const row = $('cfg-desk-row'); if (!row) return;
+  row.hidden = false;
+  $('cfg-pwa').closest('.field').style.display = 'none';    // ja esta num app: nao oferece instalar outro
+  const { mode } = await desk.api.info();
+  row.querySelectorAll('[data-desk]').forEach(b => { b.className = b.dataset.desk === mode ? 'btn' : 'btn ghost'; });
+}
 
 // ===== Orbe: motor com varios modelos (esfera, aneis, galaxia, onda, enxame, holograma) =====
 // Todos reagem ao estado (ouvindo, pensando, falando) e ao volume real (microfone ou voz).
@@ -3180,7 +3227,7 @@ $('cfg-close').onclick = closeSettings; $('cfg-done').onclick = closeSettings;
 // ===== Encerrar a A.U.R.A. (desliga todos os servicos; o agente do Windows e quem para os containers) =====
 $('cfg-quit').onclick = async () => {
   if (!hostAgent) {
-    alert('Para encerrar por aqui é preciso o agente do Windows.\n\nEm servidor Linux/umbrelOS, encerre pelo terminal, na pasta da A.U.R.A.:\n  docker compose --profile \'*\' stop\n\nPara ligar de novo:  docker compose up -d');
+    alert('Para encerrar por aqui é preciso o agente do Windows.\n\nNo Linux, encerre pelo terminal, na pasta da A.U.R.A.:\n  docker compose --profile \'*\' stop\n\nPara ligar de novo:  docker compose up -d');
     return;
   }
   if (!confirm('Encerrar a A.U.R.A.?\n\nPara todos os serviços dela (conversa, voz, modelos, casa inteligente) e o agente do Windows. Conversas e configurações ficam salvas.\n\nPara ligar de novo: rode o iniciar.ps1, ou espere o próximo logon (se "Iniciar com o Windows" estiver ligado).')) return;
@@ -3196,6 +3243,7 @@ $('cfg-quit').onclick = async () => {
     o.innerHTML = `<div><h1>A.U.R.A<b>.</b></h1><p>${j.dry ? 'Modo simulação (AURA_POWER_DRYRUN=1): nada foi desligado.' : 'Encerrada. Os serviços estão sendo desligados.'}</p>
       <small>Para ligar de novo: rode <code>iniciar.ps1</code> na pasta da A.U.R.A.${docker ? '' : ' (ou <code>docker compose up -d</code>)'}.</small></div>`;
     document.body.appendChild(o);
+    notchExpand(); desk.api?.quit();                // app de mesa: fecha junto
   } catch (e) { alert('Não consegui encerrar: ' + e.message); btn.disabled = false; btn.textContent = '⏻ Encerrar A.U.R.A.'; }
 };
 // subtitulo de cada pagina das configuracoes
@@ -3219,7 +3267,7 @@ function showPane(name) {
   // (o microfone so e consultado ao abrir "Microfone e som": nao pede permissao a toa)
   if (name !== 'aparencia') stopOrbPreviews();          // previas do orbe so rodam na pagina Aparencia
   ({ ins: renderInstructions, skills: renderSkills, plugins: () => { renderPlugins(); renderTelegram(); renderHome(); renderSpotify(); }, conn: renderConnections,
-     mic: renderMicTab, aparencia: renderAppearance, geral: () => { renderAutostart(); renderPwa(); renderNotch(); } })[name]?.();
+     mic: renderMicTab, aparencia: renderAppearance, geral: () => { renderAutostart(); renderPwa(); renderDesk(); } })[name]?.();
 }
 document.querySelectorAll('.cfg-nav .tab').forEach(tab => tab.addEventListener('click', () => showPane(tab.dataset.tab)));
 // procurar no menu: filtra os itens (nome + palavras-chave) e esconde grupos vazios
@@ -3608,12 +3656,14 @@ function renderConvo() {
   const on = cfg.conversation_mode === true;
   $('cfg-convo').setAttribute('aria-pressed', String(on)); $('cfg-convo').textContent = on ? 'Ligado' : 'Desligado';
 }
+$('notch-pill').onclick = notchExpand;
+$('notch-collapse').onclick = notchCollapse;
+document.querySelectorAll('[data-desk]').forEach(b => b.onclick = async () => {
+  if (!desk.api) return;
+  await desk.api.set_mode(b.dataset.desk);                  // o app reabre no outro formato
+  renderDesk();
+});
 $('cfg-convo').onclick = async () => { await saveSettings({ conversation_mode: cfg.conversation_mode !== true }); renderConvo(); };
-function renderNotch() {
-  const on = cfg.notch !== false;
-  $('cfg-notch').setAttribute('aria-pressed', String(on)); $('cfg-notch').textContent = on ? 'Ligado' : 'Desligado';
-}
-$('cfg-notch').onclick = async () => { await saveSettings({ notch: cfg.notch === false }); renderNotch(); };
 
 async function renderMicTab() {
   renderConvo();
@@ -4507,7 +4557,7 @@ async function renderAutostart() {
   b.textContent = s?.enabled ? 'Ligado' : 'Desligado';
   h.textContent = !s?.available
     ? (hostOs && !/windows/i.test(hostOs)
-        ? 'No Linux/umbrelOS não precisa: ela já sobe sozinha junto com o Docker quando o servidor liga.'
+        ? 'No Linux não precisa: ela já sobe sozinha junto com o Docker quando o servidor liga.'
         : 'Disponível só no Windows com o Docker Desktop (recrie o container para montar a pasta Inicializar).')
     : s.enabled ? 'Ao entrar no Windows, sobe o Docker, a Aura e o agente do Windows escondidos. O registro fica em iniciar.log.'
     : 'Ao entrar no Windows, sobe o Docker, a Aura e o agente do Windows escondidos (sem abrir o navegador).';

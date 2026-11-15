@@ -19,6 +19,9 @@ Ela é distribuída **em código-fonte**: cada instalação baixa e monta os com
 | **piper-tts** | fala em outras línguas | **GPL-3.0-or-later** |
 | webrtcvad-wheels, onnxruntime, numpy | voz | MIT / BSD |
 | Ollama | modelo local | MIT |
+| pywebview, pythonnet | app de mesa (janela e entalhe) | BSD-3-Clause / MIT |
+| PyQt6, Qt WebEngine (só no Linux) | app de mesa | GPL-3.0 / LGPL-3.0 |
+| Microsoft Edge WebView2 (Windows) | app de mesa | componente do Windows, nos termos da Microsoft |
 | Qwen3, Qwen3-VL, paraphrase-multilingual | modelos locais (baixados pelo Ollama) | Apache-2.0 |
 | Home Assistant (opcional) | casa inteligente | Apache-2.0 |
 | OpenAI Codex CLI | agente de programação (opcional) | Apache-2.0 |

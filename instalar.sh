@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instalador da A.U.R.A. para Linux (servidor, umbrelOS, Debian/Ubuntu...).
+# Instalador da A.U.R.A. para Linux (desktop ou servidor: Debian, Ubuntu, Fedora...).
 # Analisa o computador, recomenda "modelo local" ou "so Gemini", pergunta o essencial, gera o .env e sobe tudo.
 #
 #   ./instalar.sh            instala (ou reconfigura: o que ja estiver no .env vira o padrao das perguntas)
@@ -56,14 +56,13 @@ if ! docker info >/dev/null 2>&1 && command -v sudo >/dev/null; then DOCKER=(sud
 say ""; say "${B}A.U.R.A. · análise do computador${N}"
 . /etc/os-release 2>/dev/null || true
 OS_NAME="${PRETTY_NAME:-Linux}"
-UMBREL=0; { grep -qi umbrel /etc/os-release 2>/dev/null || [ -d /home/umbrel/umbrel ]; } && UMBREL=1
 ARCH="$(uname -m)"
 CPU="$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2- | sed 's/^ *//' || true)"; CPU="${CPU:-$ARCH}"
 CORES="$(nproc 2>/dev/null || echo 1)"
 RAM_GB="$(awk '/MemTotal/ {printf "%d", $2/1024/1024 + 0.5}' /proc/meminfo)"
 DISK_GB="$(df -Pk . | awk 'NR==2 {printf "%d", $4/1024/1024}')"
 GPU_NAME=""; VRAM_GB=0
-# so conta a placa se o nvidia-smi funcionar de verdade (no umbrelOS ele existe mesmo sem placa e so imprime um erro)
+# so conta a placa se o nvidia-smi funcionar de verdade (em alguns sistemas ele existe mesmo sem placa e so imprime um erro)
 if command -v nvidia-smi >/dev/null && SMI="$(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits 2>/dev/null)" \
    && [[ "$(head -n1 <<<"$SMI")" =~ ^[^,]+,\ *[0-9]+ ]]; then
   IFS=',' read -r GPU_NAME VRAM_MB <<<"$(head -n1 <<<"$SMI")"
@@ -75,7 +74,7 @@ HOSTN="$(hostname)"; IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 HA_PORT=0; (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -qE '[:.]8123\b' && HA_PORT=1
 AURA_PORT=0; (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -qE '[:.]8765\b' && AURA_PORT=1
 
-printf '  %-14s %s%s\n' "Sistema" "$OS_NAME" "$([ $UMBREL = 1 ] && echo ' (umbrelOS)')"
+printf '  %-14s %s%s\n' "Sistema" "$OS_NAME" ""
 printf '  %-14s %s · %s núcleos · %s\n' "Processador" "$CPU" "$CORES" "$ARCH"
 printf '  Memória        %s GB\n' "$RAM_GB"
 printf '  %-14s %s GB livres aqui\n' "Disco" "$DISK_GB"
@@ -125,23 +124,36 @@ else
   HA=0; askyn "Instalar o Home Assistant junto (casa inteligente)?" "$([[ "$CUR_P" == *casa* ]] && echo s || echo n)" && HA=1
 fi
 
-DEF_ROOT="$(envget WORK_ROOT | grep . || { [ -d "$HOME/umbrel/home" ] && echo "$HOME/umbrel/home" || echo "$HOME"; })"
+# desktop (app de mesa, so nesta maquina) ou servidor (outros aparelhos acessam pela rede, com senha e HTTPS)
+HAS_DISPLAY=0; [ -n "${XDG_CURRENT_DESKTOP:-}${WAYLAND_DISPLAY:-}${DISPLAY:-}" ] && HAS_DISPLAY=1
+CUR_BIND="$(envget AURA_BIND)"
+DEF_USE=$([ "$CUR_BIND" = 0.0.0.0 ] && echo 2 || { [ "$CUR_BIND" = 127.0.0.1 ] && echo 1 || { [ $HAS_DISPLAY = 1 ] && echo 1 || echo 2; }; })
+say "  Como vai usar?"
+say "  1) Neste computador — app de mesa (janela ou entalhe no topo da tela), só aqui, sem senha"
+say "  2) Servidor na rede — celular e outros computadores acessam pelo navegador, com senha e HTTPS"
+USE="$(ask 'Escolha' "$DEF_USE")"
+SERVER=$([ "$USE" = 2 ] && echo 1 || echo 0)
+
+DEF_ROOT="$(envget WORK_ROOT | grep . || echo "$HOME")"
 ROOT="$(ask 'Pasta que a A.U.R.A. pode usar (arquivos, projetos)' "$DEF_ROOT")"
 [ -d "$ROOT" ] || fail "A pasta $ROOT não existe."
 
-PASS="$(envget AURA_PASSWORD)"
-if [ -z "$PASS" ]; then PASS="$(head -c 18 /dev/urandom | base64 | tr -d '/+=' | head -c 16)"; fi
-NEWPASS="$(ask 'Senha de acesso (Enter mantém a atual/gerada)' "")"
-[ -n "$NEWPASS" ] && PASS="$NEWPASS"
-if [ ${#PASS} -lt 10 ] || [[ "${PASS,,}" =~ ^(admin|senha|password|123456|umbrel|aura) ]]; then
-  warn "Senha fraca: ela protege um assistente que lê seus arquivos e controla a casa. Use 10+ caracteres (rode o instalador de novo para trocar)."
+PASS=""
+if [ $SERVER = 1 ]; then
+  PASS="$(envget AURA_PASSWORD)"
+  if [ -z "$PASS" ]; then PASS="$(head -c 18 /dev/urandom | base64 | tr -d '/+=' | head -c 16)"; fi
+  NEWPASS="$(ask 'Senha de acesso (Enter mantém a atual/gerada)' "")"
+  [ -n "$NEWPASS" ] && PASS="$NEWPASS"
+  if [ ${#PASS} -lt 10 ] || [[ "${PASS,,}" =~ ^(admin|senha|password|123456|aura) ]]; then
+    warn "Senha fraca: ela protege um assistente que lê seus arquivos e controla a casa. Use 10+ caracteres (rode o instalador de novo para trocar)."
+  fi
 fi
 
 # voz: em processador fraco o Whisper "small" demora para entender cada frase; o "base" e bem mais leve
 DEF_WH="$(envget WHISPER_MODEL | grep . || { [ "$CORES" -le 4 ] && echo base || echo small; })"
 [ "$DEF_WH" = base ] && [ -z "$(envget WHISPER_MODEL)" ] && ok "Voz: processador com $CORES núcleos, vou usar o Whisper 'base' (mais leve)."
 
-NAME="$([ $UMBREL = 1 ] && echo umbrel.local || echo "$HOSTN.local")"
+NAME="$HOSTN.local"
 [ $AURA_PORT = 1 ] && ! "${DOCKER[@]}" compose ps aura 2>/dev/null | grep -q aura && warn "A porta 8765 já está em uso por outro programa."
 
 # ---------- grava o .env ----------
@@ -157,11 +169,21 @@ envset GEMINI_API_KEY "$KEY"
 envset WHISPER_MODEL "$DEF_WH"
 envset WORK_ROOT "$ROOT"
 envset TZ "$(timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo America/Sao_Paulo)"
-envset AURA_BIND 0.0.0.0
-envset AURA_PASSWORD "$PASS"
-envset AURA_TLS 1
-envset AURA_TLS_NAMES "$NAME,$HOSTN,$HOSTN.local${IP:+,$IP}"
-envset AURA_PUBLIC_URL "https://$NAME:8765"
+if [ $SERVER = 1 ]; then
+  envset AURA_BIND 0.0.0.0
+  envset AURA_PASSWORD "$PASS"
+  envset AURA_TLS 1
+  envset AURA_TLS_NAMES "$NAME,$HOSTN,$HOSTN.local${IP:+,$IP}"
+  envset AURA_PUBLIC_URL "https://$NAME:8765"
+  LOCAL_URL="https://localhost:8765"
+else
+  envset AURA_BIND 127.0.0.1                  # so nesta maquina: sem senha e sem HTTPS (localhost ja libera o microfone)
+  envset AURA_PASSWORD ""
+  envset AURA_TLS 0
+  envset AURA_TLS_NAMES ""
+  envset AURA_PUBLIC_URL "http://127.0.0.1:8765"
+  LOCAL_URL="http://127.0.0.1:8765"
+fi
 chmod 600 "$ENVF"
 mkdir -p workspace backups memoria plugins
 ok ".env gravado (chaves e senha ficam só nele; não compartilhe)."
@@ -177,25 +199,44 @@ if ! "${DOCKER[@]}" compose up -d --build; then
 fi
 say "  Aguardando a A.U.R.A. responder..."
 for _ in $(seq 1 90); do
-  curl -sk -o /dev/null https://localhost:8765/login && break
+  curl -sk -o /dev/null "$LOCAL_URL/login" && break
   sleep 4
 done
 
-# atalho de aplicativo (janela propria, sem abas) se esta maquina tiver area de trabalho e Chrome/Chromium/Edge
-if [ -n "${XDG_CURRENT_DESKTOP:-}${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]; then
+# app de mesa (desktop/aura_app.py: janela ou entalhe) se esta maquina tiver area de trabalho.
+# Sem Python/venv, cai no atalho de aplicativo do Chrome/Chromium/Edge (janela propria, sem abas).
+APP_EXEC=""
+if [ $HAS_DISPLAY = 1 ] && [ $SERVER = 0 ]; then
+  say "  Instalando o app de mesa (pywebview + Qt; uns 150 MB na primeira vez)..."
+  if { [ -x desktop/.venv/bin/python ] || python3 -m venv desktop/.venv >/dev/null 2>&1; } \
+     && desktop/.venv/bin/python -m pip install -q --disable-pip-version-check -r desktop/requirements.txt; then
+    APP_EXEC="$PWD/desktop/.venv/bin/python $PWD/desktop/aura_app.py"
+    ok "App de mesa instalado (modo janela ou entalhe em Configurações → Geral)."
+  else
+    rm -rf desktop/.venv
+    warn "Não consegui instalar o app de mesa (no Debian/Ubuntu: sudo apt install python3-venv, e rode de novo). Uso o navegador."
+  fi
+fi
+if [ $HAS_DISPLAY = 1 ]; then
   BR="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || command -v microsoft-edge || true)"
-  if [ -n "$BR" ]; then
+  [ -z "$APP_EXEC" ] && [ -n "$BR" ] && APP_EXEC="$BR --app=$LOCAL_URL"
+  if [ -n "$APP_EXEC" ]; then
     APPS="$HOME/.local/share/applications"; mkdir -p "$APPS"
     cat >"$APPS/aura.desktop" <<DESK
 [Desktop Entry]
 Type=Application
 Name=A.U.R.A.
 Comment=Assistente pessoal
-Exec=$BR --app=https://localhost:8765
+Exec=$APP_EXEC
 Icon=$PWD/aura/web/icons/aura-512.png
 Terminal=false
 Categories=Utility;
 DESK
+    # no logon o app de mesa sobe sozinho (no modo janela ele nao abre nada; no entalhe, a pilula aparece)
+    if [[ "$APP_EXEC" == *aura_app.py ]]; then
+      mkdir -p "$HOME/.config/autostart"
+      sed "s|^Exec=.*|Exec=$APP_EXEC --fundo|" "$APPS/aura.desktop" >"$HOME/.config/autostart/aura.desktop"
+    fi
     DESKTOP_DIR="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
     [ -d "$DESKTOP_DIR" ] && cp "$APPS/aura.desktop" "$DESKTOP_DIR/" && chmod +x "$DESKTOP_DIR/aura.desktop"
     ok "Atalho 'A.U.R.A.' criado no menu de aplicativos$([ -d "$DESKTOP_DIR" ] && echo ' e na área de trabalho')."
@@ -204,9 +245,13 @@ fi
 
 say ""
 say "${G}${B}Pronto!${N}"
-say "  Abra:  ${C}https://$NAME:8765${N}${IP:+   ou   ${C}https://$IP:8765${N}}"
-say "  Senha: ${B}$PASS${N}"
-say "  ${D}• O navegador avisa do certificado próprio uma vez: Avançado → Continuar. Sem HTTPS o microfone não funciona.${N}"
+if [ $SERVER = 1 ]; then
+  say "  Abra:  ${C}https://$NAME:8765${N}${IP:+   ou   ${C}https://$IP:8765${N}}"
+  say "  Senha: ${B}$PASS${N}"
+  say "  ${D}• O navegador avisa do certificado próprio uma vez: Avançado → Continuar. Sem HTTPS o microfone não funciona.${N}"
+else
+  say "  Abra o app ${B}A.U.R.A.${N} no menu de aplicativos (ou ${C}http://127.0.0.1:8765${N} no navegador)."
+fi
 [ $LOCAL = 1 ] && say "  ${D}• O modelo local ainda está baixando em segundo plano: '${DOCKER[*]} compose logs -f ollama-pull'.${N}"
-say "  ${D}• Logins do Google e de conectores MCP: abra uma vez pelo túnel ${N}ssh -L 8765:localhost:8765 $(whoami)@$NAME${D} e acesse http://localhost:8765.${N}"
+[ $SERVER = 1 ] && say "  ${D}• Logins do Google e de conectores MCP: abra uma vez pelo túnel ${N}ssh -L 8765:localhost:8765 $(whoami)@$NAME${D} e acesse http://localhost:8765.${N}"
 say "  ${D}• Atualizar depois: ./atualizar.sh   ·   Reconfigurar: ./instalar.sh${N}"

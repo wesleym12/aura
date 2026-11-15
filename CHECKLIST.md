@@ -21,8 +21,9 @@ Testes de uso real (com as suas contas e aparelhos). Marque com `[x]` quando pas
 - [ ] **Autorizar pela voz no Gemini Live:** pedir uma ação sensível (ex.: clicar) e aprovar na tela.
 - [ ] **Modo conversa no motor próprio** (sem Gemini Live): responde e volta a esperar "Aura".
 - [ ] **Aplicativo na área de trabalho:** Configurações → Geral → Instalar (ou o atalho A.U.R.A.), voz funcionando na janela do app.
-- [ ] **Entalhe no topo da tela:** aparece com a área de trabalho livre, some com programa maximizado, muda de cor ao ouvir/pensar/falar, clique abre a A.U.R.A., some ao Encerrar.
+- [ ] **App de mesa (Windows):** modo entalhe (pílula muda de cor ao ouvir/pensar/falar, clique abre, clique fora recolhe, some com programa maximizado, voz com ela recolhida) e modo janela; trocar em Geral → Modo de exibição; fecha ao Encerrar.
 - [ ] **Encerrar A.U.R.A.** com "Fechar também o Docker Desktop".
 - [ ] **Iniciar com o Windows:** reiniciar o PC e conferir se tudo sobe sozinho (`iniciar.log`).
-- [ ] **Instalação em Linux:** `bash instalar.sh`, acesso com senha e HTTPS pelo celular, microfone funcionando.
+- [ ] **Instalação em Linux (neste computador):** `bash instalar.sh` → opção 1, app de mesa no menu, entalhe e janela, microfone funcionando.
+- [ ] **Instalação em Linux (servidor na rede):** `bash instalar.sh` → opção 2, acesso com senha e HTTPS pelo celular, microfone funcionando.
 - [ ] **Instalação limpa no Windows:** em outra máquina (ou pasta), rodar `.\iniciar.ps1` sem `.env` e conferir se ele se configura.

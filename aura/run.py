@@ -1,6 +1,6 @@
-"""Inicia o servidor. Com AURA_TLS=1 (instalacao em servidor/umbrelOS) serve em HTTPS: o navegador so libera
+"""Inicia o servidor. Com AURA_TLS=1 (servidor Linux na rede) serve em HTTPS: o navegador so libera
 o microfone em HTTPS (ou em localhost). Na primeira vez gera um certificado proprio (autoassinado, 10 anos) em
-/data/tls para os nomes de AURA_TLS_NAMES (ex.: umbrel.local, 192.168.0.10). O navegador avisa uma vez
+/data/tls para os nomes de AURA_TLS_NAMES (ex.: meuservidor.local, 192.168.0.10). O navegador avisa uma vez
 ("conexao nao particular"): clique em Avancado -> continuar.
 """
 import ipaddress

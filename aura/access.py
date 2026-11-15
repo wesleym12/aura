@@ -3,7 +3,7 @@
 Dois jeitos de rodar:
 - So nesta maquina (padrao no Windows): porta presa em 127.0.0.1, sem senha. A protecao e aceitar so o
   host localhost/127.0.0.1 (contra DNS rebinding) e so pedidos da propria pagina (contra CSRF).
-- Na rede (Linux/umbrelOS, AURA_PASSWORD definido): qualquer endereco (umbrel.local, IP...), mas tudo pede
+- Na rede (servidor Linux, AURA_PASSWORD definido): qualquer endereco (nome.local, IP...), mas tudo pede
   login com senha. O cookie de sessao vale so para o endereco onde voce entrou, entao um site malicioso
   nao consegue usa-lo (nem por DNS rebinding).
 
@@ -20,7 +20,7 @@ COOKIE = "aura_session"
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 EXTRA_HOSTS = {h.strip().lower() for h in os.getenv("AURA_ALLOWED_HOSTS", "").split(",") if h.strip()}
 # rotas que funcionam sem login: a propria tela de login, o icone e o agente do Windows (que usa a chave dele)
-OPEN_PATHS = ("/login", "/favicon.svg", "/api/host/next", "/api/host/result", "/api/host/notch",
+OPEN_PATHS = ("/login", "/favicon.svg", "/api/host/next", "/api/host/result",
               "/manifest.webmanifest", "/sw.js", "/icons/")      # aplicativo instalavel: o navegador busca sem cookie
 _fails = {"t": 0.0, "n": 0}
 

@@ -35,7 +35,6 @@ DEFAULTS = {
     "follow_language": False,   # a voz te segue: detecta a lingua da fala (desligado = sempre portugues, mais preciso)
     "workdir": "",              # pasta de trabalho (vazio = aura/workspace)
     "desktop_control": False,   # controle do computador (desligado ate voce ligar)
-    "notch": True,              # entalhe no topo da tela do Windows (estado da Aura; clique abre o app)
 }
 
 NATIVE_VOICES = {"pm_alex", "pm_santa", "pf_dora"}
@@ -108,7 +107,7 @@ def _validate(key, value):
     elif key == "personality":
         if value not in PERSONALITIES:
             raise ValueError("jeito desconhecido")
-    elif key in ("greeting", "auto_learn", "follow_language", "desktop_control", "conversation_mode", "notch"):
+    elif key in ("greeting", "auto_learn", "follow_language", "desktop_control", "conversation_mode"):
         value = bool(value)
     elif key == "workdir":
         from .workdir import validate
