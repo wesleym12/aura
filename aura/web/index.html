@@ -1056,7 +1056,6 @@
       <div class="cfg-grp">Preferências</div>
       <button class="tab active" role="tab" data-tab="geral" data-k="tema nome palavra ativacao saudacao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Geral</button>
       <button class="tab" role="tab" data-tab="aparencia" data-k="aparencia tema claro escuro orbe animacao cor esfera galaxia aneis onda holograma"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18M3.5 9h17M3.5 15h17"/></svg>Aparência</button>
-      <button class="tab" role="tab" data-tab="contas" data-k="conta assinatura claude chatgpt codex login"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Contas</button>
       <button class="tab" role="tab" data-tab="motor" data-k="modelo motor cerebro provedor chave gemini live ollama nuvem fala lingua"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>Modelos</button>
       <button class="tab" role="tab" data-tab="voz" data-k="voz jeito personalidade velocidade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12h2M6 8v8M10 5v14M14 8v8M18 10v4M22 12h0"/></svg>Voz e jeito</button>
       <button class="tab" role="tab" data-tab="mem" data-k="memoria fatos aprender lembrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5a3 3 0 0 0-5.9.8A3 3 0 0 0 4 11a3 3 0 0 0 1.5 5.2A3 3 0 0 0 12 18zM12 5a3 3 0 0 1 5.9.8A3 3 0 0 1 20 11a3 3 0 0 1-1.5 5.2A3 3 0 0 1 12 18zM12 5v13"/></svg>Memória</button>
@@ -1153,21 +1152,6 @@
           <button class="btn ghost danger" id="bk-all" type="button">Apagar todos</button></span>
       </div>
       <div class="mem-list" id="bk-list"></div>
-    </section>
-
-    <section class="pane" data-pane="contas" hidden>
-      <div class="acct-grid">
-        <div class="acct" data-acct="claude">
-          <div class="acct-head"><b>Claude</b><span class="acct-st"></span></div>
-          <p class="hint">Pesquisa profunda e programação na pasta de trabalho, com anexos. Use sua conta Claude Pro ou Max.</p>
-          <div class="acct-body"></div>
-        </div>
-        <div class="acct" data-acct="codex">
-          <div class="acct-head"><b>ChatGPT (Codex)</b><span class="acct-st"></span></div>
-          <p class="hint">Programação na pasta de trabalho, com anexos. Use sua conta ChatGPT Plus, Pro ou Team.</p>
-          <div class="acct-body"></div>
-        </div>
-      </div>
     </section>
 
     <section class="pane" data-pane="conn" hidden>
@@ -1374,7 +1358,7 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
         <b>Microfone</b><small id="mic-sub">pronto</small></button>
       <button type="button" class="dock-btn" id="wake-btn" style="--c: var(--c-cpu)" aria-pressed="false" aria-label="Sempre ouvindo">
-        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12h2M6 8v8M10 5v14M14 8v8M18 10v4M22 12h0"/></svg></span>
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4"/></svg></span>
         <b>Sempre</b><small id="wake-sub">desligado</small></button>
       <button type="button" class="dock-btn" id="stop-btn" style="--c: var(--bad)" aria-label="Interromper">
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></span>
@@ -1963,8 +1947,8 @@ const TOOL_LABELS = { abrir: 'Abrir programa', focar_janela: 'Trocar de janela',
   ler_arquivo: 'Ler arquivo', listar_arquivos: 'Listar arquivos', mover_arquivo: 'Mover arquivo', apagar_arquivo: 'Apagar arquivo',
   criar_pasta: 'Criar pasta', ler_documento: 'Ler documento', criar_imagem: 'Criar imagem', ver_agenda: 'Agenda',
   criar_evento: 'Criar evento', alterar_evento: 'Alterar evento', apagar_evento: 'Apagar evento', buscar_emails: 'Buscar e-mails',
-  ler_email: 'Ler e-mail', rascunhar_email: 'Rascunho de e-mail', enviar_email: 'Enviar e-mail', perguntar_claude: 'Claude',
-  perguntar_codex: 'Codex', casa_ver: 'Casa', casa_controlar: 'Casa', casa_seguranca: 'Casa (segurança)',
+  ler_email: 'Ler e-mail', rascunhar_email: 'Rascunho de e-mail', enviar_email: 'Enviar e-mail',
+  casa_ver: 'Casa', casa_controlar: 'Casa', casa_seguranca: 'Casa (segurança)',
   youtube: 'YouTube', tocar_musica: 'Spotify', controlar_musica: 'Spotify', musica_tocando: 'Spotify', agendar_tarefa: 'Agendar', alterar_configuracao: 'Configuração', desfazer_ultima_acao: 'Desfazer', usar_skill: 'Skill' };
 const toolLabel = (n) => TOOL_LABELS[n] || (n.charAt(0).toUpperCase() + n.slice(1)).replace(/_/g, ' ');
 function addTrace(body, trace) {
@@ -2419,14 +2403,20 @@ function micOpen() {
     node.port.onmessage = (e) => {
       // modo Live conversando: o audio vai para o Gemini (via servidor da Aura), nao para o servico local
       const toLive = live.streaming && live.ready && live.ws?.readyState === 1;
-      if (!toLive) {
+      // conectando ao Gemini Live logo depois do "Aura": guarda o que a pessoa ja esta falando (senao o comeco se perde)
+      const hold = !toLive && live.pending;
+      if (!toLive && !hold) {
         if (voice.ws?.readyState !== 1 || voice.busy) return;        // nao escuta enquanto pensa ou fala
         if (!voice.wakeOn && !voice.recording) return;
       }
       const f = e.data, pcm = new Int16Array(f.length);
       for (let i = 0; i < f.length; i++) pcm[i] = Math.max(-1, Math.min(1, f[i])) * 32767;
       const merged = new Int16Array(acc.length + pcm.length); merged.set(acc); merged.set(pcm, acc.length); acc = merged;
-      if (acc.length >= 1280) { (toLive ? live.ws : voice.ws).send(acc.buffer); acc = new Int16Array(0); }
+      if (acc.length >= 1280) {
+        if (hold) { if (live.held.length < 125) live.held.push(acc.buffer); }     // ate ~10 s
+        else (toLive ? live.ws : voice.ws).send(acc.buffer);
+        acc = new Int16Array(0);
+      }
     };
     await new Promise((ok, fail) => {
       const ws = new WebSocket(VOICE_WS); ws.binaryType = 'arraybuffer';
@@ -2731,7 +2721,7 @@ async function listDevices() {
 }
 
 // ===== Motor Vivo: Gemini Live (so depois da ativacao local; a chave fica no servidor) =====
-const live = { ws: null, ready: false, streaming: false, opening: null, available: false, voices: [], model: '',
+const live = { ws: null, ready: false, streaming: false, opening: null, pending: false, held: [], available: false, voices: [], model: '',
                idle: null, nextTime: 0, sources: new Set(), analyser: null, userBody: null, botBody: null };
 const useLive = () => cfg.engine === 'live' && live.available;
 
@@ -2761,13 +2751,17 @@ function liveOpen() {
 async function liveBegin(text) {
   voice.ws?.readyState === 1 && voice.ws.send(JSON.stringify({ cmd: 'cancel' }));   // o gravador local para
   voice.recording = false; voice.lastVoice = true;
+  live.held = []; live.pending = true;
   try {
     if (!live.ready) setState('thinking', 'Conectando ao Gemini Live');
     await liveOpen();
+    for (const b of live.held) live.ws.send(b);       // o que foi falado enquanto conectava
+    live.held = []; live.pending = false;
     live.streaming = true; liveTouch();
     if (text) { entry('user', text); live.ws.send(JSON.stringify({ type: 'text', text })); }
     if (!live.sources.size) setState('listening', 'Ouvindo · Gemini Live');
   } catch (e) {
+    live.held = []; live.pending = false;
     entry('err', `Gemini Live indisponível (${e.message}). Usando o modo local.`);
     live.streaming = false;
     if (text) sendText(text, true);
@@ -3222,7 +3216,7 @@ function renderPersonalities() {
 async function openSettings() {
   cfgVoices = await fetch(VOICE_HTTP + '/voices').then(r => r.json()).catch(() => []);
   await loadLiveStatus();
-  renderSettings(); renderMotorTab(); renderMemTab(); renderAccounts(); renderBackups();
+  renderSettings(); renderMotorTab(); renderMemTab(); renderBackups();
   if (!$('cfg-back').querySelector('.pane[data-pane="mic"]').hidden) renderMicTab();
   cfgBack.hidden = false;
   $('cfg-close').focus();
@@ -3290,7 +3284,7 @@ $('cfg-quit').onclick = async () => {
 };
 // subtitulo de cada pagina das configuracoes
 const PANE_SUB = {
-  geral: 'Nome, palavra de ativação e saudação.', aparencia: 'Tema, modelo e cor do orbe.', contas: 'Claude e ChatGPT como ajudantes, usando as suas assinaturas.',
+  geral: 'Nome, palavra de ativação e saudação.', aparencia: 'Tema, modelo e cor do orbe.',
   motor: 'O modelo que pensa, chaves de API, Gemini Live e fala local.', voz: 'Como ela soa e como se comporta.',
   mem: 'O que ela aprendeu sobre você.', ins: 'Arquivos markdown que ela lê em toda conversa.',
   mic: 'Microfone, alto-falante e modo conversa.',
@@ -3608,88 +3602,6 @@ $('gem-rm').onclick = async () => {
   if (cfg.engine === 'live') await saveSettings({ engine: 'local' });
   await loadLiveStatus(); renderMotorTab(); flash('Chave do Gemini removida.');
 };
-
-// ----- Assinaturas: conectar Claude e ChatGPT (Codex) pela tela -----
-let acctTimer = null;
-const ACCT_NAMES = { claude: 'Claude', codex: 'ChatGPT' };
-async function acctPost(path, body) {
-  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.detail || r.statusText);
-  return j;
-}
-
-async function renderAccounts() {
-  clearTimeout(acctTimer);
-  const st = await fetch('/api/accounts').then(r => r.json()).catch(() => null);
-  if (!st) return;
-  for (const prov of ['claude', 'codex']) {
-    const s = st[prov], card = document.querySelector(`.acct[data-acct="${prov}"]`);
-    const body = card.querySelector('.acct-body'), stEl = card.querySelector('.acct-st');
-    const lg = s.login && !['done', 'cancelled'].includes(s.login.status) ? s.login : null;
-    card.classList.toggle('ok', s.connected && !lg);
-    stEl.textContent = !s.installed ? 'não instalado' : lg ? 'conectando…' : s.connected ? '✓ conectado' : 'desconectado';
-    body.innerHTML = '';
-    const btn = (label, fn, ghost = false) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (ghost ? ' ghost' : ''); b.textContent = label; b.onclick = fn; return b; };
-    if (!s.installed) continue;
-    if (!lg) {
-      if (s.connected) body.append(btn('Desconectar', async () => {
-        if (!confirm(`Desconectar o ${ACCT_NAMES[prov]} da Aura?`)) return;
-        await acctPost(`/api/accounts/${prov}/logout`); renderAccounts();
-      }, true));
-      else body.append(btn('Conectar', async (e) => {
-        e.target.disabled = true;
-        try { await acctPost(`/api/accounts/${prov}/login`); } catch (err) { alert(err.message); }
-        renderAccounts();
-      }));
-      if (s.login?.status === 'done') { const ok = document.createElement('div'); ok.className = 'hint ok-msg'; ok.textContent = s.login.message; body.prepend(ok); }
-      continue;
-    }
-    if (lg.status === 'error') {
-      const e = document.createElement('div'); e.className = 'acct-err'; e.textContent = lg.message;
-      body.append(e, btn('Tentar de novo', async () => { await acctPost(`/api/accounts/${prov}/login`); renderAccounts(); }));
-      continue;
-    }
-    if (!lg.url) {
-      const w = document.createElement('div'); w.className = 'acct-wait'; w.textContent = lg.message || 'Iniciando…';
-      body.append(w, btn('Cancelar', async () => { await acctPost(`/api/accounts/${prov}/cancel`); renderAccounts(); }, true));
-    }
-    else if (prov === 'codex') {
-      const ol = document.createElement('ol');
-      const li1 = document.createElement('li'); li1.append('Abra '); const a = document.createElement('a'); a.href = lg.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = lg.url; li1.append(a, ' e entre na sua conta do ChatGPT.');
-      const li2 = document.createElement('li'); li2.append('Digite este código: ');
-      const code = document.createElement('span'); code.className = 'acct-code'; code.textContent = lg.code;
-      const cp = document.createElement('button'); cp.type = 'button'; cp.textContent = 'copiar';
-      cp.onclick = () => { navigator.clipboard?.writeText(lg.code); cp.textContent = 'copiado'; };
-      code.appendChild(cp); li2.appendChild(code);
-      ol.append(li1, li2);
-      const w = document.createElement('div'); w.className = 'acct-wait'; w.textContent = 'Aguardando você confirmar no site… (o código vale 15 min)';
-      body.append(ol, w, btn('Cancelar', async () => { await acctPost(`/api/accounts/${prov}/cancel`); renderAccounts(); }, true));
-    } else {
-      const ol = document.createElement('ol');
-      const li1 = document.createElement('li'); li1.append('Abra '); const a = document.createElement('a'); a.href = lg.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'este link de login da Anthropic'; li1.append(a, ' e autorize com a sua conta Claude.');
-      const li2 = document.createElement('li'); li2.textContent = 'Copie o código que a página mostrar e cole aqui:';
-      ol.append(li1, li2);
-      const row = document.createElement('div'); row.className = 'acct-row';
-      const inp = document.createElement('input'); inp.placeholder = 'cole o código aqui'; inp.autocomplete = 'off';
-      const go = btn('Concluir', async () => {
-        if (!inp.value.trim()) return inp.focus();
-        go.disabled = true;
-        try { await acctPost('/api/accounts/claude/code', { code: inp.value }); } catch (err) { alert(err.message); }
-        renderAccounts();
-      });
-      inp.onkeydown = (e) => { if (e.key === 'Enter') go.click(); };
-      row.append(inp, go);
-      body.append(ol, row);
-      if (lg.status === 'checking') { const w = document.createElement('div'); w.className = 'acct-wait'; w.textContent = lg.message; body.append(w); }
-      body.append(btn('Cancelar', async () => { await acctPost(`/api/accounts/${prov}/cancel`); renderAccounts(); }, true));
-    }
-  }
-  // acompanha sozinho enquanto algum login anda (menos quando voce esta colando o codigo do Claude)
-  const moving = ['starting', 'checking', 'waiting_user'];
-  if (!cfgBack.hidden && (moving.includes(st.claude.login?.status) || moving.includes(st.codex.login?.status)))
-    acctTimer = setTimeout(renderAccounts, 2000);
-}
 
 $('cfg-follow').onclick = async () => { await saveSettings({ follow_language: cfg.follow_language !== true }); sendWake(); renderMotorTab(); };
 
@@ -4708,7 +4620,6 @@ async function openModelPick() {
         list.appendChild(m);
       }
     }
-    group('Assinaturas (respondem direto)', data.agents);
     if (!list.children.length) list.innerHTML = '<div class="mp-grp">Nada encontrado</div>';
   };
   q.oninput = render;
@@ -4948,7 +4859,8 @@ connectGlobalPtt();
   setState('idle', idleText());
   await checkVoice();
   // saudacao falada (se o navegador bloquear o som, ela toca no primeiro clique)
-  if (cfg.greeting && voice.available) {
+  // (app de mesa trocando entre janela e entalhe recarrega a pagina: ai nao repete a saudacao)
+  if (cfg.greeting && voice.available && !new URLSearchParams(location.search).has('troca')) {
     playSpeech(fetchSpeech(greetingText()), { status: false });
   }
 })();

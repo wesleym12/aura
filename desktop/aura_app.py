@@ -264,6 +264,7 @@ class App:
         self._mode = conf.get("mode", "janela")
         self._on_top = bool(conf.get("on_top", False))   # entalhe sempre por cima (nao some com programa maximizado)
         self._win = None
+        self._switched = False    # a janela atual veio de uma troca de modo (nao da abertura do app)
         self._hwnd = 0            # janela do entalhe no Windows (achada quando aparece)
         self._expanded = False
         self._hidden = False
@@ -316,7 +317,10 @@ class App:
 
     # ---- janelas ----
     def _url(self):
-        return URL + ("/?ui=entalhe" if self._mode == "entalhe" else "/")
+        q = ["ui=entalhe"] if self._mode == "entalhe" else []
+        if self._switched:
+            q.append("troca=1")          # so trocou de modo: a pagina nao repete a saudacao
+        return URL + "/" + ("?" + "&".join(q) if q else "")
 
     def _screen(self):
         s = webview.screens[0]
@@ -360,6 +364,7 @@ class App:
         return self._win
 
     def _reopen(self):
+        self._switched = True
         old = self._win
         self._create()
         if old:
@@ -419,7 +424,10 @@ def main():
     threading.Thread(target=app._watch, daemon=True).start()
     threading.Thread(target=app._serve, args=(lock,), daemon=True).start()
     storage = CONF_DIR / "webview"
-    webview.start(private_mode=False, storage_path=str(storage), gui=None if WIN else "qt")
+    icons = Path(__file__).resolve().parent.parent / "aura" / "web" / "icons"
+    icon = icons / ("aura.ico" if WIN else "aura-192.png")      # icone da janela e da barra de tarefas
+    webview.start(private_mode=False, storage_path=str(storage), gui=None if WIN else "qt",
+                  icon=str(icon) if icon.is_file() else None)
 
 
 if __name__ == "__main__":

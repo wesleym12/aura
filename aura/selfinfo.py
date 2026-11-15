@@ -61,7 +61,7 @@ def profile(ctx: dict | None = None) -> str:
         f"- Roda em: {ctx.get('host_os') or 'PC do usuario'} (servicos em containers Docker). "
         f"Cerebro (o modelo que esta respondendo agora): {ctx.get('brain') or llm.describe()}.",
         f"- Voz: {'ativa (ouve pelo microfone e responde falando)' if _voice_ok() else 'desligada no momento'}.",
-        f"- Pasta de trabalho (onde voce, o Claude e o Codex mexem em arquivos): {workdir.to_windows(workdir.current())}. "
+        f"- Pasta de trabalho (onde voce mexe em arquivos): {workdir.to_windows(workdir.current())}. "
         "Nas ferramentas de arquivo use caminhos RELATIVOS a ela: 'hello.txt' fica direto nela; NAO repita o nome "
         f"da pasta. Itens na raiz agora: {_top_level()}.",
         # a data/hora NAO vai aqui: mudaria o prompt a cada minuto e o Ollama perderia o cache (ver brain.turn_context)

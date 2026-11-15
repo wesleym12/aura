@@ -125,6 +125,6 @@ def load_plugins():
 
 def load_all():
     # importa os modulos para registrar as ferramentas
-    from . import (agenda, agents, basic, config_tool, desktop, files, google_apps, home, images,  # noqa: F401
+    from . import (agenda, basic, config_tool, desktop, files, google_apps, home, images,  # noqa: F401
                    instructions, memory, music, schedules, system)
     load_plugins()

@@ -1,9 +1,8 @@
 # A.U.R.A.
 
 **Autonomous Utility and Response Assistant** (fala-se "Aura"). Assistente pessoal que roda no seu PC, tudo em Docker.
-Um modelo do **Ollama** (na GPU) cuida da rotina e chama as habilidades; o **Gemini** é opcional (voz ao vivo e nuvem);
-tarefas pesadas podem ir para o **Claude Code** e o **Codex**, usando as suas assinaturas. Tudo fica numa memória
-local pesquisável.
+Um modelo do **Ollama** (na GPU) cuida da rotina e chama as habilidades; o **Gemini** é opcional (voz ao vivo e nuvem).
+Tudo fica numa memória local pesquisável.
 
 ## Instalação
 
@@ -48,7 +47,7 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
     ```bash
     ssh -L 8765:localhost:8765 usuario@meuservidor.local
     ```
-    Com o túnel aberto, acesse http://localhost:8765. O Spotify, o Home Assistant e as contas do Claude e do Codex funcionam direto pelo endereço da rede.
+    Com o túnel aberto, acesse http://localhost:8765. O Spotify e o Home Assistant funcionam direto pelo endereço da rede.
   - **Spotify no servidor:** cadastre como Redirect URI o endereço mostrado no card (ex.: `https://meuservidor.local:8765/api/spotify/callback`).
 - A primeira instalação leva de 10 a 30 min. A A.U.R.A. **sobe sozinha** quando a máquina liga (o Docker reinicia os containers). Atualizar: `./atualizar.sh`. Reconfigurar: `bash instalar.sh`.
 - Se já houver um Home Assistant na máquina (porta 8123), ele não é instalado de novo: conecte o seu em Plugins → Casa inteligente → "Usar outro Home Assistant".
@@ -56,7 +55,7 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
 
 | Serviço | Papel |
 |---|---|
-| `aura` | API, chat web e CLIs `claude`/`codex`. Porta 8765: só nesta máquina (Windows) ou pela rede, com senha e HTTPS (Linux) |
+| `aura` | API e chat web. Porta 8765: só nesta máquina (Windows) ou pela rede, com senha e HTTPS (Linux) |
 | `ollama` | Modelo local, na GPU com `docker-compose.gpu.yml` (não fica exposto fora do Docker). Só no modo local (`COMPOSE_PROFILES=local`) |
 | `ollama-pull` | Baixa os modelos na primeira subida e sai (modo local) |
 | `voice` | Palavra de ativação, transcrição (Whisper) e fala (Kokoro/Piper). CPU, offline; a tela fala com ele pela A.U.R.A. (`/voice`) |
@@ -83,24 +82,23 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
   - Com o Live ligado, o modelo do PC sai da memória e o chat escrito também usa o Gemini: Flash, depois Flash-Lite se o Flash estiver lotado, e o modelo do PC só em último caso.
   - Sem chave, sem internet ou com erro, volta sozinho para o motor próprio.
 - **Cérebro:** qualquer servidor compatível com OpenAI: Ollama, LM Studio, llama.cpp, vLLM, OpenAI, Groq, DeepSeek, Mistral, xAI, OpenRouter ou "Outro". As chaves ficam no banco local e a tela só mostra o final delas.
-- **Trocar no meio da conversa:** o chip no campo de texto mostra a IA da conversa (verde = PC, amarelo = nuvem, laranja = assinatura).
-  - Clique para escolher entre o padrão, os modelos do PC, a nuvem e as assinaturas (Claude e Codex respondem direto, na pasta de trabalho).
+- **Trocar no meio da conversa:** o chip no campo de texto mostra a IA da conversa (verde = PC, amarelo = nuvem).
+  - Clique para escolher entre o padrão, os modelos do PC e a nuvem.
   - O novo modelo lê a conversa toda, e cada conversa lembra a sua IA.
-- **Contas × chave de API:** as contas (Configurações → Contas) usam a sua assinatura Claude Pro/Max ou ChatGPT Plus como **agentes** (programação e pesquisa, mais lentos, sem as habilidades da A.U.R.A.). Uma chave de API vira **o cérebro** dela, com todas as habilidades, mas é paga por uso: a assinatura do ChatGPT não inclui a API.
 - **Raciocínio privado:** `<think>` e afins nunca são falados, mostrados ou salvos.
 
 ## Habilidades
 
 ### Pasta de trabalho, projetos e anexos
 - **Cowork** (barra de controles) escolhe a pasta de trabalho dentro de `C:\Users\<você>`.
-  - Arquivos, Claude e Codex só mexem lá dentro.
+  - Os arquivos só são mexidos lá dentro.
   - AppData, `.ssh` e afins são bloqueados. O seletor tem **Nova pasta**.
 - **Projetos e seções** (lateral): cada projeto tem a sua pasta e as suas conversas; seções organizam os projetos.
 - **Anexos:** clipe, arrastar ou colar (até 10 arquivos, 25 MB cada). Vão para `anexos/` na pasta de trabalho.
 - **Documentos e imagens:** PDF (inclusive escaneado), Word, Excel e PowerPoint viram texto. Imagens são descritas por um modelo com visão local (`qwen3-vl:2b-instruct`) ou pelo Gemini.
 
 ### Desfazer
-- Tudo que muda algo entra num diário: arquivos criados, alterados, movidos ou apagados, tarefas do Codex, anotações, configurações, eventos, rascunhos e a casa inteligente.
+- Tudo que muda algo entra num diário: arquivos criados, alterados, movidos ou apagados, anotações, configurações, eventos, rascunhos e a casa inteligente.
 - Desfaça pelo **↩ Desfazer** embaixo da resposta, ou falando "desfaz o que você fez".
 - Apagar nunca apaga de verdade: vai para uma lixeira interna. Se você mexeu no arquivo depois, ela avisa antes de sobrescrever.
 
@@ -199,7 +197,7 @@ Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Na
 ## Configurações e aparência
 
 - **Menu** (com busca):
-  - **Preferências:** Geral, Aparência, Contas, Modelos, Voz e jeito, Memória, Instruções.
+  - **Preferências:** Geral, Aparência, Modelos, Voz e jeito, Memória, Instruções.
   - **Este computador:** Microfone e som, Backups.
   - **Personalização:** Skills, Conectores, Plugins.
 - **Aparência:** temas Claro e Escuro, seis modelos de orbe (Esfera, Anéis, Galáxia, Onda, Enxame, Holograma) e cor livre.
@@ -239,18 +237,6 @@ otch.ps1`).
   autoMemoryReclaim=dropCache
   ```
   Depois `wsl --shutdown` e abra o Docker Desktop. O `autoMemoryReclaim` devolve ao Windows a memória que o Linux só usava como cache.
-
-## Login no Claude e no Codex
-
-**Pela tela:** Configurações → **Contas** → Conectar.
-- **Codex:** abra o link e digite o código. A tela percebe sozinha quando termina.
-- **Claude:** autorize com a sua conta Pro/Max e cole o código.
-
-Pelo terminal:
-```powershell
-docker compose exec -it aura claude setup-token      # depois coloque em CLAUDE_CODE_OAUTH_TOKEN no .env
-docker compose exec -it aura codex login --device-auth
-```
 
 ## Comandos úteis
 

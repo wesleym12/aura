@@ -56,8 +56,7 @@ def describe(cfg: dict | None = None) -> str:
 
 # ---------- modelo por conversa ----------
 # Uma "escolha" e um texto: "" (padrao do Motor), "<provedor>:<modelo>" (ex.: "ollama:qwen3:8b",
-# "gemini:gemini-2.5-flash") ou "agent:claude" / "agent:codex" (a assinatura responde direto).
-AGENTS = {"claude": "Claude (assinatura)", "codex": "ChatGPT · Codex (assinatura)"}
+# "gemini:gemini-2.5-flash").
 _gemini_cache = {"t": 0.0, "models": []}
 
 
@@ -79,10 +78,6 @@ async def gemini_suggestions() -> list[str]:
         _gemini_cache.update(t=time.time() if names else time.time() - 3300, models=out)
     return _gemini_cache["models"]
 _NOT_CHAT = ("embed", "paraphrase", "nomic", "bge", "minilm", "-vl", "vision", "rerank", "whisper")
-
-
-def is_agent(choice: str | None) -> bool:
-    return bool(choice) and choice.startswith("agent:")
 
 
 LIVE_CHAT_MODEL = "gemini-flash-latest"
@@ -136,7 +131,7 @@ def default_cfg() -> dict:
 
 def cfg_for(choice: str | None) -> dict:
     """Config do cerebro para uma escolha (vazio ou invalido = padrao: Motor, ou Gemini com o Live ligado)."""
-    if not choice or is_agent(choice) or ":" not in choice:
+    if not choice or ":" not in choice:
         return default_cfg()
     prov, model = choice.split(":", 1)
     if prov not in PROVIDERS or not model:
@@ -150,10 +145,6 @@ def cfg_for(choice: str | None) -> dict:
 
 def label_for(choice: str | None) -> dict:
     """Nome curto para a tela: modelo + se e local/nuvem/assinatura."""
-    if is_agent(choice):
-        a = choice.split(":", 1)[1]
-        return {"choice": choice, "name": "Claude" if a == "claude" else "Codex", "where": "assinatura", "local": False,
-                "label": AGENTS.get(a, a)}
     c = cfg_for(choice)
     return {"choice": choice or "", "name": c["model"], "where": "local" if c["local"] else c["label"], "local": c["local"],
             "label": describe(c)}
@@ -169,7 +160,6 @@ def _ollama_models() -> list[str]:
 
 async def choices() -> dict:
     """Opcoes do seletor de modelo do chat."""
-    from .tools.agents import claude_ready, codex_ready
     cur = current()
     s = settings.get()
     local = [{"choice": f"ollama:{m}", "name": m, "detail": "no seu PC (GPU)"} for m in _ollama_models()]
@@ -190,11 +180,7 @@ async def choices() -> dict:
         for m in await gemini_suggestions():
             add("gemini", m, "Google Gemini" + (" · sempre a versão mais nova" if m.endswith("-latest") else ""))
     keyed = [{"id": k, "label": p["label"]} for k, p in PROVIDERS.items() if p["key"] and secrets.get(k)]
-    agents = [{"choice": "agent:claude", "name": "Claude", "detail": "sua assinatura · lê e edita a pasta de trabalho",
-               "ready": claude_ready(), "why": "" if claude_ready() else "faça login em Configurações → Motor"},
-              {"choice": "agent:codex", "name": "Codex (ChatGPT)", "detail": "sua assinatura · programação na pasta de trabalho",
-               "ready": codex_ready(), "why": "" if codex_ready() else "faça login em Configurações → Motor"}]
-    return {"default": label_for(""), "local": local, "cloud": cloud, "agents": agents, "providers": keyed}
+    return {"default": label_for(""), "local": local, "cloud": cloud, "providers": keyed}
 
 
 def _headers(cfg: dict) -> dict:

@@ -55,8 +55,6 @@ services:
       - EMBED_MODEL=${EMBED_MODEL:-paraphrase-multilingual}
       - VISION_MODEL=${VISION_MODEL:-qwen3-vl:2b-instruct}        # le imagens e PDFs escaneados (local)
       - AURA_LOCAL_LLM=${AURA_LOCAL_LLM:-1}         # 0 = "so Gemini": cerebro e busca na memoria pelo Gemini, sem Ollama
-      - AGENT_TIMEOUT=${AGENT_TIMEOUT:-600}
-      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - GEMINI_LIVE_MODEL=${GEMINI_LIVE_MODEL:-gemini-3.1-flash-live-preview}
       - HOST_AGENT_TOKEN=${HOST_AGENT_TOKEN:-}          # o agente do Windows se identifica com esta chave
@@ -77,8 +75,6 @@ services:
       - ${WORK_ROOT:-./workspace}:/host # sua pasta de usuario: dentro dela voce escolhe a pasta de trabalho
       - ./backups:/backups              # backups do banco (conversas, memoria...)
       - ./memoria:/memoria              # INSTRUCOES.md, SOBRE-MIM.md e skills/
-      - claude-auth:/home/node/.claude  # login do Claude Code
-      - codex-auth:/home/node/.codex    # login do Codex
       - tool-cache:/home/node/.cache    # servidores MCP baixados pelo uvx
       - npm-cache:/home/node/.npm       # idem para os do npx
     depends_on:
@@ -120,7 +116,5 @@ volumes:
   piper-voices:
   ollama:
   aura-data:
-  claude-auth:
-  codex-auth:
   tool-cache:
   npm-cache:

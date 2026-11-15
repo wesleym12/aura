@@ -119,7 +119,7 @@ Add-Type -Namespace AuraAgent -Name Win -MemberDefinition @'
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern void mouse_event(uint f, uint dx, uint dy, uint d, System.UIntPtr e);
 '@
-$script:desktopCmds = @("windows", "focus", "open", "ui", "click", "type", "keys", "screenshot", "media")
+$script:desktopCmds = @("windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media")
 $script:uiElems = @()
 
 function Press-Key([byte]$vk) {

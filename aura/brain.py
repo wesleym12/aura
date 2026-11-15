@@ -164,39 +164,11 @@ def _current_user_index(msgs: list) -> int | None:
     return None
 
 
-def _agent_prompt(s: Session, text: str) -> str:
-    """Pedido para o Claude/Codex quando ele e a IA da conversa: leva o historico recente junto."""
-    cfg = settings.get()
-    hist = [m for m in s.messages[1:-1] if m["role"] in ("user", "assistant") and m.get("content")
-            and not str(m["content"]).startswith("[sistema]")][-12:]
-    lines = [f"{'Usuario' if m['role'] == 'user' else 'Assistente'}: {str(m['content'])[:1500]}" for m in hist]
-    lang = LANG_NAMES.get(turn_lang(s), "Brazilian Portuguese")
-    return (f"Voce esta conversando com {cfg['user_name']} dentro do assistente pessoal dele ({cfg['assistant_name']}). "
-            f"Responda em {lang}, de forma direta. A pasta atual e a pasta de trabalho dele.\n"
-            + ("\nConversa ate aqui:\n" + "\n".join(lines) + "\n" if lines else "")
-            + f"\nMensagem atual do usuario:\n{text}")
-
-
-async def _agent_turn(s: Session, sid: str, text: str, emit: Emit) -> dict:
-    from .tools.agents import claude_ready, codex_ready, direct
-    agent = s.model.split(":", 1)[1]
-    ready = claude_ready() if agent == "claude" else codex_ready()
-    name = "Claude" if agent == "claude" else "Codex"
-    if not ready:
-        return {"status": "done", "trace": [],
-                "reply": f"O {name} ainda nao esta conectado. Faca o login em Configuracoes -> Motor, ou troque de modelo no seletor."}
-    if emit:
-        await emit({"type": "tool", "tool": "perguntar_" + agent})
-    reply = await direct(agent, _agent_prompt(s, text), text)
-    s.messages.append({"role": "assistant", "content": reply})
-    return {"status": "done", "reply": reply, "trace": ["perguntar_" + agent]}
-
-
 # avisos prontos para tarefas de poucos segundos: gerar a frase com o modelo local custava mais que a propria
 # tarefa e tirava o prompt do chat do cache do Ollama (a resposta final ficava ~4 s mais lenta)
 QUICK_ACKS = {"tocar_musica": "Já vou colocar para tocar.", "criar_imagem": "Vou criar a imagem, só um instante.",
               "ler_tela": "Deixa eu ver a tela.", "ler_documento": "Vou ler o documento, um instante."}
-LONG_TASKS = {"perguntar_claude", "perguntar_codex"}      # estas levam minutos: vale a frase personalizada
+LONG_TASKS: set[str] = set()      # ferramentas que levam minutos: ganham uma frase personalizada
 
 
 async def _ack(s: Session, tool_name: str, args: dict) -> str:
@@ -344,7 +316,7 @@ async def chat(sid: str, text: str, emit: Emit = None, ctx: dict | None = None, 
     s.turn_cfg = None                                  # pedido novo: o padrao escolhe o modelo de novo
     s.messages.append({"role": "user", "content": text})
     acc = _track(sid)
-    res = await (_agent_turn(s, sid, text, emit) if llm.is_agent(s.model) else _loop(s, emit))
+    res = await _loop(s, emit)
     res["actions"] = acc            # o que foi feito neste turno (cada um com botao Desfazer)
     res["images"] = actions.turn_media.get() or []
     return res

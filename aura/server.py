@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import shutil
 from pathlib import Path
 
 import httpx
@@ -9,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile, WebSocket
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
-from . import (access, accounts, actions, attachments, autostart, backup, metrics, brain, conversations, facts, gcal, homeassistant, hostbridge,
+from . import (access, actions, attachments, autostart, backup, metrics, brain, conversations, facts, gcal, homeassistant, hostbridge,
                instructions, live, spotify,
                llm, mcpclient, memory, scheduler, secrets, settings, telegram, workdir)
 from .tools import desktop
@@ -825,10 +824,6 @@ def _stream(sid: str, run, learn_from: str | None = None) -> StreamingResponse:
 def _valid_choice(choice: str) -> str:
     if not choice:
         return ""
-    if llm.is_agent(choice):
-        if choice.split(":", 1)[1] not in llm.AGENTS:
-            raise HTTPException(400, "IA desconhecida")
-        return choice
     prov = choice.split(":", 1)[0]
     if prov not in llm.PROVIDERS or ":" not in choice:
         raise HTTPException(400, "modelo invalido (use provedor:modelo)")
@@ -960,43 +955,6 @@ async def host_cancel():
 @app.get("/api/live")
 def live_status():
     return live.status()
-
-
-# ---- contas: Claude e ChatGPT (Codex) pelas suas assinaturas, conectadas pela tela ----
-@app.get("/api/accounts")
-def accounts_status():
-    return accounts.status()
-
-
-@app.post("/api/accounts/{provider}/login")
-def accounts_login(provider: str):
-    try:
-        return accounts.start(provider)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-
-
-@app.post("/api/accounts/claude/code")
-def accounts_claude_code(body: dict):
-    code = str(body.get("code", "")).strip()
-    if not code:
-        raise HTTPException(400, "cole o codigo")
-    try:
-        return accounts.submit_code(code)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-
-
-@app.post("/api/accounts/{provider}/cancel")
-def accounts_cancel(provider: str):
-    accounts.cancel(provider)
-    return {"ok": True}
-
-
-@app.post("/api/accounts/{provider}/logout")
-def accounts_logout(provider: str):
-    accounts.logout(provider)
-    return accounts.status()
 
 
 # ---- backups do banco ----
@@ -1390,7 +1348,5 @@ async def status():
         "engine": settings.get().get("engine"), "live": live.available(),
         "agent": hostbridge.agent_online(),           # agente do Windows (controle do PC, desligar, abrir pastas)
         "model_ready": any(m == OLLAMA_MODEL or m.split(":")[0] == OLLAMA_MODEL for m in models),
-        "claude": bool(shutil.which("claude")),
-        "codex": bool(shutil.which("codex")),
         "tools": [{"name": t.name, "sensitive": t.sensitive} for t in REGISTRY.values()],
     }

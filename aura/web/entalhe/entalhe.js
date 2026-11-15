@@ -18,6 +18,7 @@
     pc: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
     ajustes: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
     recolher: '<path d="M6 15l6-6 6 6"/>',
+    ear: '<path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4"/>',
     mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
   };
@@ -80,7 +81,7 @@
   // ---------- telas ----------
   const R = {
     conversa() {
-      const wake = tool(`${ICON(I.mic)}Sempre ouvindo`, () => { $('wake-btn').click(); setTimeout(sync, 400); });
+      const wake = tool(`${ICON(I.ear)}Sempre ouvindo`, () => { $('wake-btn').click(); setTimeout(sync, 400); });
       const sync = () => wake.classList.toggle('on', $('wake-btn').getAttribute('aria-pressed') === 'true');
       sync();
       tool(ICON(I.mic), () => $('mic-btn').click(), 'e-btn e-icon').title = 'Falar agora';
@@ -255,7 +256,7 @@
         <div class="e-set"><span>Aprender sozinha<small>Guarda fatos duradouros sobre você que aparecem nas conversas.</small></span>${sw('e-learn', cfg.auto_learn !== false)}</div>
         <div class="e-set"><span>Nome da assistente</span><input class="e-input" style="max-width:220px" id="e-an" maxlength="40" value="${esc(cfg.assistant_name)}"></div>
         <div class="e-set"><span>Palavra de ativação</span><input class="e-input" style="max-width:220px" id="e-ww" maxlength="40" value="${esc(cfg.wake_word)}"></div>
-        <div class="e-set"><span>Todas as configurações<small>Modelos, voz, contas, conectores, plugins, backups... (abre a A.U.R.A. no modo janela)</small></span>
+        <div class="e-set"><span>Todas as configurações<small>Modelos, voz, conectores, plugins, backups... (abre a A.U.R.A. no modo janela)</small></span>
           <button class="e-btn" type="button" id="e-full">Abrir</button></div>
         <div class="e-set"><span>Encerrar a A.U.R.A.<small>Desliga todos os serviços dela.</small></span>
           <button class="e-btn e-danger" type="button" id="e-quit">Encerrar</button></div>`;

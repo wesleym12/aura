@@ -75,6 +75,7 @@ body[data-sleep] .e-brand small::before { background: #8a96a3; }
 .e-switch { width: 40px; height: 22px; border-radius: 99px; border: 0; background: #2a303c; position: relative; cursor: pointer; flex: none; }
 .e-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #c9d0db; transition: transform .2s; }
 .e-switch[aria-pressed="true"] { background: var(--e-acc); } .e-switch[aria-pressed="true"]::after { transform: translateX(18px); background: #fff; }
+.e-set > .e-seg { flex: none; }
 .e-seg { display: inline-flex; border: 1px solid var(--e-line); border-radius: 9px; overflow: hidden; }
 .e-seg button { padding: 5px 12px; border: 0; background: none; color: var(--e-dim); font: 600 12.5px "Exo 2", sans-serif; cursor: pointer; }
 .e-seg button.on { background: rgba(255, 154, 31, .16); color: var(--e-acc2); }

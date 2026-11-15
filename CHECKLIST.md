@@ -11,8 +11,6 @@ Testes de uso real (com as suas contas e aparelhos). Marque com `[x]` quando pas
 - [x] **Modo conversa desligado:** depois de responder ela volta a "Dormindo · diga Aura" (Gemini Live).
 
 ## Pendentes
-- [ ] **Login do Claude** (Configurações → Contas) e conversar escolhendo "Claude" no chip do chat.
-- [ ] **Login do ChatGPT / Codex** (Configurações → Contas) e pedir uma tarefa de programação.
 - [ ] **Google Agenda com credencial real** (e depois Gmail, Drive, Docs e Sheets).
 - [ ] **Spotify:** criar o app no painel do Spotify, colar o Client ID, "toca a minha playlist <nome>", "pula essa", "o que está tocando?".
 - [ ] **Casa inteligente:** criar a conta no Home Assistant, adicionar os aparelhos (Tuya/Smart Life), Conectar, "liga a luz da sala" e Desfazer.
