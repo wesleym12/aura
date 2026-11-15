@@ -1,0 +1,89 @@
+/* Interface propria do modo entalhe (app de mesa). So entra com ?ui=entalhe; o modo janela nao muda. */
+#ent { display: none; }
+html.notch:not(.mini) body { display: block; padding: 0; background: #0b0d12; }
+html.notch:not(.mini) body > *:not(#ent):not(.modal-back):not(.toast):not(#notch-pill) { display: none !important; }
+html.notch:not(.mini) #ent {
+  --e-bg: #0b0d12; --e-side: #07090d; --e-card: #141821; --e-card2: #1a1f2a; --e-line: rgba(255, 255, 255, .07);
+  --e-text: #e6e9ef; --e-dim: #8d97a7; --e-acc: #ff9a1f; --e-acc2: #ffb54d;
+  display: grid; grid-template-columns: 196px minmax(0, 1fr); position: fixed; inset: 0; color: var(--e-text);
+  font: 500 14px/1.5 "Exo 2", "Segoe UI", sans-serif; background: var(--e-bg);
+}
+
+/* ----- menu lateral ----- */
+.e-side { display: flex; flex-direction: column; gap: 2px; padding: 14px 10px 12px; background: var(--e-side); border-right: 1px solid var(--e-line); min-height: 0; }
+.e-brand { display: flex; align-items: center; gap: 8px; padding: 2px 6px 14px; }
+.e-brand b { display: block; font: 700 12px "Orbitron", sans-serif; letter-spacing: .14em; }
+.e-brand small { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--e-dim); }
+.e-brand small::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #3ccf8e; }
+body[data-state="listening"] .e-brand small::before { background: #3ec7ff; }
+body[data-state="thinking"] .e-brand small::before { background: #b48cff; }
+body[data-state="speaking"] .e-brand small::before { background: #ff9a1f; }
+body[data-sleep] .e-brand small::before { background: #8a96a3; }
+.e-nav { display: flex; align-items: center; gap: 11px; width: 100%; padding: 7px 10px; border: 0; border-radius: 9px; background: none;
+  color: #a9b2bf; font: 500 13.5px "Exo 2", sans-serif; text-align: left; cursor: pointer; }
+.e-nav:hover { background: rgba(255, 255, 255, .05); color: var(--e-text); }
+.e-nav.on { background: rgba(255, 154, 31, .14); color: var(--e-acc2); }
+.e-nav svg { width: 17px; height: 17px; flex: none; }
+.e-nav .e-badge { margin-left: auto; font-size: 11px; color: var(--e-dim); }
+.e-space { flex: 1; }
+
+/* ----- area de conteudo ----- */
+.e-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
+.e-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px 10px; }
+.e-head h2 { margin: 0; font: 700 16px "Exo 2", sans-serif; display: flex; align-items: center; gap: 8px; }
+.e-head h2 i { width: 9px; height: 9px; border-radius: 50%; background: var(--e-acc); box-shadow: 0 0 10px var(--e-acc); }
+.e-tools { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.e-view { display: none; min-height: 0; overflow: auto; padding: 0 18px 14px; }
+.e-view.on { display: block; }
+.e-view.e-flex.on { display: flex; flex-direction: column; }
+
+.e-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9px; border: 1px solid var(--e-line);
+  background: var(--e-card); color: var(--e-text); font: 600 12.5px "Exo 2", sans-serif; cursor: pointer; white-space: nowrap; }
+.e-btn:hover { border-color: rgba(255, 154, 31, .5); }
+.e-btn.acc { background: var(--e-acc); border-color: var(--e-acc); color: #1a1205; }
+.e-btn.on { background: rgba(255, 154, 31, .16); border-color: rgba(255, 154, 31, .55); color: var(--e-acc2); }
+.e-btn svg { width: 15px; height: 15px; }
+.e-icon { width: 32px; height: 32px; padding: 0; justify-content: center; border-radius: 50%; }
+.e-input { width: 100%; box-sizing: border-box; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--e-line); background: var(--e-card);
+  color: var(--e-text); font: 500 13.5px "Exo 2", sans-serif; outline: none; }
+.e-input:focus { border-color: rgba(255, 154, 31, .6); }
+.e-row { display: flex; gap: 8px; align-items: center; }
+.e-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.e-chip { padding: 4px 10px; border-radius: 99px; border: 1px solid var(--e-line); background: none; color: var(--e-dim); font: 600 12px "Exo 2", sans-serif; cursor: pointer; }
+.e-chip.on { color: var(--e-acc2); border-color: rgba(255, 154, 31, .55); background: rgba(255, 154, 31, .1); }
+.e-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.e-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 11px; background: var(--e-card); border: 1px solid transparent; }
+.e-item.click { cursor: pointer; } .e-item.click:hover { border-color: var(--e-line); background: var(--e-card2); }
+.e-item .e-txt { flex: 1; min-width: 0; }
+.e-item b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.e-item p { margin: 2px 0 0; color: var(--e-dim); font-size: 12.5px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.e-item small { color: var(--e-dim); font-size: 11.5px; }
+.e-item .e-x { background: none; border: 0; color: var(--e-dim); cursor: pointer; padding: 2px 4px; font-size: 15px; }
+.e-item .e-x:hover { color: #ff6b6b; }
+.e-tag { flex: none; padding: 1px 8px; border-radius: 99px; font-size: 11px; background: rgba(255, 255, 255, .06); color: var(--e-dim); }
+.e-tag.ok { color: #3ccf8e; background: rgba(60, 207, 142, .12); }
+.e-empty { padding: 30px 10px; text-align: center; color: var(--e-dim); }
+.e-empty b { display: block; color: var(--e-text); margin-bottom: 4px; }
+.e-sec { margin: 16px 0 6px; font: 500 10.5px "JetBrains Mono", monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--e-dim); }
+.e-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.e-tile { padding: 12px; border-radius: 12px; background: var(--e-card); }
+.e-tile small { display: block; color: var(--e-dim); font: 500 10px "JetBrains Mono", monospace; letter-spacing: .14em; }
+.e-tile b { font: 600 20px "Exo 2", sans-serif; }
+.e-tile.click { cursor: pointer; border: 1px solid transparent; } .e-tile.click:hover { border-color: rgba(255, 154, 31, .45); }
+.e-set { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--e-line); }
+.e-set > span { flex: 1; } .e-set small { display: block; color: var(--e-dim); font-size: 12px; }
+.e-switch { width: 40px; height: 22px; border-radius: 99px; border: 0; background: #2a303c; position: relative; cursor: pointer; flex: none; }
+.e-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #c9d0db; transition: transform .2s; }
+.e-switch[aria-pressed="true"] { background: var(--e-acc); } .e-switch[aria-pressed="true"]::after { transform: translateX(18px); background: #fff; }
+.e-seg { display: inline-flex; border: 1px solid var(--e-line); border-radius: 9px; overflow: hidden; }
+.e-seg button { padding: 5px 12px; border: 0; background: none; color: var(--e-dim); font: 600 12.5px "Exo 2", sans-serif; cursor: pointer; }
+.e-seg button.on { background: rgba(255, 154, 31, .16); color: var(--e-acc2); }
+.e-danger { color: #ff8b8b; border-color: rgba(255, 107, 107, .4); }
+
+/* ----- conversa: mensagens e caixa de texto (os mesmos do modo janela, com o visual do entalhe) ----- */
+#e-conv { gap: 10px; }
+#e-conv #log { flex: 1; min-height: 0; overflow: auto; padding-right: 4px; }
+#e-conv #attach-row:not([hidden]) { display: flex; }
+#e-conv #f { flex: none; margin: 0; }
+#e-conv .e-hello { margin: auto; text-align: center; color: var(--e-dim); }
+#e-conv .e-hello .np-face { margin: 0 auto 12px; transform: scale(1.6); }

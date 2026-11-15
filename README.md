@@ -208,7 +208,7 @@ Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Na
 - **Iniciar com o Windows** (Geral): grava `Aura.vbs` na pasta Inicializar, que roda o `iniciar.ps1` escondido no logon. Desligar apaga o arquivo. Pelo terminal: `.\autostart.ps1`, `-Status` ou `-Remover`.
 - **App de mesa** (Windows e Linux, `desktop/aura_app.py`): a A.U.R.A. fora do navegador, em dois modos (Geral → **Modo de exibição**):
   - **Janela:** uma janela própria, como um aplicativo comum.
-  - **Entalhe:** um rostinho no topo da tela, sempre à mão, que reage ao estado: pisca quando está pronta, arregala os olhos (azul) ao ouvir, olha para os lados (roxo) ao pensar e mexe a boca (laranja) ao falar. **Passe o mouse** e a A.U.R.A. desce num painel escuro com menu lateral (Conversa, Histórico, Memória, Agenda, Agendados, Música, Casa, Meu PC, Configurações) e a caixa de conversa ao lado; tire o mouse e ela recolhe. **Clicando** dentro, o painel fica aberto até você clicar em outro programa. A voz e a palavra de ativação continuam funcionando com ela recolhida, e um pedido de Autorizar abre o painel sozinho.
+  - **Entalhe:** um rostinho (cabeça branca com dois olhinhos) e o relógio no topo da tela. Ele reage ao estado: pisca quando está pronta, brilho azul ao ouvir, roxo olhando para os lados ao pensar, laranja mexendo a boca ao falar. **Passe o mouse** e abre a interface própria do entalhe: menu lateral (Conversa, Histórico, Memória, Agenda, Agendados, Música, Casa, Meu PC, Ajustes) e uma tela por vez, desenhada para o painel. Tire o mouse e ela recolhe; **clicando** dentro, fica aberta até você clicar em outro programa. A voz e a palavra de ativação continuam funcionando com ela recolhida, e um pedido de Autorizar abre o painel sozinho. Em Ajustes → "Todas as configurações" a A.U.R.A. passa para o modo janela.
   - **Entalhe acima das janelas** (Geral): ligado, ele fica sempre visível, por cima de tudo; desligado, some quando um programa está maximizado ou em tela cheia.
   - Abrir o atalho de novo traz a janela para a frente (ou abre o entalhe). No logon, só o modo entalhe aparece sozinho.
 - **Aplicativo pelo navegador (PWA):** para quem não usa o app de mesa (ou acessa de outro aparelho): a A.U.R.A. é instalável pelo Edge/Chrome, numa janela própria com ícone no menu Iniciar.
@@ -278,7 +278,7 @@ A interface (`aura/web/index.html`) é montada ao vivo: basta F5.
 | `aura/gcal.py`, `aura/connectors.py`, `aura/mcpclient.py` | Google, catálogo de conectores e cliente MCP |
 | `aura/spotify.py`, `aura/homeassistant.py`, `aura/telegram.py` | Plugins nativos |
 | `aura/hostbridge.py`, `host-agent/agent.ps1` | Ponte com o agente do Windows |
-| `desktop/aura_app.py` | App de mesa (Windows e Linux): modo janela e modo entalhe |
+| `desktop/aura_app.py`, `aura/web/entalhe/` | App de mesa (Windows e Linux) e a interface própria do modo entalhe |
 | `aura/workdir.py`, `aura/attachments.py`, `aura/docreader.py`, `aura/imagegen.py` | Pasta de trabalho, anexos, documentos e imagens |
 | `aura/scheduler.py`, `aura/backup.py`, `aura/autostart.py` | Agendados, backups e início com o Windows |
 | `voice/app.py` | Serviço de voz (ativação, Whisper, Kokoro/Piper) |

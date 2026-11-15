@@ -740,6 +740,18 @@ def index():
     return FileResponse(WEB / "index.html")
 
 
+@app.get("/entalhe/{name}")
+def entalhe_file(name: str):
+    """Interface propria do app de mesa no modo entalhe (web/entalhe: css e js)."""
+    import re
+    p = WEB / "entalhe" / name
+    m = re.fullmatch(r"[a-z0-9-]+\.(css|js)", name)
+    if not m or not p.is_file():
+        raise HTTPException(404)
+    mt = {"css": "text/css", "js": "text/javascript"}[m.group(1)]
+    return FileResponse(p, media_type=f"{mt}; charset=utf-8", headers={"Cache-Control": "no-cache"})
+
+
 @app.get("/icons/{name}")
 def icon(name: str):
     """Logos dos conectores (Simple Icons, CC0) e icones do aplicativo, guardados em web/icons."""

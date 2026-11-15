@@ -877,88 +877,38 @@
 
   /* ===== App de mesa no modo entalhe (?ui=entalhe) =====
      Recolhido: pilula no topo da tela com o rostinho. Aberto: painel escuro com menu lateral e o conteudo ao lado. */
-  #notch-pill, #notch-collapse, #np-side, #np-pc { display: none; }
+  #notch-pill, #notch-collapse { display: none; }
   html.notch.mini body > *:not(#notch-pill) { display: none !important; }
   html.notch.mini, html.notch.mini body { background: #050608 !important; overflow: hidden; }
   html.notch.mini #notch-pill { display: flex; position: fixed; inset: 0; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
-  /* rostinho (desenho proprio da A.U.R.A.): pisca, arregala ao ouvir, olha para os lados ao pensar, fala */
-  .np-face { --np: #e8eef5; position: relative; display: block; width: 46px; height: 18px; flex: none; }
-  .np-face i { position: absolute; background: var(--np); transition: background .25s, height .2s, top .2s, width .2s; }
-  .np-face .eye { top: 4px; width: 9px; height: 10px; border-radius: 50%; animation: np-blink 5s infinite; }
+  /* rostinho (desenho proprio da A.U.R.A.): cabeca branca arredondada com dois olhinhos; o brilho em volta mostra o estado */
+  .np-face { --np: transparent; position: relative; display: block; flex: none; width: 36px; height: 24px; border-radius: 50% / 58%;
+    background: radial-gradient(120% 90% at 35% 25%, #ffffff 0%, #f1f3f6 55%, #d9dde4 100%);
+    box-shadow: 0 0 0 2px var(--np), 0 0 12px var(--np); transition: box-shadow .25s; }
+  .np-face i { position: absolute; background: #14161a; transition: height .2s, top .2s, width .2s; }
+  .np-face .eye { top: 9px; width: 6px; height: 7px; border-radius: 50%; animation: np-blink 5s infinite; }
   .np-face .l { left: 9px; } .np-face .r { right: 9px; }
-  .np-face .mouth { left: 50%; bottom: 0; width: 8px; height: 2px; margin-left: -4px; border-radius: 2px; opacity: 0; }
+  .np-face .mouth { left: 50%; top: 17px; width: 4px; height: 1.5px; margin-left: -2px; border-radius: 2px; opacity: 0; }
   @keyframes np-blink { 0%, 45%, 49%, 100% { transform: scaleY(1); } 47% { transform: scaleY(.1); } }
-  @keyframes np-look { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
-  @keyframes np-talk { 50% { width: 12px; height: 5px; margin-left: -6px; border-radius: 4px; } }
-  body[data-state="listening"] .np-face { --np: #3ec7ff; }
-  body[data-state="listening"] .np-face .eye { top: 2px; height: 13px; }
-  body[data-state="thinking"] .np-face { --np: #b48cff; }
-  body[data-state="thinking"] .np-face .eye { top: 6px; height: 7px; animation: np-look 1.2s ease-in-out infinite; }
-  body[data-state="speaking"] .np-face { --np: #ff9a1f; }
+  @keyframes np-look { 0%, 100% { transform: translateX(-2px); } 50% { transform: translateX(2px); } }
+  @keyframes np-talk { 50% { width: 7px; height: 3px; margin-left: -3.5px; border-radius: 3px; } }
+  @keyframes np-glow { 50% { box-shadow: 0 0 0 2px var(--np), 0 0 4px var(--np); } }
+  body[data-state="listening"] .np-face { --np: #3ec7ff; animation: np-glow 1.1s ease-in-out infinite; }
+  body[data-state="listening"] .np-face .eye { top: 8px; height: 8.5px; }
+  body[data-state="thinking"] .np-face { --np: #b48cff; animation: np-glow .8s ease-in-out infinite; }
+  body[data-state="thinking"] .np-face .eye { animation: np-look 1.2s ease-in-out infinite; }
+  body[data-state="speaking"] .np-face { --np: #ff9a1f; animation: np-glow .5s ease-in-out infinite; }
   body[data-state="speaking"] .np-face .mouth { opacity: 1; animation: np-talk .35s ease-in-out infinite; }
-  body[data-sleep] .np-face { --np: #8a96a3; }
-  body[data-sleep] .np-face .eye { top: 9px; height: 2px; border-radius: 2px; animation: none; }
+  body[data-sleep] .np-face { filter: brightness(.8); }
+  body[data-sleep] .np-face .eye { top: 11px; height: 1.6px; border-radius: 2px; animation: none; }
+  html.notch.mini #notch-pill { gap: 10px; }
+  #notch-pill .np-time { color: #d6dce5; font: 600 13px "Exo 2", "Segoe UI", sans-serif; letter-spacing: .02em; }
 
-  /* painel aberto */
-  html.notch:not(.mini) { --np-side: 200px; }
-  html.notch:not(.mini) body { padding-left: var(--np-side); grid-template-rows: minmax(0, 1fr); }
-  html.notch:not(.mini) body > header, html.notch:not(.mini) body > footer { display: none !important; }
-  /* so a conversa (mensagens + caixa de texto): sem orbe, botoes grandes e o resto da tela do modo janela */
-  html.notch:not(.mini) .stage > .center { display: none !important; }
-  html.notch:not(.mini) .stage { grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: minmax(0, 1fr) !important; }
-  html.notch:not(.mini) .stage > .chat { border: 0; padding: 14px 18px 12px; min-height: 0; }
-  html.notch:not(.mini) #np-side { display: flex; flex-direction: column; gap: 2px; position: fixed; z-index: 60; inset: 0 auto 0 0;
-    width: var(--np-side); box-sizing: border-box; padding: 14px 10px 12px; background: #07090d; border-right: 1px solid rgba(255, 255, 255, .06); }
-  #np-side .np-brand { display: flex; align-items: center; gap: 8px; padding: 2px 6px 14px; }
-  #np-side .np-brand b { display: block; font: 700 12px "Orbitron", sans-serif; letter-spacing: .14em; color: #e6e9ef; }
-  #np-side .np-brand small { display: flex; align-items: center; gap: 6px; font: 500 11px "Exo 2", sans-serif; color: #8d97a7; }
-  #np-side .np-brand small::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #3ccf8e; }
-  body[data-state="listening"] #np-side .np-brand small::before { background: #3ec7ff; }
-  body[data-state="thinking"] #np-side .np-brand small::before { background: #b48cff; }
-  body[data-state="speaking"] #np-side .np-brand small::before { background: #ff9a1f; }
-  body[data-sleep] #np-side .np-brand small::before { background: #8a96a3; }
-  #np-side .np-item { display: flex; align-items: center; gap: 11px; width: 100%; padding: 7px 10px; border: 0; border-radius: 9px;
-    background: transparent; color: #a9b2bf; font: 500 13.5px "Exo 2", sans-serif; text-align: left; cursor: pointer; }
-  #np-side .np-item:hover { background: rgba(255, 255, 255, .05); color: #e6e9ef; }
-  #np-side .np-item.on { background: rgba(255, 154, 31, .14); color: #ffb54d; }
-  #np-side .np-item svg { width: 17px; height: 17px; flex: none; }
-  #np-side .np-space { flex: 1; }
-  /* configuracoes, agenda e afins abrem no espaco do conteudo, ao lado do menu */
-  html.notch:not(.mini) .modal-back { left: var(--np-side); padding: 8px; backdrop-filter: none; }
-  html.notch:not(.mini) .modal-back > .modal { width: 100%; height: 100%; max-height: none; }
-  html.notch:not(.mini) .history.open { left: var(--np-side); box-shadow: none; }
-  html.notch:not(.mini) #np-pc:not([hidden]) { display: block; position: fixed; z-index: 50; inset: 0 0 0 var(--np-side);
-    padding: 20px 24px; overflow: auto; background: var(--bg); }
-  #np-pc h3 { margin: 0 0 14px; font: 700 15px "Exo 2", sans-serif; color: var(--text); }
-  #np-pc .np-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 18px; }
-  #np-pc .np-tile { padding: 12px; border-radius: 12px; background: var(--tile); border: 1px solid var(--line); }
-  #np-pc .np-tile small { display: block; color: var(--dim); font: 500 10px "JetBrains Mono", monospace; letter-spacing: .14em; }
-  #np-pc .np-tile b { font: 600 20px "Exo 2", sans-serif; color: var(--text); }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
-<div id="notch-pill" title="A.U.R.A."><span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i></span></div>
-<aside id="np-side" aria-label="Menu da A.U.R.A.">
-  <div class="np-brand"><span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i></span><span><b id="np-side-name">A.U.R.A.</b><small id="np-side-st">Pronta</small></span></div>
-  <button class="np-item on" type="button" data-np="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/></svg>Conversa</button>
-  <button class="np-item" type="button" data-np="conversas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Histórico</button>
-  <button class="np-item" type="button" data-np="memoria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-5.9.8A3 3 0 0 0 4 11a3 3 0 0 0 1.5 5.2A3 3 0 0 0 12 18zM12 5a3 3 0 0 1 5.9.8A3 3 0 0 1 20 11a3 3 0 0 1-1.5 5.2A3 3 0 0 1 12 18zM12 5v13"/></svg>Memória</button>
-  <button class="np-item" type="button" data-np="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
-  <button class="np-item" type="button" data-np="agendados"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Agendados</button>
-  <button class="np-item" type="button" data-np="musica"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Música</button>
-  <button class="np-item" type="button" data-np="casa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Casa</button>
-  <button class="np-item" type="button" data-np="pc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Meu PC</button>
-  <span class="np-space"></span>
-  <button class="np-item" type="button" data-np="config"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Configurações</button>
-  <button class="np-item" type="button" data-np="recolher"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>Recolher</button>
-</aside>
-<section id="np-pc" hidden aria-label="Meu PC">
-  <h3>Meu PC</h3>
-  <div class="np-tiles" id="np-tiles"></div>
-  <div class="field row"><span><span class="label">Controle do computador</span><br><small class="hint">A A.U.R.A. abre programas e sites, lê a tela e (com o seu Autorizar) clica e digita.</small></span>
-    <button class="toggle" id="np-pc-ctl" type="button" aria-pressed="false">Desligado</button></div>
-</section>
+<div id="notch-pill" title="A.U.R.A."><span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i></span><span class="np-time" id="np-time">--:--</span></div>
 <header>
   <button class="icon-btn" id="history-btn" title="Conversas" aria-label="Abrir conversas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -1497,7 +1447,12 @@ function setState(state, text) {
 
 // ===== App de mesa (desktop/aura_app.py): modo janela ou entalhe =====
 const NOTCH = new URLSearchParams(location.search).get('ui') === 'entalhe';
-if (NOTCH) document.documentElement.classList.add('notch', 'mini');
+if (NOTCH) {
+  document.documentElement.classList.add('notch', 'mini');
+  document.head.append(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: '/entalhe/entalhe.css' }));
+  // depois do script principal (usa a conversa, a voz e as configuracoes dele)
+  window.addEventListener('DOMContentLoaded', () => document.body.append(Object.assign(document.createElement('script'), { src: '/entalhe/entalhe.js' })));
+}
 const desk = { api: null, picking: false };
 // Entalhe: passar o mouse abre (e tirar o mouse fecha); clicar dentro "prende" aberto ate clicar fora.
 const notch = { pinned: false, hoverT: 0, leaveT: 0 };
@@ -1536,10 +1491,7 @@ window.addEventListener('blur', () => {
 });
 setInterval(() => {
   if (!NOTCH) return;
-  $('np-side-name').textContent = $('hdr-name').textContent;
-  const st = document.body.dataset.state, sleep = document.body.hasAttribute('data-sleep');
-  $('np-side-st').textContent = sleep ? 'Dormindo' : ({ listening: 'Ouvindo', thinking: 'Pensando', speaking: 'Falando' })[st] || 'Pronta';
-  npSync();
+  $('np-time').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }, 1000);
 async function renderDesk() {
   if (!desk.api) return;
@@ -3751,48 +3703,6 @@ $('cfg-ontop').onclick = async () => {
   if (!desk.api) return;
   await desk.api.set_on_top($('cfg-ontop').getAttribute('aria-pressed') !== 'true'); renderDesk();
 };
-// ----- menu lateral do entalhe aberto: cada item abre uma tela que a A.U.R.A. ja tem, no espaco do conteudo -----
-let npCur = 'inicio';
-function npMark(name) { npCur = name; document.querySelectorAll('#np-side .np-item').forEach(b => b.classList.toggle('on', b.dataset.np === name)); }
-function npCloseAll() {
-  if (!cfgBack.hidden) closeSettings();
-  $('ag-back').hidden = true; histEl.classList.remove('open'); $('np-pc').hidden = true;
-}
-async function npSettings(pane, card) {
-  await openSettings(); showPane(pane);
-  if (card) $(card)?.scrollIntoView({ block: 'start' });
-}
-async function npShow(name) {
-  if (name === 'recolher') { npCloseAll(); npMark('inicio'); return notchCollapse(); }
-  npCloseAll(); npMark(name);
-  ({
-    conversas: () => { setRail('chats'); histEl.classList.add('open'); },
-    agendados: () => { setRail('sched'); histEl.classList.add('open'); },
-    memoria: () => npSettings('mem'),
-    agenda: () => openAgenda(),
-    musica: () => npSettings('plugins', 'sp-card'),
-    casa: () => npSettings('plugins', 'ha-card'),
-    pc: () => { $('np-pc').hidden = false; renderNpPc(); },
-    config: () => openSettings(),
-  })[name]?.();
-}
-// a tela aberta pelo menu foi fechada por ela mesma (X, clicar fora...): o menu volta para Inicio
-function npSync() {
-  if (!NOTCH || notchMini() || npCur === 'inicio') return;
-  const open = { conversas: histEl.classList.contains('open'), agendados: histEl.classList.contains('open'), agenda: !$('ag-back').hidden,
-    pc: !$('np-pc').hidden }[npCur] ?? !cfgBack.hidden;
-  if (!open) npMark('inicio');
-  if (npCur === 'pc') renderNpPc();
-}
-function renderNpPc() {
-  const v = (id) => $(id)?.textContent || '--';
-  $('np-tiles').innerHTML = [['CPU', 'v-cpu'], ['RAM', 'v-ram'], ['GPU', 'v-gpu'], ['TEMP', 'v-temp'], ['REDE', 'v-net']]
-    .map(([k, id]) => `<div class="np-tile"><small>${k}</small><b>${v(id)}</b></div>`).join('');
-  const on = $('pc-btn').getAttribute('aria-pressed') === 'true';
-  $('np-pc-ctl').setAttribute('aria-pressed', String(on)); $('np-pc-ctl').textContent = on ? 'Ligado' : 'Desligado';
-}
-$('np-pc-ctl').onclick = () => { $('pc-btn').click(); setTimeout(renderNpPc, 600); };
-document.querySelectorAll('#np-side .np-item').forEach(b => b.onclick = () => npShow(b.dataset.np));
 $('notch-pill').onmouseenter = () => { clearTimeout(notch.hoverT); notch.hoverT = setTimeout(() => notchExpand(false), 180); };
 $('notch-pill').onmouseleave = () => clearTimeout(notch.hoverT);
 $('notch-collapse').onclick = notchCollapse;
