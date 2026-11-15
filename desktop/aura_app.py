@@ -184,6 +184,27 @@ if WIN:
             u32.ShowWindow(hwnd, 9)
             u32.SetForegroundWindow(hwnd)
 
+    u32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.UINT]
+    u32.MonitorFromPoint.restype = wintypes.HMONITOR
+    u32.MonitorFromPoint.argtypes = [wintypes.POINT, wintypes.DWORD]
+
+    def place_top_center(hwnd: int, w: int, h: int) -> bool:
+        """Tamanho e posicao numa chamada so, no topo e no centro do monitor principal (pixels reais, com a escala
+        do Windows). Mover e redimensionar separado fazia o entalhe ir escorregando para o lado a cada abre/fecha."""
+        if not hwnd:
+            return False
+        try:
+            scale = u32.GetDpiForWindow(hwnd) / 96 or 1
+        except (AttributeError, OSError):
+            scale = 1
+        mi = MONITORINFO(cbSize=ctypes.sizeof(MONITORINFO))
+        if not u32.GetMonitorInfoW(u32.MonitorFromPoint(wintypes.POINT(0, 0), 1), ctypes.byref(mi)):
+            return False
+        m = mi.rcMonitor
+        pw, ph = round(w * scale), round(h * scale)
+        x = m.left + (m.right - m.left - pw) // 2
+        return bool(u32.SetWindowPos(hwnd, None, x, m.top, pw, ph, 0x0004 | 0x0010))   # NOZORDER | NOACTIVATE
+
     def focus_elsewhere() -> bool:
         """O foco foi para outro programa? (janelas deste processo, como o seletor de arquivos, nao contam)"""
         h = u32.GetForegroundWindow()
@@ -231,6 +252,9 @@ else:
     def bring_front(hwnd: int):
         pass
 
+    def place_top_center(hwnd: int, w: int, h: int) -> bool:
+        return False                         # no Linux o pywebview (Qt) posiciona
+
 
 class App:
     """Ponte com a pagina (window.pywebview.api.*) e controle das janelas."""
@@ -240,6 +264,7 @@ class App:
         self._mode = conf.get("mode", "janela")
         self._on_top = bool(conf.get("on_top", False))   # entalhe sempre por cima (nao some com programa maximizado)
         self._win = None
+        self._hwnd = 0            # janela do entalhe no Windows (achada quando aparece)
         self._expanded = False
         self._hidden = False
         self._pinned = False      # entalhe aberto com clique (fica ate clicar fora); aberto so pelo mouse fecha ao sair
@@ -298,6 +323,10 @@ class App:
         return s.width, s.height
 
     def _place(self, w, h):
+        if self._mode == "entalhe":
+            self._hwnd = self._hwnd or find_hwnd(self._title)
+            if place_top_center(self._hwnd, w, h):
+                return
         sw, _ = self._screen()
         self._win.resize(w, h)
         self._win.move(max(0, (sw - w) // 2), 0)
@@ -308,14 +337,16 @@ class App:
         if self._mode == "entalhe":
             sw, _ = self._screen()
             self._expanded = False
+            self._hwnd = 0
             self._win = webview.create_window(self._title, start, html=None if start else LOADING, frameless=True,
                                              on_top=True, resizable=False, easy_drag=False, min_size=(120, 30),
                                              width=PILL[0], height=PILL[1], x=(sw - PILL[0]) // 2, y=0, **common)
             prev = u32.GetForegroundWindow() if WIN else None
 
             def shown():
+                self._hwnd = find_hwnd(self._title)
                 self._place(*PILL)           # o tamanho inicial de janela sem moldura sai torto no Windows
-                style_window(find_hwnd(self._title), taskbar=False)
+                style_window(self._hwnd, taskbar=False)
                 if prev:
                     u32.SetForegroundWindow(prev)    # aparecer nao rouba o foco de quem voce estava usando
             self._win.events.shown += shown
