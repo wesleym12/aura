@@ -1424,28 +1424,46 @@ function setState(state, text) {
   $('core-status').textContent = text;
   document.body.dataset.state = state;
   document.body.toggleAttribute('data-sleep', state === 'idle' && /^Dormindo/.test(text));
-  if (text === 'Aguardando autorização') notchExpand();      // pedido de Autorizar: abre o entalhe para voce ver
+  if (text === 'Aguardando autorização') notchExpand(true);  // pedido de Autorizar: abre o entalhe e deixa aberto
 }
 
 // ===== App de mesa (desktop/aura_app.py): modo janela ou entalhe =====
 const NOTCH = new URLSearchParams(location.search).get('ui') === 'entalhe';
 if (NOTCH) document.documentElement.classList.add('notch', 'mini');
 const desk = { api: null, picking: false };
-function notchExpand() {
-  if (!NOTCH || !document.documentElement.classList.contains('mini')) return;
-  document.documentElement.classList.remove('mini'); desk.api?.expand();
+// Entalhe: passar o mouse abre (e tirar o mouse fecha); clicar dentro "prende" aberto ate clicar fora.
+const notch = { pinned: false, hoverT: 0, leaveT: 0 };
+const notchMini = () => document.documentElement.classList.contains('mini');
+function notchExpand(pin) {
+  if (!NOTCH) return;
+  clearTimeout(notch.leaveT);
+  if (notchMini()) { document.documentElement.classList.remove('mini'); desk.api?.expand(); }
+  if (pin) notchPin();
+}
+function notchPin() {
+  if (!NOTCH || notch.pinned || notchMini()) return;
+  notch.pinned = true; desk.api?.pin();
 }
 function notchCollapse() {
-  if (!NOTCH || document.documentElement.classList.contains('mini')) return;
+  if (!NOTCH || notchMini()) return;
+  clearTimeout(notch.leaveT); notch.pinned = false;
   try { closeSettings(); } catch {}
   document.documentElement.classList.add('mini'); desk.api?.collapse();
 }
 window.addEventListener('pywebviewready', () => { desk.api = window.pywebview.api; renderDesk(); });
 document.addEventListener('click', (e) => { if (e.target.matches?.('input[type=file]')) desk.picking = true; }, true);
 window.addEventListener('focus', () => { desk.picking = false; });
-// clicou fora do entalhe aberto: recolhe (menos enquanto escolhe um arquivo)
+// qualquer clique dentro do entalhe aberto o prende aberto (para digitar, mexer nas configuracoes...)
+document.addEventListener('pointerdown', () => { if (NOTCH && !notchMini()) notchPin(); }, true);
+// o mouse saiu do entalhe aberto so pelo mouse: fecha (um instante depois, para nao piscar)
+document.addEventListener('mouseout', (e) => {
+  if (!NOTCH || e.relatedTarget || notchMini() || notch.pinned) return;
+  clearTimeout(notch.leaveT); notch.leaveT = setTimeout(notchCollapse, 450);
+});
+document.addEventListener('mouseover', () => clearTimeout(notch.leaveT));
+// preso aberto e clicou fora: recolhe (menos enquanto escolhe um arquivo)
 window.addEventListener('blur', () => {
-  if (!NOTCH || desk.picking) return;
+  if (!NOTCH || desk.picking || !notch.pinned) return;
   setTimeout(() => { if (!document.hasFocus() && !desk.picking) notchCollapse(); }, 250);
 });
 setInterval(() => {
@@ -3243,7 +3261,7 @@ $('cfg-quit').onclick = async () => {
     o.innerHTML = `<div><h1>A.U.R.A<b>.</b></h1><p>${j.dry ? 'Modo simulação (AURA_POWER_DRYRUN=1): nada foi desligado.' : 'Encerrada. Os serviços estão sendo desligados.'}</p>
       <small>Para ligar de novo: rode <code>iniciar.ps1</code> na pasta da A.U.R.A.${docker ? '' : ' (ou <code>docker compose up -d</code>)'}.</small></div>`;
     document.body.appendChild(o);
-    notchExpand(); desk.api?.quit();                // app de mesa: fecha junto
+    notchExpand(true); desk.api?.quit();                // app de mesa: fecha junto
   } catch (e) { alert('Não consegui encerrar: ' + e.message); btn.disabled = false; btn.textContent = '⏻ Encerrar A.U.R.A.'; }
 };
 // subtitulo de cada pagina das configuracoes
@@ -3656,7 +3674,9 @@ function renderConvo() {
   const on = cfg.conversation_mode === true;
   $('cfg-convo').setAttribute('aria-pressed', String(on)); $('cfg-convo').textContent = on ? 'Ligado' : 'Desligado';
 }
-$('notch-pill').onclick = notchExpand;
+$('notch-pill').onclick = () => notchExpand(true);
+$('notch-pill').onmouseenter = () => { clearTimeout(notch.hoverT); notch.hoverT = setTimeout(() => notchExpand(false), 180); };
+$('notch-pill').onmouseleave = () => clearTimeout(notch.hoverT);
 $('notch-collapse').onclick = notchCollapse;
 document.querySelectorAll('[data-desk]').forEach(b => b.onclick = async () => {
   if (!desk.api) return;

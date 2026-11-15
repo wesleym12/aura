@@ -139,6 +139,51 @@ if WIN:
         m = mi.rcMonitor
         return r.left <= m.left and r.top <= m.top and r.right >= m.right and r.bottom >= m.bottom
 
+    ICON = str(Path(__file__).resolve().parent.parent / "aura" / "web" / "icons" / "aura.ico")
+    u32.SendMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+    u32.LoadImageW.restype = wintypes.HANDLE
+    u32.GetWindowLongW.restype = ctypes.c_long
+    try:   # o Windows agrupa e mostra o app como "A.U.R.A." (e nao como o python)
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("AURA.Desktop")
+    except (AttributeError, OSError):
+        pass
+
+    def find_hwnd(title: str) -> int:
+        """Janela deste processo com o titulo (a mais recente, se houver duas durante a troca de modo)."""
+        found = []
+        proc = ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
+
+        def cb(h, _):
+            pid = wintypes.DWORD()
+            u32.GetWindowThreadProcessId(h, ctypes.byref(pid))
+            if pid.value == os.getpid():
+                buf = ctypes.create_unicode_buffer(64)
+                u32.GetWindowTextW(h, buf, 64)
+                if buf.value == title:
+                    found.append(h)
+            return True
+        u32.EnumWindows(proc(cb), 0)
+        return found[0] if found else 0
+
+    def style_window(hwnd: int, taskbar: bool):
+        """Icone da A.U.R.A. na janela e, no entalhe, fora da barra de tarefas e do Alt+Tab."""
+        if not hwnd:
+            return
+        ico = u32.LoadImageW(None, ICON, 1, 0, 0, 0x10 | 0x40)          # IMAGE_ICON, LOADFROMFILE | DEFAULTSIZE
+        if ico:
+            u32.SendMessageW(hwnd, 0x80, 1, ico)                          # WM_SETICON grande
+            u32.SendMessageW(hwnd, 0x80, 0, ico)                          # e pequeno
+        if not taskbar:
+            ex = u32.GetWindowLongW(hwnd, -20)
+            u32.ShowWindow(hwnd, 0)
+            u32.SetWindowLongW(hwnd, -20, (ex | 0x80) & ~0x40000)          # TOOLWINDOW, sem APPWINDOW
+            u32.ShowWindow(hwnd, 4)                                       # mostra de novo sem roubar o foco
+
+    def bring_front(hwnd: int):
+        if hwnd:
+            u32.ShowWindow(hwnd, 9)
+            u32.SetForegroundWindow(hwnd)
+
     def focus_elsewhere() -> bool:
         """O foco foi para outro programa? (janelas deste processo, como o seletor de arquivos, nao contam)"""
         h = u32.GetForegroundWindow()
@@ -177,6 +222,15 @@ else:
         except (OSError, subprocess.SubprocessError, IndexError):
             return False
 
+    def find_hwnd(title: str) -> int:
+        return 0
+
+    def style_window(hwnd: int, taskbar: bool):
+        pass                                 # no Linux o Qt cuida (o entalhe e uma janela "ferramenta" comum)
+
+    def bring_front(hwnd: int):
+        pass
+
 
 class App:
     """Ponte com a pagina (window.pywebview.api.*) e controle das janelas."""
@@ -186,6 +240,8 @@ class App:
         self._win = None
         self._expanded = False
         self._hidden = False
+        self._pinned = False      # entalhe aberto com clique (fica ate clicar fora); aberto so pelo mouse fecha ao sair
+        self._focused = False     # o entalhe aberto ja recebeu o foco (so entao "foco em outro programa" recolhe)
         self._title = "A.U.R.A."
 
     # ---- chamado pela pagina ----
@@ -206,9 +262,15 @@ class App:
             self._place(*PANEL)
         return self.info()
 
+    def pin(self):
+        """Clicou dentro do entalhe aberto: ele fica aberto (e recebe o teclado) ate clicar fora."""
+        if self._mode == "entalhe" and self._expanded:
+            self._pinned = True
+        return self.info()
+
     def collapse(self):
         if self._mode == "entalhe" and self._expanded:
-            self._expanded = False
+            self._expanded = self._pinned = self._focused = False
             self._place(*PILL)
         return self.info()
 
@@ -239,16 +301,23 @@ class App:
             sw, _ = self._screen()
             self._expanded = False
             self._win = webview.create_window(self._title, start, html=None if start else LOADING, frameless=True,
-                                             on_top=True, resizable=False, easy_drag=False, focus=False, min_size=(120, 30),
+                                             on_top=True, resizable=False, easy_drag=False, min_size=(120, 30),
                                              width=PILL[0], height=PILL[1], x=(sw - PILL[0]) // 2, y=0, **common)
-            # o tamanho inicial de janela sem moldura sai torto no Windows: acerta depois de aparecer
-            self._win.events.shown += lambda: self._place(*PILL)
+            prev = u32.GetForegroundWindow() if WIN else None
+
+            def shown():
+                self._place(*PILL)           # o tamanho inicial de janela sem moldura sai torto no Windows
+                style_window(find_hwnd(self._title), taskbar=False)
+                if prev:
+                    u32.SetForegroundWindow(prev)    # aparecer nao rouba o foco de quem voce estava usando
+            self._win.events.shown += shown
         else:
             sw, sh = self._screen()
             w, h = min(WINDOW[0], sw - 60), min(WINDOW[1], sh - 90)       # cabe em tela pequena / com zoom
             self._win = webview.create_window(self._title, start, html=None if start else LOADING,
                                              width=w, height=h, x=(sw - w) // 2, y=max(0, (sh - h) // 2 - 20),
                                              min_size=(400, 560), **common)
+            self._win.events.shown += lambda: style_window(find_hwnd(self._title), taskbar=True)
         return self._win
 
     def _reopen(self):
@@ -268,10 +337,10 @@ class App:
             if self._hidden:
                 w.show(); self._hidden = False
             if self._mode == "entalhe":
-                w.evaluate_js("notchExpand()")
+                w.evaluate_js("notchExpand(true)")
             else:
                 w.restore(); w.show()
-                w.on_top = True; w.on_top = False      # traz para a frente
+            bring_front(find_hwnd(self._title))
 
     def _watch(self):
         """Entalhe recolhido: some com programa maximizado/tela cheia e volta quando ele sai."""
@@ -279,9 +348,13 @@ class App:
         while True:
             time.sleep(0.5)
             w = self._win
-            if w and self._mode == "entalhe" and self._expanded:
-                # aberto e o foco foi para outro programa: recolhe (como clicar fora)
-                away = away + 1 if focus_elsewhere() else 0
+            if w and self._mode == "entalhe" and self._expanded and self._pinned:
+                # aberto com clique e o foco foi para outro programa: recolhe (como clicar fora).
+                # So depois de ele ter tido o foco: o clique que abre pode demorar um instante para ativar a janela.
+                elsewhere = focus_elsewhere()
+                if not elsewhere:
+                    self._focused = True
+                away = away + 1 if elsewhere and self._focused else 0
                 if away >= 2:
                     away = 0
                     w.evaluate_js("notchCollapse()")
