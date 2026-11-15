@@ -33,8 +33,8 @@ WIN = sys.platform == "win32"
 CONF_DIR = Path(os.getenv("APPDATA") or Path.home() / ".config") / ("AURA" if WIN else "aura")
 CONF = CONF_DIR / "desktop.json"
 
-PILL = (250, 36)          # entalhe recolhido (largura, altura)
-PANEL = (440, 700)        # entalhe aberto
+PILL = (130, 34)          # entalhe recolhido: so o rostinho (largura, altura)
+PANEL = (860, 540)        # entalhe aberto: menu lateral + conteudo
 WINDOW = (1280, 820)      # modo janela
 
 
@@ -236,7 +236,9 @@ class App:
     """Ponte com a pagina (window.pywebview.api.*) e controle das janelas."""
 
     def __init__(self):
-        self._mode = load_conf().get("mode", "janela")
+        conf = load_conf()
+        self._mode = conf.get("mode", "janela")
+        self._on_top = bool(conf.get("on_top", False))   # entalhe sempre por cima (nao some com programa maximizado)
         self._win = None
         self._expanded = False
         self._hidden = False
@@ -246,7 +248,13 @@ class App:
 
     # ---- chamado pela pagina ----
     def info(self):
-        return {"mode": self._mode, "expanded": self._expanded, "platform": sys.platform}
+        return {"mode": self._mode, "expanded": self._expanded, "on_top": self._on_top, "platform": sys.platform}
+
+    def set_on_top(self, on):
+        """Ligado: o entalhe fica sempre visivel por cima de tudo. Desligado: some com programa maximizado/tela cheia."""
+        self._on_top = bool(on)
+        save_conf(on_top=self._on_top)
+        return self.info()
 
     def set_mode(self, mode):
         if mode not in ("janela", "entalhe") or mode == self._mode:
@@ -362,7 +370,7 @@ class App:
                 if self._hidden and w:
                     w.show(); self._hidden = False
                 continue
-            hide = covered(self._title)
+            hide = not self._on_top and covered(self._title)
             if hide != self._hidden:
                 (w.hide if hide else w.show)()
                 self._hidden = hide
