@@ -122,18 +122,38 @@ def _yt_first(query: str, live: bool) -> tuple[str, str] | None:
 
 @tool(
     "YouTube: procura video, musica, canal ou live e toca o primeiro resultado na aba ja aberta. Para "
-    "'abre/toca X no YouTube', 'live de X' (ao_vivo=true). Sem busca: traz o YouTube para a frente. "
+    "'abre/toca X no YouTube', 'live de X' (ao_vivo=true). 'abre o segundo video' (da tela) = posicao=2; "
+    "'toca o terceiro video de X' = busca=X, posicao=3. Sem busca nem posicao: traz o YouTube para a frente. "
     "Pausar, pular ou volume: use midia.",
     {"busca": {"type": "string", "x-optional": True, "description": "o que procurar (vazio = pagina inicial)"},
      "ao_vivo": {"type": "boolean", "x-optional": True, "description": "true para lives/transmissoes ao vivo"},
      "so_resultados": {"type": "boolean", "x-optional": True,
-                       "description": "true para mostrar a lista de resultados em vez de tocar o primeiro"}},
+                       "description": "true para mostrar a lista de resultados em vez de tocar o primeiro"},
+     "posicao": {"type": "integer", "x-optional": True,
+                 "description": "abre o N-esimo video que aparece na tela do YouTube (1 = primeiro)"}},
     available=_ready,
 )
-async def youtube(busca: str = "", ao_vivo: bool = False, so_resultados: bool = False) -> str:
+async def youtube(busca: str = "", ao_vivo: bool = False, so_resultados: bool = False, posicao: int | None = None) -> str:
     import asyncio
+    import re
     from urllib.parse import quote_plus
     busca = (busca or "").strip()
+    if posicao:
+        # o N-esimo video: da busca pedida (abre os resultados e espera carregar) ou do que ja esta na tela
+        if busca:
+            q = f"https://www.youtube.com/results?search_query={quote_plus(busca)}" + (f"&sp={YT_LIVE}" if ao_vivo else "")
+            await _do("open_in_tab", url=q, match="YouTube")
+            await asyncio.sleep(3.5)
+        ok, lista = await hostbridge.run("yt_videos", timeout=30)
+        if not ok:
+            return f"Nao consegui ver os videos da tela: {lista}"
+        itens = [ln for ln in lista.splitlines() if re.match(r"\d+\. ", ln)]
+        n = int(posicao)
+        if not 1 <= n <= len(itens):
+            return f"Na tela do YouTube so aparecem {len(itens)} videos. Lista:\n{lista}"
+        titulo, vid = itens[n - 1].split(". ", 1)[1].rsplit(" | ", 1)
+        out = await _do("open_in_tab", url=f"https://www.youtube.com/watch?v={vid}", match="YouTube")
+        return f"Abri o {n}o video da tela: '{titulo}'. ({out})"
     if not busca:
         # sem busca: se o YouTube ja esta aberto, so traz para a frente (nunca troca o video que esta tocando)
         out = await _do("focus", title="YouTube")

@@ -214,7 +214,7 @@ Add-Type -Namespace AuraAgent -Name Win -MemberDefinition @'
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern void mouse_event(uint f, uint dx, uint dy, uint d, System.UIntPtr e);
 '@
 $script:desktopCmds = @("windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media",
-                        "clip_set", "find_files", "reveal", "desktop_scan", "desktop_organize", "desktop_undo", "metrics")
+                        "clip_set", "find_files", "reveal", "desktop_scan", "desktop_organize", "desktop_undo", "metrics", "yt_videos")
 $script:uiElems = @()
 
 # so "restaura" a janela se ela estiver minimizada: restaurar uma janela maximizada tira ela do maximizado
@@ -406,6 +406,35 @@ function Invoke-Desktop($c) {
             return @{ ok = $true; output = "$n arquivo(s) voltaram para a area de trabalho" }
         }
         "metrics" { return @{ ok = $true; output = $shared.json } }
+        "yt_videos" {
+            # videos que aparecem na aba do YouTube, na ordem da pagina (titulo + id), pela acessibilidade do
+            # navegador. So leitura: nao clica em nada. O navegador monta essa arvore na primeira consulta.
+            $w = Get-Process | Where-Object { $_.MainWindowTitle -like "*YouTube*" -and $_.ProcessName -match 'msedge|chrome|firefox|brave|opera|vivaldi' } | Select-Object -First 1
+            if (-not $w) { return @{ ok = $false; output = "nao ha aba do YouTube aberta em primeiro plano no navegador" } }
+            $root = [System.Windows.Automation.AutomationElement]::FromHandle($w.MainWindowHandle)
+            $cond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Hyperlink)
+            $links = $null
+            for ($try = 0; $try -lt 4; $try++) {
+                $links = $root.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond)
+                if ($links.Count -gt 5) { break }
+                Start-Sleep -Milliseconds 900
+            }
+            $seen = @{}; $out = @()
+            foreach ($l in $links) {
+                $v = $null
+                try { $v = $l.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).Current.Value } catch {}
+                if (-not $v -or $v -notmatch 'youtube\.com/(watch\?v=|shorts/)([\w-]{11})') { continue }
+                $id = $Matches[2]; $name = ([string]$l.Current.Name).Trim()
+                # botoes genericos ("Assistir", "Reproduzir tudo"...) nao sao o titulo do video
+                if ($name.Length -lt 6 -or $name -match '^(Assistir|Watch|Reproduzir|Play|Ver tudo|Mix)') { continue }
+                if ($seen[$id]) { continue }; $seen[$id] = 1
+                if ($name.Length -gt 90) { $name = $name.Substring(0, 90) }
+                $out += "$($out.Count + 1). $name | $id"
+                if ($out.Count -ge 15) { break }
+            }
+            if (-not $out) { return @{ ok = $false; output = "nao achei videos na aba do YouTube (a pagina ainda estava carregando?)" } }
+            return @{ ok = $true; output = ($out -join "`n") }
+        }
         "open_in_tab" {
             # abre o endereco NA ABA que ja mostra o site (ex.: YouTube), em vez de abrir outra janela.
             # So digita depois de confirmar que a janela em foco e mesmo a do site: nunca digita na janela errada.
