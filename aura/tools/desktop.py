@@ -141,7 +141,7 @@ async def youtube(busca: str = "", ao_vivo: bool = False, so_resultados: bool = 
         out = await _do("focus", title="YouTube")
         if not out.startswith("Nao consegui"):
             return f"O YouTube ja estava aberto: trouxe para a frente ({out})."
-        url, what = "https://www.youtube.com/", "o YouTube"
+        url, what = "https://www.youtube.com/", "a pagina inicial"
     else:
         hit = None if so_resultados else await asyncio.to_thread(_yt_first, busca, ao_vivo)
         if hit:

@@ -48,7 +48,7 @@ async def suspender_pc() -> str:
     return f"Suspendendo o PC. ({out})" if ok else f"Nao consegui suspender: {out}"
 
 
-@tool("Bloqueia a tela do computador (volta com a senha do Windows).", available=_ready)
+@tool("Bloqueia o computador: tela de bloqueio do Windows (volta com a senha). Use para 'bloqueia/tranca o computador, o PC ou a tela'. So diga que bloqueou depois de chamar esta ferramenta.", available=_ready)
 async def bloquear_tela() -> str:
     ok, out = await hostbridge.run("lock")
     return "Tela bloqueada." if ok else f"Nao consegui bloquear: {out}"

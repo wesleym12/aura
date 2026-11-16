@@ -136,7 +136,8 @@ function Invoke-Desktop($c) {
             return @{ ok = $true; output = ($list -join "`n") }
         }
         "focus" {
-            $t = [string]$a.title
+            $t = ([string]$a.title).Trim()
+            if (-not $t) { return @{ ok = $false; output = "diga o nome da janela" } }   # vazio casaria com qualquer janela
             $alias = @{ "bloco de notas" = "notepad"; "calculadora" = "calculatorapp"; "explorador" = "explorer"; "navegador" = "msedge" }
             $proc = $alias[$t.ToLower()]
             $wins = Get-Process | Where-Object { $_.MainWindowTitle }
@@ -161,8 +162,9 @@ function Invoke-Desktop($c) {
             if ($t -match '^https?://') { Start-Process $t; return @{ ok = $true; output = "abriu $t" } }
             $known = @{ "bloco de notas" = "notepad.exe"; "notepad" = "notepad.exe"; "calculadora" = "calc.exe"; "calc" = "calc.exe";
                         "explorador" = "explorer.exe"; "explorer" = "explorer.exe"; "paint" = "mspaint.exe";
-                        "configuracoes" = "ms-settings:"; "configurações" = "ms-settings:"; "gerenciador de tarefas" = "taskmgr.exe" }
-            if ($known.ContainsKey($t.ToLower())) { Start-Process $known[$t.ToLower()]; return @{ ok = $true; output = "abriu $t" } }
+                        "configuracoes" = "ms-settings:"; "gerenciador de tarefas" = "taskmgr.exe" }
+            $k = $t.ToLower().Normalize([Text.NormalizationForm]::FormD) -replace '\p{Mn}', ''     # ignora acentos (configuracoes com ou sem acento)
+            if ($known.ContainsKey($k)) { Start-Process $known[$k]; return @{ ok = $true; output = "abriu $t" } }
             # lista de apps do Menu Iniciar do Windows: inclui os da Microsoft Store (Spotify, WhatsApp...), que nao
             # tem atalho .lnk. Fica em cache por 10 min (a primeira consulta leva ~1 s).
             if (-not $script:startApps -or ((Get-Date) - $script:startAppsAt).TotalMinutes -gt 10) {
@@ -353,10 +355,14 @@ docker compose --profile '*' stop 2>`$null | Out-Null
     $psi.FileName = $plan[0]; $psi.Arguments = $plan[1]
     $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true
     $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+    # shutdown/netsh escrevem na pagina de codigo do console (OEM): sem isto os acentos chegam quebrados
+    $oem = [Text.Encoding]::GetEncoding([Globalization.CultureInfo]::CurrentCulture.TextInfo.OEMCodePage)
+    $psi.StandardOutputEncoding = $oem; $psi.StandardErrorEncoding = $oem
     $proc = [System.Diagnostics.Process]::Start($psi)
     $out = ($proc.StandardOutput.ReadToEnd() + $proc.StandardError.ReadToEnd()).Trim()
     $proc.WaitForExit(15000) | Out-Null
     $ok = ($proc.ExitCode -eq 0) -or ($c.cmd -eq "lock")
+    if ($c.cmd -eq "abort" -and $proc.ExitCode -eq 1116) { $ok = $true; $out = "nao havia desligamento agendado" }
     if (-not $out) { $out = "ok" }
     return @{ ok = $ok; output = $out }
 }

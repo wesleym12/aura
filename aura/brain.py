@@ -268,8 +268,21 @@ def _did_this_round(s: Session) -> bool:
 _CLAIM = re.compile(r"\b(criei|criado|salvei|salvo em|gravei|abri|foi abert[oa]|apaguei|movi|renomeei|escrevi o arquivo|"
                     r"toquei|coloquei (?:para|pra) tocar|est[aá] tocando|liguei|desliguei|enviei|abrindo|sintonizei|"
                     r"acabo de \w+|j[aá] (?:abri|coloquei|liguei|toquei|est[aá])|pronto,? (?:abri|est[aá])|"
+                    r"prontinho|bloqueei|bloquead[oa]|tranquei|trancad[oa]|suspendi|reiniciando|desligando|"
+                    r"aumentei|abaixei|baixei|pausei|pulei|dei (?:o )?play|fechei|mandei|"
                     r"estou (?:verificando|procurando|buscando|abrindo|tocando|checando|analisando)|verificando se|"
                     r"i (?:have )?(?:created|saved|opened|deleted|wrote)|i'?m (?:checking|looking|searching))\b", re.I)
+
+
+# o mesmo aviso, para o modo de voz ao vivo (Gemini Live), onde a fala ja saiu: ou faz de verdade ou corrige
+NUDGE = ("[sistema] Atencao: voce disse que fez (ou esta fazendo) uma acao, mas NAO chamou nenhuma ferramenta para "
+         "isso, entao nada foi feito. Se existe ferramenta para isso, chame agora. Se nao existe, diga em uma frase, "
+         "honestamente, que ainda nao consegue fazer isso. Nunca diga 'estou verificando' sem ferramenta.")
+
+
+def claims_action(text: str) -> bool:
+    """A resposta afirma que uma acao foi feita? (sem ferramenta chamada no turno, e invencao)"""
+    return bool(_CLAIM.search(text or ""))
 
 
 async def _loop(s: Session, emit: Emit = None) -> dict:
@@ -278,13 +291,10 @@ async def _loop(s: Session, emit: Emit = None) -> dict:
         msg = await _think(s)
         calls = _normalize_calls(msg.get("tool_calls"))
         content = strip_reasoning(msg.get("content"))
-        if not calls and not nudged and _CLAIM.search(content or "") and not _did_this_round(s):
+        if not calls and not nudged and claims_action(content) and not _did_this_round(s):
             # da uma segunda chance: ou chama a ferramenta de verdade, ou admite que nao fez
             nudged = True
-            s.messages.append({"role": "user", "content":
-                "[sistema] Atencao: voce disse que fez (ou esta fazendo) uma acao, mas NAO chamou nenhuma ferramenta para "
-                "isso, entao nada foi feito. Se existe ferramenta para isso, chame agora. Se nao existe, diga em uma frase, "
-                "honestamente, que ainda nao consegue fazer isso. Nunca diga 'estou verificando' sem ferramenta."})
+            s.messages.append({"role": "user", "content": NUDGE})
             continue
         s.messages.append({"role": "assistant", "content": content, **({"tool_calls": calls} if calls else {})})
         if not calls:

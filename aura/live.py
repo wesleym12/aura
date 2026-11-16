@@ -148,6 +148,7 @@ async def handle(sock: WebSocket):
     s.ctx.update({k: str(v)[:120] for k, v in (start.get("context") or {}).items()})
     pending: dict = {"confirm": None}
     turn = {"in": [], "out": [], "trace": []}
+    nudge = {"sent": False}         # um aviso por pedido: "voce disse que fez, mas nao chamou a ferramenta"
 
     try:
         # a Live API so existe em v1beta/v1alpha (o SDK 3.x usa v1 por padrao, que da 404)
@@ -232,8 +233,16 @@ async def handle(sock: WebSocket):
                             if sc.interrupted:
                                 await sock.send_json({"type": "interrupted"})
                             if sc.turn_complete:
+                                bot, used = "".join(turn["out"]), bool(turn["trace"])
+                                if turn["in"]:
+                                    nudge["sent"] = False           # pedido novo do usuario
                                 save_turn()
                                 await sock.send_json({"type": "turn_complete"})
+                                if not used and not nudge["sent"] and brain.claims_action(bot):
+                                    # disse "prontinho, bloqueado!" sem chamar ferramenta nenhuma: nada aconteceu
+                                    nudge["sent"] = True
+                                    log.info("Gemini Live afirmou uma acao sem ferramenta: %r", bot[:120])
+                                    await session.send_realtime_input(text=brain.NUDGE)
                         if m.tool_call and m.tool_call.function_calls:
                             responses = [await run_call(fc) for fc in m.tool_call.function_calls]
                             await session.send_tool_response(function_responses=responses)
