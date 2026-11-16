@@ -176,18 +176,18 @@ body[data-mood="carinho"] .np-face::before, body[data-mood="carinho"] .np-face::
 body[data-mood="carinho"] .np-face::before { left: 4px; } body[data-mood="carinho"] .np-face::after { right: 4px; }
 /* olhos em arco: feliz, rindo e carinho */
 body[data-mood="feliz"] .np-face .eye, body[data-mood="rindo"] .np-face .eye, body[data-mood="carinho"] .np-face .eye {
-  top: 9px; height: 5px; background: none; border-top: 2.5px solid #14161a; border-radius: 50% 50% 0 0; animation: none; }
+  top: 9px; height: 5px; background: none; border-top: 2.5px solid var(--np-ink, #14161a); border-radius: 50% 50% 0 0; animation: none; }
 body[data-mood="feliz"] .np-face .mouth, body[data-mood="carinho"] .np-face .mouth { opacity: 1; top: 16.5px; width: 7px; height: 3px;
-  margin-left: -3.5px; background: none; border-bottom: 2px solid #14161a; border-radius: 0 0 6px 6px; }
+  margin-left: -3.5px; background: none; border-bottom: 2px solid var(--np-ink, #14161a); border-radius: 0 0 6px 6px; }
 body[data-mood="rindo"] .np-face { animation: np-laugh .32s ease-in-out infinite; }
-body[data-mood="rindo"] .np-face .mouth { opacity: 1; top: 15px; width: 8px; height: 5px; margin-left: -4px; background: #14161a; border-radius: 1px 1px 6px 6px; }
+body[data-mood="rindo"] .np-face .mouth { opacity: 1; top: 15px; width: 8px; height: 5px; margin-left: -4px; background: var(--np-ink, #14161a); border-radius: 1px 1px 6px 6px; }
 @keyframes np-laugh { 50% { transform: translateY(-1.5px) rotate(-3deg); } }
 /* surpresa: olhos grandes e boca em O */
 body[data-mood="surpreso"] .np-face .eye { top: 7px; width: 7.5px; height: 9px; animation: none; }
-body[data-mood="surpreso"] .np-face .mouth { opacity: 1; top: 17px; width: 4px; height: 4px; margin-left: -2px; background: none; border: 1.5px solid #14161a; border-radius: 50%; }
+body[data-mood="surpreso"] .np-face .mouth { opacity: 1; top: 17px; width: 4px; height: 4px; margin-left: -2px; background: none; border: 1.5px solid var(--np-ink, #14161a); border-radius: 50%; }
 /* triste: olhos caidos e uma lagrima */
 body[data-mood="triste"] .np-face .eye { top: 11px; height: 3.5px; border-radius: 0 0 50% 50%; animation: none; }
-body[data-mood="triste"] .np-face .mouth { opacity: 1; top: 18px; width: 6px; height: 3px; margin-left: -3px; background: none; border-top: 1.8px solid #14161a; border-radius: 6px 6px 0 0; }
+body[data-mood="triste"] .np-face .mouth { opacity: 1; top: 18px; width: 6px; height: 3px; margin-left: -3px; background: none; border-top: 1.8px solid var(--np-ink, #14161a); border-radius: 6px 6px 0 0; }
 body[data-mood="triste"] .np-face::after { opacity: 1; left: 10px; top: 15px; width: 3px; height: 4px; border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
   background: #5ab8ff; animation: np-tear 1.6s ease-in infinite; }
 @keyframes np-tear { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(6px); opacity: 0; } }

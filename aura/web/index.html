@@ -911,11 +911,44 @@
   html.notch.mini #notch-pill { gap: 10px; }
   #notch-pill .np-time { color: #d6dce5; font: 600 13px "Exo 2", "Segoe UI", sans-serif; letter-spacing: .02em; }
 
+
+  /* rostinho: acessorios e cores (Configuracoes -> Aparencia). Desenho proprio da A.U.R.A. */
+  .np-face { --np-ink: #14161a; }
+  .np-face i { background-color: var(--np-ink); }
+  .np-acc { position: absolute; left: -4px; top: -10px; width: 44px; height: 36px; background: no-repeat center / 100% 100%; pointer-events: none; z-index: 1; }
+  html[data-acc]:not([data-acc='']):not([data-acc='oculos']):not([data-acc='bigode']) #notch-pill .np-face { margin-top: 7px; }
+  html[data-acc='coroa'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='coroa'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M12 11 13 2l5 5 4-6 4 6 5-5 1 9z%22 fill=%22%23ffcb3d%22 stroke=%22%23c98f00%22 stroke-width=%22.8%22 stroke-linejoin=%22round%22/%3E%3Ccircle cx=%2222%22 cy=%221.6%22 r=%221.3%22 fill=%22%23ff5a5a%22/%3E%3Ccircle cx=%2213%22 cy=%222.4%22 r=%221%22 fill=%22%234fc3ff%22/%3E%3Ccircle cx=%2231%22 cy=%222.4%22 r=%221%22 fill=%22%234fc3ff%22/%3E%3C/svg%3E"); }
+  html[data-acc='fones'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='fones'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M6 21Q6 3 22 3T38 21%22 fill=%22none%22 stroke=%22%233b4250%22 stroke-width=%223%22 stroke-linecap=%22round%22/%3E%3Crect x=%221%22 y=%2216%22 width=%227%22 height=%2212%22 rx=%223%22 fill=%22%23ff8a3d%22/%3E%3Crect x=%2236%22 y=%2216%22 width=%227%22 height=%2212%22 rx=%223%22 fill=%22%23ff8a3d%22/%3E%3C/svg%3E"); }
+  html[data-acc='natal'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='natal'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M9 12Q19-2 33 2l2 10z%22 fill=%22%23e5383b%22/%3E%3Crect x=%227%22 y=%229.5%22 width=%2230%22 height=%224%22 rx=%222%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2233.5%22 cy=%222.5%22 r=%222.6%22 fill=%22%23fff%22/%3E%3C/svg%3E"); }
+  html[data-acc='festa'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='festa'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M15 11 22 0l7 11z%22 fill=%22%237c5cff%22/%3E%3Cpath d=%22M17.5 7h9M19.5 4h5%22 stroke=%22%23ffcb3d%22 stroke-width=%221.4%22/%3E%3Ccircle cx=%2222%22 cy=%221%22 r=%221.8%22 fill=%22%23ff5fa2%22/%3E%3C/svg%3E"); }
+  html[data-acc='cartola'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='cartola'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Crect x=%2213%22 y=%220%22 width=%2218%22 height=%2211%22 rx=%221.5%22 fill=%22%231d2129%22/%3E%3Crect x=%228%22 y=%229%22 width=%2228%22 height=%223.4%22 rx=%221.7%22 fill=%22%231d2129%22/%3E%3Crect x=%2213%22 y=%226.6%22 width=%2218%22 height=%222.2%22 fill=%22%23e5383b%22/%3E%3C/svg%3E"); }
+  html[data-acc='bone'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='bone'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M9 12Q10 2 22 2t12 10z%22 fill=%22%232f7bf6%22/%3E%3Cpath d=%22M30 10.5Q40 9.5 43 12.5L31 13z%22 fill=%22%231f5fd1%22/%3E%3Ccircle cx=%2222%22 cy=%222.3%22 r=%221.3%22 fill=%22%231f5fd1%22/%3E%3C/svg%3E"); }
+  html[data-acc='aureola'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='aureola'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cellipse cx=%2222%22 cy=%224%22 rx=%2210%22 ry=%222.6%22 fill=%22none%22 stroke=%22%23ffd84d%22 stroke-width=%222%22/%3E%3C/svg%3E"); }
+  html[data-acc='chifres'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='chifres'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M10 12Q7 4 13 1q-1 6 3 10zM34 12q3-8-3-11 1 6-3 10z%22 fill=%22%23e5383b%22/%3E%3C/svg%3E"); }
+  html[data-acc='laco'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='laco'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M12 8.5 4 3.5v10zM12 8.5l8-5v10z%22 fill=%22%23ff5fa2%22/%3E%3Ccircle cx=%2212%22 cy=%228.5%22 r=%222.2%22 fill=%22%23d63c84%22/%3E%3C/svg%3E"); }
+  html[data-acc='flor'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='flor'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Ccircle cx=%2233%22 cy=%222.8%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2236%22 cy=%225%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2235%22 cy=%228.6%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2231%22 cy=%228.6%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2230%22 cy=%225%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2233%22 cy=%226%22 r=%222%22 fill=%22%23ffcb3d%22/%3E%3C/svg%3E"); }
+  html[data-acc='oculos'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='oculos'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Crect x=%2210%22 y=%2217%22 width=%2211%22 height=%228%22 rx=%223%22 fill=%22%2314161a%22/%3E%3Crect x=%2223%22 y=%2217%22 width=%2211%22 height=%228%22 rx=%223%22 fill=%22%2314161a%22/%3E%3Cpath d=%22M21 20h2%22 stroke=%22%2314161a%22 stroke-width=%221.6%22/%3E%3Cpath d=%22M12 19.2l3-1M25 19.2l3-1%22 stroke=%22%23fff%22 stroke-width=%22.9%22 stroke-linecap=%22round%22 opacity=%22.7%22/%3E%3C/svg%3E"); }
+  html[data-acc='bigode'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='bigode'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M22 27q-5-3-10 1 4 3 10 0 6 3 10 0-5-4-10-1z%22 fill=%22%233a2a1c%22/%3E%3C/svg%3E"); }
+  html[data-face='grafite'] .np-face { --np-ink: #eef2f7; background: radial-gradient(120% 90% at 35% 25%, #5b6170 0%, #3d4250 55%, #2a2e38 100%); }
+  html[data-face='azul'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #eef6ff 0%, #cfe3ff 55%, #a9c9f5 100%); }
+  html[data-face='rosa'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #fff2f7 0%, #ffd3e4 55%, #f5aac7 100%); }
+  html[data-face='verde'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #f0fff5 0%, #cdf3dc 55%, #9fe0b8 100%); }
+  html[data-face='lilas'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #f6f1ff 0%, #e0d5ff 55%, #c3b2f5 100%); }
+  html[data-face='amarelo'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #fffbe8 0%, #fff0b8 55%, #f5d97e 100%); }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  .face-colors { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .face-sw { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
+  .face-sw.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .face-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-bottom: 18px; }
+  .face-card { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 22px 6px 10px; border-radius: 10px;
+    border: 1px solid var(--line); background: color-mix(in srgb, var(--text) 4%, transparent); cursor: pointer; color: var(--text); font: 600 12px "Exo 2", sans-serif; }
+  .face-card:hover { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .face-card.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .face-card .np-face { transform: scale(1.35); box-shadow: 0 1px 4px rgba(0, 0, 0, .28); }
 </style>
 </head>
 <body>
-<div id="notch-pill" title="A.U.R.A."><span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i></span><span class="np-time" id="np-time">--:--</span></div>
+<div id="notch-pill" title="A.U.R.A."><span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i><b class="np-acc"></b></span><span class="np-time" id="np-time">--:--</span></div>
 <header>
   <button class="icon-btn" id="history-btn" title="Conversas" aria-label="Abrir conversas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -1106,6 +1139,9 @@
     <section class="pane" data-pane="aparencia" hidden>
       <div class="field row"><span class="label">Tema</span>
         <div class="seg" id="cfg-theme"><button data-v="claro">Claro</button><button data-v="escuro">Escuro</button></div></div>
+      <h3 class="sub"><b>Rostinho</b> · cor e acessório (aparece no entalhe; as expressões continuam automáticas)</h3>
+      <div class="face-colors" id="face-colors"></div>
+      <div class="face-grid" id="face-grid"></div>
       <h3 class="sub"><b>Orbe</b> · o modelo da animação central (todos reagem à sua voz)</h3>
       <div class="orb-grid" id="orb-grid"></div>
       <h3 class="sub"><b>Cor do orbe</b></h3>
@@ -3117,6 +3153,8 @@ function flash(msg) {
 // nome do assistente e do usuario aparecem na tela
 function applySettings() {
   orb.setStyle(cfg.orb_style || 'esfera'); orb.setColor(cfg.orb_color || '');    // modelo e cor do orbe
+  document.documentElement.dataset.acc = cfg.face_acc || '';                      // rostinho: acessorio e cor
+  document.documentElement.dataset.face = cfg.face_color || 'branco';
   document.title = `${cfg.assistant_name.toUpperCase()} · Command Center`;
   $('cfg-name').textContent = cfg.assistant_name.toUpperCase();
   t.placeholder = `Fale com a ${cfg.assistant_name}`;
@@ -3251,7 +3289,22 @@ function closeSettings() { cfgBack.hidden = true; stopSpeech(); stopOrbPreviews(
 // ===== Aparencia: galeria de modelos do orbe (previas ao vivo) e cores =====
 let orbPreviews = [];
 function stopOrbPreviews() { orbPreviews.forEach(p => p.destroy()); orbPreviews = []; }
+// ----- rostinho: cor e acessorio (desenhos proprios; o CSS de cada um fica no topo da pagina) -----
+const FACE_ACC = {"coroa": "Coroa", "fones": "Fones", "natal": "Natal", "festa": "Festa", "cartola": "Cartola", "bone": "Boné", "aureola": "Auréola", "chifres": "Chifrinhos", "laco": "Laço", "flor": "Flor", "oculos": "Óculos", "bigode": "Bigode"};
+const FACE_COLORS = {"branco": ["Branco", "#f1f3f6"], "grafite": ["Grafite", "#3d4250"], "azul": ["Azul", "#cfe3ff"], "rosa": ["Rosa", "#ffd3e4"], "verde": ["Menta", "#cdf3dc"], "lilas": ["Lilás", "#e0d5ff"], "amarelo": ["Amarelo", "#fff0b8"]};
+function renderFace() {
+  const cols = $('face-colors'), grid = $('face-grid'); if (!cols || !grid) return;
+  const cur = cfg.face_acc || '', col = cfg.face_color || 'branco';
+  cols.innerHTML = Object.entries(FACE_COLORS).map(([k, [n, c]]) =>
+    `<button type="button" class="face-sw${k === col ? ' on' : ''}" data-col="${k}" title="${n}" aria-label="Cor ${n}" style="background:${c}"></button>`).join('');
+  grid.innerHTML = [['', 'Nenhum'], ...Object.entries(FACE_ACC)].map(([k, n]) =>
+    `<button type="button" class="face-card${k === cur ? ' on' : ''}" data-acc="${k}"><span class="np-face" data-acc="${k}" aria-hidden="true">` +
+    `<i class="eye l"></i><i class="eye r"></i><i class="mouth"></i><b class="np-acc"></b></span>${n}</button>`).join('');
+  cols.querySelectorAll('[data-col]').forEach(b => b.onclick = async () => { await saveSettings({ face_color: b.dataset.col }); renderFace(); });
+  grid.querySelectorAll('.face-card').forEach(b => b.onclick = async () => { await saveSettings({ face_acc: b.dataset.acc }); renderFace(); });
+}
 function renderAppearance() {
+  renderFace();
   stopOrbPreviews();
   const grid = $('orb-grid'); grid.innerHTML = '';
   for (const [id, st] of Object.entries(ORB_STYLES)) {
@@ -3309,7 +3362,7 @@ $('cfg-quit').onclick = async () => {
 };
 // subtitulo de cada pagina das configuracoes
 const PANE_SUB = {
-  geral: 'Nome, palavra de ativação e saudação.', aparencia: 'Tema, modelo e cor do orbe.',
+  geral: 'Nome, palavra de ativação e saudação.', aparencia: 'Tema, rostinho do entalhe, modelo e cor do orbe.',
   motor: 'O modelo que pensa, chaves de API, Gemini Live e fala local.', voz: 'Como ela soa e como se comporta.',
   mem: 'O que ela aprendeu sobre você.', ins: 'Arquivos markdown que ela lê em toda conversa.',
   mic: 'Microfone, alto-falante e modo conversa.',

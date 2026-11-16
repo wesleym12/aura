@@ -39,6 +39,8 @@ DEFAULTS = {
     "quick_texts": [],          # textos rapidos para copiar: [{"name": "pix", "text": "..."}]
     "clip_history": False,      # historico do que voce copiou (so na memoria do agente do Windows)
     "quiet_mode": False,        # modo so executar: faz o pedido e nao responde em voz alta
+    "face_acc": "",             # acessorio do rostinho (vazio = nenhum)
+    "face_color": "branco",     # cor da cabeca do rostinho
 }
 
 NATIVE_VOICES = {"pm_alex", "pm_santa", "pf_dora"}
@@ -121,6 +123,12 @@ def _validate(key, value):
         from .llm import PROVIDERS
         if value not in PROVIDERS:
             raise ValueError("provedor desconhecido")
+    elif key == "face_acc":
+        if value not in ("", 'coroa', 'fones', 'natal', 'festa', 'cartola', 'bone', 'aureola', 'chifres', 'laco', 'flor', 'oculos', 'bigode'):
+            raise ValueError("acessorio desconhecido")
+    elif key == "face_color":
+        if value not in ('branco', 'grafite', 'azul', 'rosa', 'verde', 'lilas', 'amarelo'):
+            raise ValueError("cor desconhecida")
     elif key == "city":
         value = " ".join(str(value or "").split())[:80]
     elif key == "quick_texts":
