@@ -280,7 +280,7 @@
   .orb-card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 4px 16px var(--glow); }
   .orb-card.active::after { content: "✓ em uso"; position: absolute; top: 12px; right: 12px; padding: 2px 8px; border-radius: 99px; background: var(--accent);
                             color: #fff; font: 700 10px/1.4 "Exo 2", sans-serif; }
-  .orb-colors { display: flex; flex-wrap: wrap; gap: 10px; }
+  .orb-colors { display: flex; flex-wrap: wrap; gap: 12px; padding: 6px; margin: 0 0 14px; }   /* folga para o contorno da cor escolhida */
   .orb-sw { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--line-strong); cursor: pointer; padding: 0;
             background: var(--sw); box-shadow: 0 2px 8px var(--v-sh, rgba(0,0,0,.2)); }
   .orb-sw.active { outline: 2px solid var(--text); outline-offset: 3px; }
@@ -506,6 +506,7 @@
   .field { display: block; margin-bottom: 14px; }
   .field .label { display: block; margin-bottom: 8px; }
   .field.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .field.row > span:first-child { min-width: 0; }      /* o texto encolhe e quebra, o botao nao */
   .field.row .label { margin-bottom: 4px; }
   .field input { width: 100%; max-width: 420px; padding: 10px 12px; background: transparent; border: 1px solid var(--line-strong); color: var(--text);
                  font: 500 15px "Exo 2", sans-serif; border-radius: 4px; }
@@ -516,8 +517,8 @@
   .with-btn input { flex: 1; max-width: none; }
   .with-btn .btn { margin: 0; white-space: nowrap; }
   small.hint { margin: 0; }
-  .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 4px; overflow: hidden; }
-  .seg button { padding: 8px 16px; background: transparent; border: 0; color: var(--text); cursor: pointer; font: 500 14px "Exo 2", sans-serif; }
+  .seg { display: inline-flex; flex: none; border: 1px solid var(--line-strong); border-radius: 4px; overflow: hidden; }   /* nunca espreme os botoes */
+  .seg button { padding: 8px 16px; background: transparent; border: 0; color: var(--text); cursor: pointer; font: 500 14px "Exo 2", sans-serif; white-space: nowrap; }
   .seg button.on { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
   .toggle { min-width: 120px; padding: 9px 16px; border: 1px solid var(--line-strong); border-radius: 4px; background: transparent; color: var(--dim); cursor: pointer;
             font: 600 12px "JetBrains Mono", monospace; letter-spacing: .14em; text-transform: uppercase; }
@@ -936,7 +937,14 @@
   html[data-face='lilas'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #f6f1ff 0%, #e0d5ff 55%, #c3b2f5 100%); }
   html[data-face='amarelo'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #fffbe8 0%, #fff0b8 55%, #f5d97e 100%); }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-  .face-colors { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .cfg-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .cfg-tile { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
+    background: color-mix(in srgb, var(--text) 3%, transparent); }
+  .cfg-tile[hidden] { display: none; }
+  .cfg-tile-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .cfg-tile .hint { margin: 0; }
+  .cfg-tile .with-btn .btn { margin: 0; padding: 6px 12px; }
+  .face-colors { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px; margin-bottom: 12px; }
   .face-sw { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
   .face-sw.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
   .face-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-bottom: 18px; }
@@ -1137,16 +1145,22 @@
     </section>
 
     <section class="pane" data-pane="aparencia" hidden>
-      <div class="field row"><span class="label">Tema</span>
-        <div class="seg" id="cfg-theme"><button data-v="claro">Claro</button><button data-v="escuro">Escuro</button></div></div>
-      <h3 class="sub"><b>Rostinho</b> · cor e acessório (aparece no entalhe; as expressões continuam automáticas)</h3>
+      <!-- so o que vale para o modo atual: entalhe = rostinho; janela = tema e orbe -->
+      <div id="ap-notch" hidden>
+      <h3 class="sub"><b>Rostinho</b> · cor e acessório (no entalhe e no Mascote; as expressões continuam automáticas)</h3>
       <div class="face-colors" id="face-colors"></div>
       <div class="face-grid" id="face-grid"></div>
+      </div>
+      <div id="ap-win">
+      <div class="field row"><span class="label">Tema</span>
+        <div class="seg" id="cfg-theme"><button data-v="claro">Claro</button><button data-v="escuro">Escuro</button></div></div>
       <h3 class="sub"><b>Orbe</b> · o modelo da animação central (todos reagem à sua voz)</h3>
       <div class="orb-grid" id="orb-grid"></div>
       <h3 class="sub"><b>Cor do orbe</b></h3>
       <div class="orb-colors" id="orb-colors">
         <label class="orb-sw orb-custom" title="Escolher qualquer cor"><input type="color" id="orb-custom" aria-label="Cor personalizada"><span>+</span></label>
+      </div>
+      <p class="hint" id="ap-face-hint">O rostinho do entalhe (cor e acessório) se escolhe aqui mesmo no modo entalhe, ou aqui quando o modelo escolhido é o Mascote.</p>
       </div>
     </section>
 
@@ -1235,6 +1249,14 @@
     </section>
 
     <section class="pane" data-pane="geral">
+      <div class="cfg-top">
+        <div class="cfg-tile"><div class="cfg-tile-head"><span class="label">Iniciar com o Windows</span>
+          <button class="toggle" id="cfg-autostart" type="button" aria-pressed="false">Desligado</button></div>
+          <small class="hint" id="cfg-autostart-hint">Ao entrar no Windows, sobe o Docker, a Aura e o agente do Windows escondidos.</small></div>
+        <div class="cfg-tile" id="cfg-desk-row" hidden><div class="cfg-tile-head"><span class="label">Modo de exibição</span>
+          <span class="with-btn"><button class="btn ghost" type="button" data-desk="janela">Janela</button><button class="btn ghost" type="button" data-desk="entalhe">Entalhe</button></span></div>
+          <small class="hint">Entalhe: uma pílula no topo da tela que abre ali mesmo. Janela: a A.U.R.A. numa janela comum.</small></div>
+      </div>
       <label class="field"><span class="label">Nome da assistente</span>
         <input id="cfg-assistant" maxlength="30" autocomplete="off"></label>
       <p class="hint">É como ela se apresenta e aparece na tela.</p>
@@ -1243,18 +1265,13 @@
       <p class="hint" id="cfg-wake-hint"></p>
       <label class="field"><span class="label">Seu nome</span>
         <input id="cfg-user" maxlength="30" autocomplete="off"></label>
-      <div class="field row"><span><span class="label">Saudação ao abrir</span><br><small class="hint">Ela te cumprimenta falando quando a página abre.</small></span>
-        <button class="toggle" id="cfg-greeting" aria-pressed="true">Ligada</button></div>
-      <label class="field"><span class="label">Texto da saudação</span>
-        <span class="with-btn"><input id="cfg-greeting-text" maxlength="200" autocomplete="off">
-          <button class="btn ghost" id="cfg-greeting-play" type="button">▶ Ouvir</button></span></label>
-      <p class="hint">Use <code>{saudacao}</code> (bom dia / boa tarde / boa noite), <code>{usuario}</code> e <code>{assistente}</code>.</p>
-      <div class="field row"><span><span class="label">Iniciar com o Windows</span><br><small class="hint" id="cfg-autostart-hint">Ao entrar no Windows, sobe o Docker, a Aura e o agente do Windows escondidos (sem abrir o navegador).</small></span>
-        <button class="toggle" id="cfg-autostart" aria-pressed="false">Desligado</button></div>
+      <div class="field"><span class="label">Saudação ao abrir</span>
+        <span class="with-btn"><input id="cfg-greeting-text" maxlength="200" autocomplete="off" aria-label="Texto da saudação">
+          <button class="btn ghost" id="cfg-greeting-play" type="button">▶ Ouvir</button>
+          <button class="toggle" id="cfg-greeting" type="button" aria-pressed="true" title="Falar a saudação quando a página abre">Ligada</button></span></div>
+      <p class="hint">Ela te cumprimenta falando quando abre. Use <code>{saudacao}</code> (bom dia / boa tarde / boa noite), <code>{usuario}</code> e <code>{assistente}</code>.</p>
       <div class="field row"><span><span class="label">Aplicativo na área de trabalho</span><br><small class="hint" id="cfg-pwa-hint">Instala a A.U.R.A. como aplicativo: janela própria, sem abas nem barra do navegador, com ícone no menu Iniciar e na barra de tarefas.</small></span>
         <button class="btn" id="cfg-pwa" type="button">Instalar</button></div>
-      <div class="field row" id="cfg-desk-row" hidden><span><span class="label">Modo de exibição</span><br><small class="hint">Janela: a A.U.R.A. numa janela comum. Entalhe: uma pílula no topo da tela mostra se ela está ouvindo, pensando ou falando; clique nela e a A.U.R.A. abre ali mesmo. Ela some quando um programa está maximizado ou em tela cheia.</small></span>
-        <span class="with-btn"><button class="btn ghost" type="button" data-desk="janela">Janela</button><button class="btn ghost" type="button" data-desk="entalhe">Entalhe</button></span></div>
       <div class="field row" id="cfg-ontop-row" hidden><span><span class="label">Entalhe acima das janelas</span><br><small class="hint">Ligado: o entalhe fica sempre visível, por cima de tudo, mesmo com um programa maximizado ou em tela cheia. Desligado: ele some nesses casos e volta quando o programa sai.</small></span>
         <button class="toggle" id="cfg-ontop" type="button" aria-pressed="false">Desligado</button></div>
       <div class="field row"><span><span class="label">Modo só executar</span><br><small class="hint">Faz o que você pediu e fica quieta: a resposta aparece escrita e um bipe avisa que terminou, sem falar. Também por voz: "liga o modo silencioso".</small></span>
@@ -1745,6 +1762,110 @@ const ORB_STYLES = (() => {
         S.core(.22);
       },
     },
+    // ---------- Mascote: o rostinho do entalhe com corpo (desenho proprio). Flutua, pisca, olha em volta,
+    // acena ao falar, levanta os bracos ao ouvir, poe a mao no queixo ao pensar e dorme quando esta dormindo.
+    // Usa a cor e o acessorio escolhidos em Aparencia (os mesmos do entalhe); a luz do peito e a cor do orbe.
+    mascote: {
+      name: 'Mascote', desc: 'O rostinho com corpo: acena, fala e reage',
+      init() { return { blink: 0, nextBlink: 2, look: 0, lookT: 0, accKey: null, accImg: null }; },
+      draw(S, g) {
+        const { ctx, cx, cy, R, t, dt, energy, talk, DPR, light } = S;
+        ctx.globalCompositeOperation = 'source-over';
+        const state = S.state || 'idle', sleep = document.body.hasAttribute('data-sleep'), mood = document.body.dataset.mood || '';
+        // cor da cabeca/corpo (a mesma do rostinho) e "tinta" dos olhos
+        const fc = (typeof FACE_COLORS !== 'undefined' && FACE_COLORS[(typeof cfg !== 'undefined' && cfg.face_color) || 'branco']) || ['', '#f1f3f6'];
+        const base = fc[1], ink = (cfg?.face_color === 'grafite') ? '#eef2f7' : '#14161a';
+        const mix = (hex, to, f) => { const h = parseInt(hex.slice(1), 16), a = [h >> 16, h >> 8 & 255, h & 255], b = to === 'w' ? [255, 255, 255] : [0, 0, 0];
+          return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * f)).join(',')})`; };
+        // piscar e olhar em volta
+        g.nextBlink -= dt; if (g.nextBlink <= 0) { g.blink = .16; g.nextBlink = 2.5 + Math.random() * 3.5; }
+        g.blink = Math.max(0, g.blink - dt);
+        g.lookT -= dt; if (g.lookT <= 0) { g.look = state === 'idle' && Math.random() < .5 ? (Math.random() < .5 ? -1 : 1) : 0; g.lookT = 1.5 + Math.random() * 3; }
+        const lookX = state === 'thinking' ? Math.sin(t * 2.4) : g.look;
+        // corpo flutuando
+        const u = R / 1.28, bob = Math.sin(t * 1.7) * .05 * u * (sleep ? .4 : 1);
+        const hx = cx, hy = cy - .3 * u + bob, hrx = 1.05 * u, hry = .72 * u;          // cabeca
+        const bw = 1.15 * u, bh = 1.0 * u, bx = cx - bw / 2, by = hy + .5 * u;          // corpo
+        // sombra no chao
+        ctx.globalAlpha = light ? .14 : .35; ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.ellipse(cx, by + bh + .32 * u, .8 * u * (1 - bob / u), .12 * u, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        const fillBody = (y0, y1) => { const gr = ctx.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, mix(base, 'w', .55)); gr.addColorStop(1, mix(base, 'k', .12)); return gr; };
+        // bracos (atras do corpo): ouvir = levantados; falar = acenando; pensar = mao no queixo
+        const arm = (side) => {
+          let ang = side * .35 + Math.sin(t * 1.7 + side) * .05;                       // parado: soltos
+          if (state === 'listening') ang = side * 1.9;
+          if (state === 'speaking') ang = side * (1.1 + Math.sin(t * 7 + side) * .5 * (.4 + talk));
+          if (state === 'thinking' && side === 1) ang = 2.6;
+          if (sleep) ang = side * .2;
+          const sx = cx + side * bw * .48, sy = by + .22 * u, len = .62 * u;
+          ctx.save(); ctx.translate(sx, sy); ctx.rotate(-ang);
+          ctx.fillStyle = fillBody(-len, len); ctx.strokeStyle = mix(base, 'k', .25); ctx.lineWidth = 1.2 * DPR;
+          ctx.beginPath(); ctx.roundRect(-.13 * u, 0, .26 * u, len, .13 * u); ctx.fill(); ctx.stroke(); ctx.restore();
+        };
+        arm(-1); arm(1);
+        // corpo
+        ctx.fillStyle = fillBody(by, by + bh); ctx.strokeStyle = mix(base, 'k', .22); ctx.lineWidth = 1.4 * DPR;
+        ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, [.42 * u, .42 * u, .5 * u, .5 * u]); ctx.fill(); ctx.stroke();
+        // luz do peito: a "energia" dela (pulsa ao pensar, segue a voz ao falar/ouvir)
+        const pr = .17 * u * (1 + energy * .25 + talk * .3);
+        S.dot(cx, by + bh * .45, pr * 5, .55 + energy * .3); S.dot(cx, by + bh * .45, pr * 2, 1);
+        // pescoco e cabeca
+        const hg = ctx.createRadialGradient(hx - .35 * hrx, hy - .45 * hry, .1 * u, hx, hy, 1.3 * hrx);
+        hg.addColorStop(0, mix(base, 'w', .8)); hg.addColorStop(.55, base); hg.addColorStop(1, mix(base, 'k', .14));
+        ctx.fillStyle = hg; ctx.strokeStyle = mix(base, 'k', .2); ctx.lineWidth = 1.4 * DPR;
+        ctx.beginPath(); ctx.ellipse(hx, hy, hrx, hry, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        // brilho do estado em volta da cabeca
+        const glow = { listening: '#3ec7ff', thinking: '#b48cff', speaking: '#ff9a1f' }[state];
+        if (glow && !sleep) { ctx.globalAlpha = .35 + .25 * Math.sin(t * 6); ctx.strokeStyle = glow; ctx.lineWidth = 3 * DPR;
+          ctx.beginPath(); ctx.ellipse(hx, hy, hrx + 4 * DPR, hry + 4 * DPR, 0, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
+        // olhos e boca
+        ctx.fillStyle = ink; ctx.strokeStyle = ink; ctx.lineCap = 'round';
+        const ex = .36 * hrx, ey = hy - .02 * u, ew = .16 * u, eh = .21 * u;
+        const eyes = (fn) => [-1, 1].forEach(sd => fn(hx + sd * ex + lookX * .07 * u, ey, sd));
+        if (sleep || mood === 'sono') {
+          ctx.lineWidth = .05 * u; eyes((x, y) => { ctx.beginPath(); ctx.moveTo(x - ew * .6, y + eh * .2); ctx.lineTo(x + ew * .6, y + eh * .2); ctx.stroke(); });
+          ctx.fillStyle = light ? '#7a8594' : '#9aa4b2'; ctx.font = `700 ${.3 * u}px "Exo 2", sans-serif`;
+          const zt = (t * .5) % 1; ctx.globalAlpha = 1 - zt; ctx.fillText('z', hx + hrx * .8 + zt * .2 * u, hy - hry * .6 - zt * .4 * u); ctx.globalAlpha = 1;
+        } else if (['feliz', 'rindo', 'carinho'].includes(mood)) {
+          ctx.lineWidth = .06 * u; eyes((x, y) => { ctx.beginPath(); ctx.arc(x, y + eh * .25, ew * .55, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); });
+        } else {
+          const big = state === 'listening' || mood === 'surpreso' ? 1.2 : 1, sy = Math.max(.08, 1 - (g.blink > 0 ? 1 - Math.abs(g.blink - .08) / .08 : 0));
+          const droop = mood === 'triste' ? .45 : 1;
+          eyes((x, y) => { ctx.beginPath(); ctx.ellipse(x, y + (1 - droop) * eh * .4, ew * .5 * big, eh * .5 * big * sy * droop, 0, 0, Math.PI * 2); ctx.fill(); });
+        }
+        if (mood === 'carinho') { ctx.fillStyle = 'rgba(255,143,177,.85)'; [-1, 1].forEach(sd => { ctx.beginPath(); ctx.ellipse(hx + sd * .62 * hrx, hy + .3 * hry, .12 * u, .06 * u, 0, 0, Math.PI * 2); ctx.fill(); }); }
+        if (mood === 'triste') { ctx.fillStyle = '#5ab8ff'; const ty = (t * .8) % 1; ctx.globalAlpha = 1 - ty;
+          ctx.beginPath(); ctx.ellipse(hx - ex, ey + eh * .6 + ty * .25 * u, .045 * u, .07 * u, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+        ctx.fillStyle = ink; ctx.strokeStyle = ink;
+        const my = hy + .38 * hry;
+        if (state === 'speaking' && !sleep) {
+          const open = .03 * u + talk * .1 * u + (Math.sin(t * 16) * .5 + .5) * .03 * u;
+          ctx.beginPath(); ctx.ellipse(hx, my, .1 * u, open, 0, 0, Math.PI * 2); ctx.fill();
+        } else if (mood === 'surpreso') {
+          ctx.lineWidth = .04 * u; ctx.beginPath(); ctx.ellipse(hx, my, .06 * u, .07 * u, 0, 0, Math.PI * 2); ctx.stroke();
+        } else if (['feliz', 'carinho', 'rindo'].includes(mood) || (state === 'idle' && !sleep)) {
+          ctx.lineWidth = .045 * u; ctx.beginPath(); ctx.arc(hx, my - .06 * u, .11 * u, Math.PI * .2, Math.PI * .8); ctx.stroke();
+        }
+        // acessorio escolhido (o mesmo desenho do entalhe)
+        const acc = (typeof cfg !== 'undefined' && cfg.face_acc) || '';
+        if (acc !== g.accKey) {
+          g.accKey = acc; g.accImg = null;
+          if (acc) {
+            const probe = document.createElement('span'); probe.className = 'np-face'; probe.dataset.acc = acc;
+            probe.style.cssText = 'position:absolute;left:-999px;top:-999px'; probe.innerHTML = '<b class="np-acc"></b>';
+            document.body.append(probe);
+            const m = /url\("?(.*?)"?\)$/.exec(getComputedStyle(probe.firstChild).backgroundImage); probe.remove();
+            if (m) { const im = new Image(); im.src = m[1]; g.accImg = im; }
+          }
+        }
+        if (g.accImg?.complete) {
+          // o desenho tem 44x36, com a cabeca em x 4..40 e y 10..34: escala para a cabeca daqui
+          const kx = 2 * hrx / 36, ky = 2 * hry / 24;
+          ctx.drawImage(g.accImg, hx - 22 * kx, hy - hry - 10 * ky, 44 * kx, 36 * ky);
+        }
+      },
+    },
   };
 })();
 
@@ -1808,7 +1929,7 @@ function createOrb(cv, opts = {}) {
       return (x, y, z) => { const x1 = x * cyR + z * syR, z1 = -x * syR + z * cyR, y2 = y * ct - z1 * stt, z2 = y * stt + z1 * ct, k = F / (F + z2);
         return [cx + x1 * R * k, cy + y2 * R * k, k, z2]; }; };
     const S = {
-      ctx, W, H, DPR, cx, cy, R, t, dt, energy, talk, lvl, rgb, light,
+      ctx, W, H, DPR, cx, cy, R, t, dt, energy, talk, lvl, rgb, light, state: st,
       proj: mkProj(.38),
       proj2: (x, y, z, tilt) => { const ct = Math.cos(tilt), stt = Math.sin(tilt), y2 = y * ct - z * stt, z2 = y * stt + z * ct, k = F / (F + z2);
         return [cx + x * R * k, cy + y2 * R * k, k, z2]; },
@@ -3304,7 +3425,12 @@ function renderFace() {
   grid.querySelectorAll('.face-card').forEach(b => b.onclick = async () => { await saveSettings({ face_acc: b.dataset.acc }); renderFace(); });
 }
 function renderAppearance() {
+  // entalhe: rostinho; janela: tema e orbe (e o rostinho tambem, se o modelo escolhido for o Mascote)
+  const masc = (cfg.orb_style || 'esfera') === 'mascote';
+  $('ap-notch').hidden = !NOTCH && !masc; $('ap-win').hidden = NOTCH;
+  $('ap-face-hint').hidden = masc;
   renderFace();
+  if (NOTCH) return;                                               // sem orbe no entalhe: nao anima as previas
   stopOrbPreviews();
   const grid = $('orb-grid'); grid.innerHTML = '';
   for (const [id, st] of Object.entries(ORB_STYLES)) {
@@ -3362,7 +3488,7 @@ $('cfg-quit').onclick = async () => {
 };
 // subtitulo de cada pagina das configuracoes
 const PANE_SUB = {
-  geral: 'Nome, palavra de ativação e saudação.', aparencia: 'Tema, rostinho do entalhe, modelo e cor do orbe.',
+  geral: 'Nome, palavra de ativação e saudação.', aparencia: NOTCH ? 'Cor e acessório do rostinho.' : 'Tema, modelo e cor do orbe.',
   motor: 'O modelo que pensa, chaves de API, Gemini Live e fala local.', voz: 'Como ela soa e como se comporta.',
   mem: 'O que ela aprendeu sobre você.', ins: 'Arquivos markdown que ela lê em toda conversa.',
   mic: 'Microfone, alto-falante e modo conversa.',

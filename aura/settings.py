@@ -29,7 +29,7 @@ DEFAULTS = {
     "telegram_chats": [],       # conversas do Telegram aprovadas: [{id, name, sid}]
     "ha_url": "",               # Home Assistant (vazio = o container homeassistant do docker-compose)
     "ha_hidden": [],            # aparelhos do HA que a Aura NAO ve (entity_id)
-    "orb_style": "esfera",      # modelo do orbe: esfera | aneis | galaxia | onda | enxame | holograma
+    "orb_style": "esfera",      # modelo do orbe: esfera | aneis | galaxia | onda | enxame | holograma | mascote
     "orb_color": "",            # cor do orbe (#rrggbb); vazio = cor do tema
     "conversation_mode": False, # modo conversa: depois de responder continua ouvindo 2 min sem a palavra (desligado = pede "Aura" de novo)
     "follow_language": False,   # a voz te segue: detecta a lingua da fala (desligado = sempre portugues, mais preciso)
@@ -152,7 +152,7 @@ def _validate(key, value):
             raise ValueError("ha_hidden deve ser uma lista")
         value = sorted({str(v).strip()[:120] for v in value if "." in str(v)})[:2000]
     elif key == "orb_style":
-        if value not in ("esfera", "aneis", "galaxia", "onda", "enxame", "holograma"):
+        if value not in ("esfera", "aneis", "galaxia", "onda", "enxame", "holograma", "mascote"):
             raise ValueError("modelo de orbe desconhecido")
     elif key == "orb_color":
         value = str(value or "").strip().lower()

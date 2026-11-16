@@ -3,27 +3,37 @@ Cada mudanca entra no diario de acoes e pode ser desfeita."""
 from .. import actions, settings
 from . import tool
 
+# nomes curtos (vao para o modelo em todo pedido: cada palavra aqui custa memoria de conversa)
 EDITABLE = {
-    "assistant_name": "nome do assistente",
+    "assistant_name": "nome dela",
     "user_name": "como chamar o usuario",
-    "voice": "voz local (pf_dora, pm_alex ou pm_santa)",
-    "voice_speed": "velocidade da fala (0.7 a 1.5)",
-    "personality": "jeito de ser: " + ", ".join(settings.PERSONALITIES),
+    "voice": "voz local",
+    "voice_speed": "velocidade da fala, 0.7 a 1.5",
+    "personality": "jeito de ser",
     "wake_word": "palavra de ativacao",
-    "greeting_text": "texto da saudacao ao abrir",
-    "live_voice": "voz do modo Gemini Live (ex.: Orus, Kore, Puck)",
-    "quiet_mode": "modo so executar / silencioso: faz e nao fala a resposta (valor: ligado ou desligado)",
-    "conversation_mode": "modo conversa: continua ouvindo depois de responder (valor: ligado ou desligado)",
+    "greeting_text": "saudacao ao abrir",
+    "live_voice": "voz do Gemini Live",
+    "quiet_mode": "modo so executar/silencioso, ligado ou desligado",
+    "conversation_mode": "modo conversa, ligado ou desligado",
     "city": "cidade do clima",
-    "face_acc": "acessorio do rostinho (valor: nenhum, coroa, fones, natal, festa, cartola, bone, aureola, chifres, laco, flor, oculos, bigode)",
-    "face_color": "cor do rostinho (valor: branco, grafite, azul, rosa, verde, lilas, amarelo)",
+    "face_acc": "acessorio do rostinho: coroa, oculos, chapeu, fones...",
+    "face_color": "cor do rostinho: rosa, azul...",
 }
 BOOLS = {"quiet_mode", "conversation_mode"}
+# valores aceitos: so aparecem para o modelo se ele errar (na mensagem de erro), nao em todo pedido
+OPTIONS = {
+    "voice": "pf_dora, pm_alex ou pm_santa",
+    "personality": ", ".join(settings.PERSONALITIES),
+    "live_voice": "Orus, Kore, Puck, Charon, Fenrir, Leda...",
+    "face_acc": "nenhum, coroa, fones, natal, festa, cartola, bone, aureola, chifres, laco, flor, oculos, bigode",
+    "face_color": "branco, grafite, azul, rosa, verde, lilas, amarelo",
+}
 
 
 @tool(
-    "Altera uma configuracao do proprio assistente quando o usuario pedir. Chaves: "
-    + "; ".join(f"{k} = {v}" for k, v in EDITABLE.items()) + ". Pode ser desfeito.",
+    "Muda uma configuracao dela quando o usuario pedir (pode ser desfeito). chave: "
+    + "; ".join(f"{k} ({v})" for k, v in EDITABLE.items())
+    + ". Ex.: 'poe uma coroa' -> face_acc=coroa; 'fica rosa' -> face_color=rosa; 'fica sarcastica' -> personality=sarcastico.",
     {
         "chave": {"type": "string", "enum": list(EDITABLE), "description": "Qual configuracao"},
         "valor": {"type": "string", "description": "Novo valor"},
@@ -48,11 +58,11 @@ def alterar_configuracao(chave: str, valor: str) -> str:
             valor = str(valor).strip().lower() in ("ligado", "liga", "ligar", "sim", "true", "1", "on", "ativado", "ativa")
         new = settings.update({chave: float(valor) if chave == "voice_speed" else valor})[chave]
     except (ValueError, TypeError) as e:
-        return f"Erro: valor invalido para {EDITABLE[chave]}: {e}"
+        return f"Erro: valor invalido para {EDITABLE[chave]}: {e}." + (f" Valores aceitos: {OPTIONS[chave]}." if chave in OPTIONS else "")
     if new == old:
         return f"{EDITABLE[chave]} ja era '{new}'."
-    actions.record("alterar_configuracao", f"Mudou {EDITABLE[chave].split(' (')[0].split(':')[0]}: {old} → {new}",
+    actions.record("alterar_configuracao", f"Mudou {EDITABLE[chave].split(',')[0]}: {old} → {new}",
                    "settings", {"old": {chave: old}, "new": {chave: new}})
     if chave in BOOLS:
-        return f"Pronto: {EDITABLE[chave].split(':')[0]} {'ligado' if new else 'desligado'}."
-    return f"Pronto: {EDITABLE[chave].split(' (')[0]} agora e '{new}'."
+        return f"Pronto: {EDITABLE[chave].split(',')[0]} {'ligado' if new else 'desligado'}."
+    return f"Pronto: {EDITABLE[chave].split(',')[0]} agora e '{new or 'nenhum'}'."

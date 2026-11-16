@@ -287,6 +287,9 @@ _CLAIM = re.compile(r"\b(criei|criado|salvei|salvo em|gravei|abri|foi abert[oa]|
                     r"toquei|coloquei (?:para|pra) tocar|est[aá] tocando|liguei|desliguei|enviei|abrindo|sintonizei|"
                     r"acabo de \w+|j[aá] (?:abri|coloquei|liguei|toquei|est[aá])|pronto,? (?:abri|est[aá])|"
                     r"prontinho|bloqueei|bloquead[oa]|tranquei|trancad[oa]|suspendi|reiniciando|desligando|"
+                    r"anotei|anotad[oa]|registrei|registrad[oa]|marquei|marcad[oa]|j[aá] (?:anotei|registrei|marquei)|"
+                    r"vou (?:colocar|p[oô]r|mudar|trocar|ligar|desligar|deixar|anotar|registrar|marcar|criar|abrir|tocar|fazer isso|adicionar|"
+                    r"ajustar|configurar|ativar|desativar)|"
                     r"aumentei|abaixei|baixei|pausei|pulei|dei (?:o )?play|fechei|mandei|"
                     r"estou (?:verificando|procurando|buscando|abrindo|tocando|checando|analisando)|verificando se|"
                     r"i (?:have )?(?:created|saved|opened|deleted|wrote)|i'?m (?:checking|looking|searching))\b", re.I)

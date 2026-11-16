@@ -40,9 +40,8 @@ async def focar_janela(titulo: str) -> str:
 
 
 @tool(
-    "Abre um programa instalado (ex.: 'Spotify', 'Word', 'calculadora'; inclui apps da Microsoft Store), um site "
-    "(https://...), a pasta de trabalho ('pasta de trabalho') ou um arquivo dela (caminho relativo). Para abrir um "
-    "programa passe so o NOME dele; so use https:// se o usuario pedir o site. Para YouTube use a ferramenta youtube.",
+    "Abre um programa instalado pelo NOME (ex.: 'Spotify', 'Word', 'calculadora'; inclui Microsoft Store), um site "
+    "(https://, so se pedirem o site), a 'pasta de trabalho' ou um arquivo dela. YouTube: use youtube.",
     {"alvo": {"type": "string", "description": "Nome do programa, endereco https://, 'pasta de trabalho' ou arquivo"}},
     available=_ready,
 )
@@ -122,10 +121,9 @@ def _yt_first(query: str, live: bool) -> tuple[str, str] | None:
 
 
 @tool(
-    "YouTube: procura um video, musica, canal ou LIVE e ja toca o primeiro resultado, reaproveitando a aba do "
-    "YouTube que ja estiver aberta (nao abre outra janela). Use para 'abre/toca/coloca X no YouTube', "
-    "'abre uma live de X' (ao_vivo=true). Sem busca: so traz o YouTube para a frente. NAO use para pausar, "
-    "continuar, pular ou volume do que ja esta tocando: para isso use midia.",
+    "YouTube: procura video, musica, canal ou live e toca o primeiro resultado na aba ja aberta. Para "
+    "'abre/toca X no YouTube', 'live de X' (ao_vivo=true). Sem busca: traz o YouTube para a frente. "
+    "Pausar, pular ou volume: use midia.",
     {"busca": {"type": "string", "x-optional": True, "description": "o que procurar (vazio = pagina inicial)"},
      "ao_vivo": {"type": "boolean", "x-optional": True, "description": "true para lives/transmissoes ao vivo"},
      "so_resultados": {"type": "boolean", "x-optional": True,
@@ -206,9 +204,8 @@ async def tirar_print() -> str:
 
 
 @tool(
-    "Pausa/continua (play_pause), pula (next) ou volta (previous) a musica ou video que esta tocando em QUALQUER "
-    "programa (YouTube no navegador, Spotify, VLC...) e controla o volume do PC. Use para 'pausa a musica', "
-    "'pausa o YouTube', 'continua', 'proxima', 'aumenta/abaixa o volume', 'muta', 'volume em 30' (acao=volume, nivel=30).",
+    "Pausa/continua (play_pause), proxima (next) ou anterior (previous) do que toca em QUALQUER programa "
+    "(YouTube, Spotify...) e volume do PC: volume_up, volume_down, mute ou exato ('volume em 30': acao=volume, nivel=30).",
     {"acao": {"type": "string", "enum": ["volume_up", "volume_down", "volume", "mute", "play_pause", "next", "previous"]},
      "vezes": {"type": "integer", "description": "Quantas vezes (volume_up/volume_down), ate 10", "x-optional": True},
      "nivel": {"type": "integer", "description": "Volume exato de 0 a 100 (so com acao=volume)", "x-optional": True}},
