@@ -208,6 +208,7 @@ Add-Type -Namespace AuraAgent -Name Win -MemberDefinition @'
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow();
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool SetForegroundWindow(System.IntPtr h);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool ShowWindow(System.IntPtr h, int n);
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool IsIconic(System.IntPtr h);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, System.UIntPtr extra);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern void mouse_event(uint f, uint dx, uint dy, uint d, System.UIntPtr e);
@@ -215,6 +216,11 @@ Add-Type -Namespace AuraAgent -Name Win -MemberDefinition @'
 $script:desktopCmds = @("windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media",
                         "clip_set", "find_files", "reveal", "desktop_scan", "desktop_organize", "desktop_undo", "metrics")
 $script:uiElems = @()
+
+# so "restaura" a janela se ela estiver minimizada: restaurar uma janela maximizada tira ela do maximizado
+function Show-Front([IntPtr]$h) {
+    if ([AuraAgent.Win]::IsIconic($h)) { [AuraAgent.Win]::ShowWindow($h, 9) | Out-Null }
+}
 
 function Press-Key([byte]$vk) {
     [AuraAgent.Win]::keybd_event($vk, 0, 0, [UIntPtr]::Zero)
@@ -277,7 +283,7 @@ function Invoke-Desktop($c) {
                 $lista = ($wins | ForEach-Object { "$($_.ProcessName): $($_.MainWindowTitle)" }) -join "; "
                 return @{ ok = $false; output = "nenhuma janela com '$t'. Janelas abertas: $lista" }
             }
-            [AuraAgent.Win]::ShowWindow($p.MainWindowHandle, 9) | Out-Null
+            Show-Front $p.MainWindowHandle
             Press-Key 0x12                                   # Alt: libera o Windows para trocar o foco
             [AuraAgent.Win]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
             return @{ ok = $true; output = "em foco: $($p.MainWindowTitle)" }
@@ -408,7 +414,7 @@ function Invoke-Desktop($c) {
             $browsers = 'msedge|chrome|firefox|brave|opera|vivaldi'
             $w = Get-Process | Where-Object { $_.MainWindowTitle -like "*$match*" -and $_.ProcessName -match $browsers } | Select-Object -First 1
             if ($w) {
-                [AuraAgent.Win]::ShowWindow($w.MainWindowHandle, 9) | Out-Null
+                Show-Front $w.MainWindowHandle
                 Press-Key 0x12
                 [AuraAgent.Win]::SetForegroundWindow($w.MainWindowHandle) | Out-Null
                 Start-Sleep -Milliseconds 350
