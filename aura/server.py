@@ -157,6 +157,7 @@ async def _start_mcp():
     asyncio.create_task(scheduler.loop())   # tarefas agendadas
     telegram.start()                        # bot do Telegram (se o token estiver configurado)
     # motor proprio: carrega o modelo e o prompt fixo antes do primeiro pedido; Gemini Live: tira o modelo local da memoria
+    _LOOP["loop"] = asyncio.get_running_loop()
     asyncio.create_task(llm.unload_local() if llm.live_mode() else brain.warm_up())
 
 
@@ -831,6 +832,18 @@ def _valid_choice(choice: str) -> str:
     return choice[:200]
 
 
+_LOOP: dict = {}
+
+
+def _bg(coro):
+    """Roda uma tarefa em segundo plano mesmo de dentro de uma rota sincrona (que roda fora do loop)."""
+    loop = _LOOP.get("loop")
+    if loop:
+        asyncio.run_coroutine_threadsafe(coro, loop)
+    else:
+        coro.close()
+
+
 def _switch_model(conv_id: str, choice: str):
     """Troca o modelo/IA da conversa; a troca fica registrada no historico."""
     choice = _valid_choice(choice)
@@ -844,6 +857,18 @@ def _switch_model(conv_id: str, choice: str):
     s = brain.SESSIONS.get(conv_id)
     if s:
         s.model = choice
+    if choice.startswith("ollama:"):          # escolheu um modelo do PC no chat: ja carrega ele
+        _bg(brain.warm_up(quiet=True, cfg=llm.cfg_for(choice)))
+
+
+@app.post("/api/llm/warm")
+async def llm_warm(body: dict | None = None):
+    """O app (ou a pagina) abriu: aquece o modelo local, se for ele que vai responder. Com Gemini nao faz nada."""
+    ctx = (body or {}).get("context") or {}
+    local = bool(llm.cfg_for(None).get("local")) and not llm.live_mode()
+    if local:
+        asyncio.create_task(brain.warm_up(ctx=ctx if isinstance(ctx, dict) else None))
+    return {"local": local}
 
 
 @app.get("/api/models")
@@ -1324,7 +1349,9 @@ def get_settings():
 
 @app.put("/api/settings")
 async def put_settings(changes: dict):
-    before = settings.get().get("engine")
+    old = settings.get()
+    before = old.get("engine")
+    brain_before = (old.get("llm_provider"), old.get("llm_model"), old.get("llm_base_url"))
     try:
         out = await asyncio.to_thread(settings.update, changes)
     except (ValueError, TypeError) as e:
@@ -1332,6 +1359,8 @@ async def put_settings(changes: dict):
     if out.get("engine") != before:
         # Gemini Live: o modelo local sai da memoria; motor proprio: volta a carregar (e aquecer) em segundo plano
         asyncio.create_task(llm.unload_local() if out["engine"] == "live" else brain.warm_up())
+    elif (out.get("llm_provider"), out.get("llm_model"), out.get("llm_base_url")) != brain_before:
+        asyncio.create_task(brain.warm_up())     # trocou o modelo no Motor: se for local, ja carrega o novo
     return {"settings": out}
 
 

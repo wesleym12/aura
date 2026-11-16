@@ -4968,6 +4968,9 @@ connectGlobalPtt();
   if (items.some(c => c.id === sid)) await openConv(sid); else showEmpty();
   setState('idle', idleText());
   await checkVoice();
+  // modelo local: ja carrega o modelo e as instrucoes enquanto a pessoa ainda nao pediu nada (com Gemini nao faz nada)
+  setTimeout(() => fetch('/api/llm/warm', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ context: hostOs ? { host_os: hostOs } : {} }) }).catch(() => {}), 3000);
   // saudacao falada (se o navegador bloquear o som, ela toca no primeiro clique)
   // (app de mesa trocando entre janela e entalhe recarrega a pagina: ai nao repete a saudacao)
   if (cfg.greeting && voice.available && !new URLSearchParams(location.search).has('troca')) {

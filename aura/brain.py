@@ -132,14 +132,32 @@ async def _think(s: Session) -> dict:
 LAST_CTX: dict = {}       # contexto da pagina usado no ultimo pedido (ex.: host_os)
 
 
-async def warm_up(quiet: bool = False):
-    """Ao ligar: carrega o modelo local na GPU e deixa o prompt fixo (sistema + ferramentas) no cache do Ollama.
-    Sem isso o primeiro pedido do dia pagava a carga do modelo (de segundos a 1-2 min com a RAM apertada)."""
+_warming = {"busy": False}
+
+
+async def warm_up(quiet: bool = False, cfg: dict | None = None, ctx: dict | None = None):
+    """Carrega o modelo local na GPU e deixa o prompt fixo (sistema + ferramentas) no cache do Ollama, para o
+    proximo pedido nao pagar a carga do modelo (~7 s) nem a leitura das instrucoes (~3 s).
+    Roda ao ligar, ao abrir o app, ao trocar o modelo no Motor e ao escolher um modelo local no chat.
+    cfg: o modelo escolhido na conversa (vazio = o padrao do Motor). ctx: o contexto da pagina (prompt identico)."""
     import logging
     log = logging.getLogger("uvicorn.error")
-    cfg = llm.cfg_for(None)
-    if not cfg.get("local") or llm.live_mode():
-        return                                         # nuvem ou Gemini Live: o modelo local fica fora da memoria
+    if ctx:
+        LAST_CTX.update({k: str(v)[:120] for k, v in ctx.items()})
+    if cfg is None:
+        cfg = llm.cfg_for(None)
+        if llm.live_mode():
+            return                                     # Gemini Live: o modelo local fica fora da memoria
+    if not cfg.get("local") or _warming["busy"]:
+        return                                         # nuvem: nada a aquecer; ou ja tem um aquecimento rodando
+    _warming["busy"] = True
+    try:
+        await _warm(cfg, quiet, log)
+    finally:
+        _warming["busy"] = False
+
+
+async def _warm(cfg: dict, quiet: bool, log):
     for _ in range(60):                                # o Ollama pode ainda estar subindo
         try:
             t0 = asyncio.get_running_loop().time()
