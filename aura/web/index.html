@@ -2126,6 +2126,17 @@ const TOOL_LABELS = { abrir: 'Abrir programa', focar_janela: 'Trocar de janela',
   ler_email: 'Ler e-mail', rascunhar_email: 'Rascunho de e-mail', enviar_email: 'Enviar e-mail',
   casa_ver: 'Casa', casa_controlar: 'Casa', casa_seguranca: 'Casa (segurança)',
   youtube: 'YouTube', tocar_musica: 'Spotify', controlar_musica: 'Spotify', musica_tocando: 'Spotify', agendar_tarefa: 'Agendar', alterar_configuracao: 'Configuração', desfazer_ultima_acao: 'Desfazer', usar_skill: 'Skill' };
+// nomes das habilidades novas (rotina, utilidades, PC); as que ja tem nome acima continuam iguais
+Object.assign(TOOL_LABELS, Object.fromEntries(Object.entries({
+  criar_timer: 'Timer', criar_lembrete: 'Lembrete', ver_timers: 'Timers', cancelar_timer: 'Cancelar timer', cronometro: 'Cronômetro',
+  iniciar_foco: 'Modo foco', criar_tarefa: 'Tarefa', ver_tarefas: 'Tarefas', concluir_tarefa: 'Concluir tarefa', apagar_tarefa: 'Apagar tarefa',
+  marcar_habito: 'Hábito', ver_habitos: 'Hábitos', criar_habito: 'Novo hábito', clima: 'Clima', cotacao: 'Cotação', calcular: 'Calcular',
+  dias_ate: 'Contar dias', noticias: 'Notícias', gerar_senha: 'Gerar senha', sortear: 'Sorteio', copiar_texto: 'Copiar texto',
+  salvar_texto: 'Salvar texto', procurar_arquivo: 'Procurar arquivo', mostrar_arquivo: 'Mostrar arquivo',
+  ver_area_de_trabalho: 'Área de trabalho', organizar_area_de_trabalho: 'Organizar área de trabalho', desfazer_organizacao: 'Desfazer organização',
+  status_pc: 'Estado do PC', bloquear_tela: 'Bloquear o PC', desligar_pc: 'Desligar o PC', reiniciar_pc: 'Reiniciar o PC',
+  suspender_pc: 'Suspender o PC', cancelar_desligamento: 'Cancelar desligamento', wifi: 'Wi-Fi', alterar_configuracao: 'Configuração',
+}).filter(([k]) => !(k in TOOL_LABELS))));
 const toolLabel = (n) => TOOL_LABELS[n] || (n.charAt(0).toUpperCase() + n.slice(1)).replace(/_/g, ' ');
 function addTrace(body, trace) {
   if (!trace?.length) return;
@@ -2480,6 +2491,7 @@ async function run(fn, { speak = false, lang = null } = {}) {
       if (speak && cfg.quiet_mode !== true) ackSpeech = playSpeech(fetchSpeech(ev.text, null, lang), { status: false });
     } else if (ev.type === 'tool') {
       wait.textContent = `Usando ${ev.tool}...`;
+      setState('thinking', `Usando ${ev.tool}`);              // o entalhe mostra "Executando · <ferramenta>"
     }
   };
   try {

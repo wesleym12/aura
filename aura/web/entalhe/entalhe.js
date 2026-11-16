@@ -691,6 +691,23 @@
   pollAgent();
   rot.refresh();
 
+  // ---------- o que ela esta fazendo, escrito na pilula ----------
+  // Ouvindo / Pensando / Executando · <ferramenta> / Falando, ao lado do rostinho (o brilho colorido continua)
+  const realSetState = window.setState;
+  window.setState = (state, text) => { realSetState(state, text); stateText(state, String(text || '')); };
+  function stateText(state, text) {
+    let t = '';
+    if (state === 'listening') t = 'Ouvindo…';
+    else if (state === 'speaking') t = 'Falando…';
+    else if (state === 'thinking') {
+      const m = /^Usando (\w+)/.exec(text);
+      t = m ? `Executando · ${(typeof TOOL_LABELS !== 'undefined' && TOOL_LABELS[m[1]]) || m[1].replace(/_/g, ' ')}`
+        : /^Conectando/.test(text) ? 'Conectando…' : /^Trabalhando/.test(text) ? 'Executando…' : 'Pensando…';
+    }
+    if (/^Aguardando autoriza/.test(text)) t = 'Aguardando Autorizar';
+    entAct('state', t ? `<span class="np-st st-${esc(state)}"><i></i>${esc(t)}</span>` : '', 7);
+  }
+
   // ---------- arrastar para outro monitor ----------
   // Segure a pilula (ou o rostinho do painel aberto) e arraste: ela segue o mouse e, ao soltar, vai para o topo
   // do monitor onde caiu (e lembra dele). So no app de mesa do Windows.

@@ -263,3 +263,9 @@ body.np-groove:not([data-mood]):not([data-state="thinking"]) .np-face { animatio
 .e-cfgtabs { position: static; margin-bottom: 14px; background: none; border: 0; padding: 0; }
 .e-cfgtabs[hidden] { display: none; }
 .e-cfgtabs button { border: 1px solid var(--e-line); }
+
+/* pilula: o que ela esta fazendo (ao lado do rostinho) */
+.np-st { display: inline-flex; align-items: center; gap: 6px; max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.np-st i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #b48cff; animation: np-pulse 1s ease-in-out infinite; }
+.np-st.st-listening i { background: #3ec7ff; }
+.np-st.st-speaking i { background: #ff9a1f; }
