@@ -4262,6 +4262,21 @@ async function renderMcp() {
 
 function renderConnections() { renderCatalog(); renderGoogle(); }
 
+// login do Spotify: igual ao do Google (navegador do computador; a tela atualiza sozinha quando conectar)
+let spWatch = 0;
+function spotifyLogin() {
+  const url = location.origin + '/api/spotify/auth';
+  if (desk.api?.open_url) desk.api.open_url(url); else window.open(url, '_blank', 'noopener');
+  flash('Abri o login do Spotify no navegador. Aceite e volte aqui.');
+  clearInterval(spWatch);
+  const t0 = Date.now();
+  spWatch = setInterval(async () => {
+    const st = await fetch('/api/spotify').then(r => r.json()).catch(() => null);
+    if (st?.configured) { clearInterval(spWatch); try { renderSpotify(); } catch {} flash('Spotify conectado!'); }
+    else if (Date.now() - t0 > 10 * 60 * 1000) clearInterval(spWatch);
+  }, 3000);
+}
+
 // login do Google: abre no navegador do computador (o Google nao aceita login dentro de janelas de app) e,
 // enquanto isso, a A.U.R.A. fica olhando: quando a permissao chega, a tela atualiza sozinha
 let gWatch = 0;
@@ -4636,7 +4651,7 @@ async function renderSpotify() {
       try {
         if (inp.value.trim()) await apiJSON('PUT', '/api/spotify/client', { client_id: inp.value.trim() });
         else if (!s.client_id) throw new Error('cole o Client ID do seu app');
-        location.href = '/api/spotify/auth';
+        spotifyLogin();
       } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--bad)'; }
     };
     row.append(inp, go); body.append(row, msg);

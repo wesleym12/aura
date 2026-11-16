@@ -252,16 +252,14 @@ def spotify_auth(request: Request):
 
 @app.get("/api/spotify/callback")
 def spotify_callback(code: str = "", state: str = "", error: str = ""):
-    from fastapi.responses import RedirectResponse
-    from urllib.parse import quote
-    back = spotify.back_for(state)                    # volta para a aba de onde saiu (localhost ou 127.0.0.1)
+    # o login abre no navegador (fora do app): termina numa pagina simples e a A.U.R.A. percebe sozinha
     if error or not code:
-        return RedirectResponse(back + "/?spotify=" + quote("erro: " + (error or "login cancelado")))
+        return _google_done(False, error or "login cancelado", "Spotify")
     try:
         spotify.finish(code, state)
     except (spotify.SpotifyError, httpx.HTTPError) as e:
-        return RedirectResponse(back + "/?spotify=" + quote("erro: " + str(e)))
-    return RedirectResponse(back + "/?spotify=ok")
+        return _google_done(False, str(e), "Spotify")
+    return _google_done(True, "", "Spotify")
 
 
 @app.delete("/api/spotify")
@@ -404,19 +402,26 @@ def google_auth(services: str = "calendar"):
         raise HTTPException(400, str(e))
 
 
-def _google_done(ok: bool, msg: str):
-    """Fim do login do Google: abre no navegador (fora do app); o app percebe sozinho e atualiza."""
+def _google_done(ok: bool, msg: str, service: str = "Google"):
+    """Fim do login (Google, Spotify): abre no navegador (fora do app); o app percebe sozinho e atualiza."""
     from fastapi.responses import HTMLResponse
     from html import escape
-    title = "Conta Google conectada" if ok else "Não deu certo"
+    title = (f"Conta {service} conectada" if service == "Google" else f"{service} conectado") if ok else "Não deu certo"
     body = ("Pode fechar esta aba e voltar para a A.U.R.A.: ela já atualizou sozinha." if ok
-            else f"O Google respondeu: {escape(msg)}. Volte para a A.U.R.A. e clique em Conectar de novo.")
+            else f"O {escape(service)} respondeu: {escape(msg)}. Volte para a A.U.R.A. e clique em Conectar de novo.")
     return HTMLResponse(f"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>A.U.R.A. · Google</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0d12;color:#e6e9ef;
 font:16px 'Segoe UI',sans-serif"><div style="text-align:center;max-width:420px;padding:24px">
 <div style="font-size:44px">{'✅' if ok else '⚠️'}</div><h2 style="margin:12px 0 8px">{title}</h2>
-<p style="color:#9aa4b2;line-height:1.5">{body}</p></div>
-<script>{'setTimeout(() => window.close(), 2500)' if ok else ''}</script></body>""")
+<p style="color:#9aa4b2;line-height:1.5">{body}</p>
+<p id="back" style="display:none"><a href="/" style="color:#ffb54d">Voltar para a A.U.R.A.</a></p></div>
+<script>
+// abriu dentro do app (janela ou entalhe): volta sozinho para a A.U.R.A., no mesmo modo
+function voltar(mode) {{ location.href = mode === 'entalhe' ? '/?ui=entalhe&troca=1' : '/?troca=1'; }}
+window.addEventListener('pywebviewready', () => window.pywebview.api.info().then(i => setTimeout(() => voltar(i.mode), {1500 if ok else 4000})).catch(() => voltar('')));
+// no navegador: tenta fechar a aba; se o navegador nao deixar, mostra o link de volta
+setTimeout(() => {{ if (!window.pywebview) {{ {'window.close();' if ok else ''} document.getElementById('back').style.display = 'block'; }} }}, 2500);
+</script></body>""")
 
 
 @app.get("/api/google/callback")
