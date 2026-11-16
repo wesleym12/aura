@@ -277,9 +277,17 @@
         const q = el.querySelector('#e-hq').value.trim().toLowerCase();
         const items = all.filter(c => !q || (c.title || '').toLowerCase().includes(q));
         el.querySelector('#e-hl').innerHTML = items.length ? items.map(c => `<div class="e-item click" data-id="${esc(c.id)}">
-            <div class="e-txt"><b>${esc(c.title || 'Conversa')}</b><small>${esc(when(c.updated))}</small></div></div>`).join('')
+            <div class="e-txt"><b>${esc(c.title || 'Conversa')}</b><small>${esc(when(c.updated))}</small></div>
+            <button class="e-x" type="button" data-rmconv="${esc(c.id)}" title="Apagar conversa">✕</button></div>`).join('')
           : empty('Nenhuma conversa', q ? 'Nada com esse nome.' : 'As conversas aparecem aqui.');
         el.querySelectorAll('.e-item').forEach(r => r.onclick = async () => { await openConv(r.dataset.id); show('conversa'); });
+        // apagar (pede confirmacao; se for a conversa aberta, comeca uma nova)
+        el.querySelectorAll('[data-rmconv]').forEach(b => b.onclick = async (ev) => {
+          ev.stopPropagation();
+          const c = all.find(x => x.id === b.dataset.rmconv);
+          await removeConv(c.id, c.title || 'Conversa');
+          all = await getJSON('/api/conversations'); draw();
+        });
       };
       el.querySelector('#e-hq').oninput = draw;
       tool(`${ICON(I.plus)}Nova conversa`, () => { newConv(); show('conversa'); });
