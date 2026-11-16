@@ -404,17 +404,30 @@ def google_auth(services: str = "calendar"):
         raise HTTPException(400, str(e))
 
 
+def _google_done(ok: bool, msg: str):
+    """Fim do login do Google: abre no navegador (fora do app); o app percebe sozinho e atualiza."""
+    from fastapi.responses import HTMLResponse
+    from html import escape
+    title = "Conta Google conectada" if ok else "Não deu certo"
+    body = ("Pode fechar esta aba e voltar para a A.U.R.A.: ela já atualizou sozinha." if ok
+            else f"O Google respondeu: {escape(msg)}. Volte para a A.U.R.A. e clique em Conectar de novo.")
+    return HTMLResponse(f"""<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A.U.R.A. · Google</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0d12;color:#e6e9ef;
+font:16px 'Segoe UI',sans-serif"><div style="text-align:center;max-width:420px;padding:24px">
+<div style="font-size:44px">{'✅' if ok else '⚠️'}</div><h2 style="margin:12px 0 8px">{title}</h2>
+<p style="color:#9aa4b2;line-height:1.5">{body}</p></div>
+<script>{'setTimeout(() => window.close(), 2500)' if ok else ''}</script></body>""")
+
+
 @app.get("/api/google/callback")
 def google_callback(code: str = "", state: str = "", error: str = ""):
-    from fastapi.responses import RedirectResponse
-    from urllib.parse import quote
     if error:
-        return RedirectResponse("/?google=" + quote("erro: " + error))
+        return _google_done(False, error)
     try:
         gcal.finish(code, state)
     except (gcal.GoogleError, httpx.HTTPError) as e:
-        return RedirectResponse("/?google=" + quote("erro: " + str(e)))
-    return RedirectResponse("/?google=ok")
+        return _google_done(False, str(e))
+    return _google_done(True, "")
 
 
 @app.post("/api/google/disconnect")

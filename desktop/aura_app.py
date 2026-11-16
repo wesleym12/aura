@@ -347,6 +347,14 @@ class App:
                 self._place(w, PILL[1])
         return self.info()
 
+    def open_url(self, url):
+        """Abre no navegador do computador (o login do Google nao funciona dentro de janelas de app)."""
+        import webbrowser
+        if isinstance(url, str) and url.startswith(URL + "/api/"):
+            webbrowser.open(url)
+            return True
+        return False
+
     def pin(self):
         """Clicou dentro do entalhe aberto: ele fica aberto (e recebe o teclado) ate clicar fora."""
         if self._mode == "entalhe" and self._expanded:

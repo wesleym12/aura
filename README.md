@@ -154,27 +154,23 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
 
 ## Conectores (Configurações → Conectores)
 
-Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Nada se instala sozinho.
+Por enquanto, só o **Google**: Agenda, Gmail, Drive, Docs e Sheets. Cada serviço pede só a permissão dele, e
+nada passa por servidores de terceiros (a A.U.R.A. fala direto com o Google, com a sua própria credencial).
 
-| Como conecta | Serviços |
-|---|---|
-| **Google** (integração própria; a sua credencial do Google Cloud, cada serviço pede só a permissão dele) | Agenda, Gmail, Drive, Docs, Sheets |
-| **Autorizar no site** (OAuth com PKCE; ela se cadastra sozinha) | Notion, Linear, Atlassian, monday.com, ClickUp, Todoist, Airtable, Zapier, Dropbox, Intercom, Canva, Figma, Webflow, Wix, Sentry, Supabase, Vercel, Stripe, PayPal, Square |
-| **App seu** (redirecionamento `http://localhost:8765/api/mcp/oauth/callback`) | Asana, Box, HubSpot |
-| **Token pessoal** | GitHub |
-| **Aberto** | Hugging Face, Cloudflare Docs, Context7, DeepWiki |
-
-- **Google:**
-  1. No Google Cloud, crie um projeto, ative as APIs que quiser e configure o Google Auth Platform: público Externo, seu e-mail como usuário de teste, depois **Publicar app** para o login não expirar em 7 dias.
-  2. Crie um cliente OAuth "Aplicativo da Web" com o redirecionamento `http://localhost:8765/api/google/callback`.
-  3. Cole o ID e a chave secreta na tela.
-- **O que cada serviço Google faz:**
+- **Configurar uma vez** (o card "Conta Google" mostra o passo a passo, com links):
+  1. No Google Cloud, crie um projeto e ative as APIs que quiser usar (Calendar, Gmail, Drive, Docs, Sheets).
+  2. Em Google Auth Platform: público **Externo**, seu e-mail como contato e como **usuário de teste**; depois
+     **Publicar app** para o login não expirar a cada 7 dias (ele continua só seu).
+  3. Crie um cliente OAuth "Aplicativo da Web" com o redirecionamento `http://localhost:8765/api/google/callback`.
+  4. Cole o ID do cliente e a chave secreta no card.
+- **Conectar:** clique em **Conectar** no serviço. O login abre no seu navegador (o Google não aceita login
+  dentro de janelas de app); depois de autorizar, pode fechar a aba: a A.U.R.A. percebe e atualiza sozinha.
+- **O que cada serviço faz:**
   - **Agenda:** ver, criar, alterar e apagar eventos.
   - **Gmail:** buscar, ler, rascunhar e enviar.
   - **Drive:** buscar e ler.
   - **Docs e Sheets:** ler, criar e acrescentar.
   - O que não dá para desfazer (enviar e-mail, apagar evento, mexer em documento existente) pede Autorizar. Conteúdo de e-mails e arquivos é tratado como dado: ela não obedece ordens escritas neles.
-- **MCP personalizado** (+ Personalizado): um endereço HTTP, ou um comando que roda no container (`npx`/`uvx`, com cache). Ferramentas que não são só leitura pedem Autorizar, a menos que o conector seja marcado como confiável.
 - Os logos ficam em `aura/web/icons` e vêm do [Simple Icons](https://simpleicons.org) (CC0); as marcas pertencem aos seus donos.
 
 ## Plugins nativos (Configurações → Plugins)
