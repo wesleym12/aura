@@ -1,3 +1,4 @@
 # app de mesa da A.U.R.A. (desktop/aura_app.py): no Windows usa o WebView2 do sistema; no Linux, o Qt WebEngine
+# Os instaladores criam um ambiente proprio em desktop/.venv e instalam isto la (nao mexe no Python do sistema).
 pywebview>=6.0; sys_platform == "win32"
 pywebview[qt]>=6.0; sys_platform == "linux"

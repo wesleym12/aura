@@ -1,4 +1,5 @@
 # Placa NVIDIA para o modelo local (Windows com WSL2 ou Linux com o NVIDIA Container Toolkit).
+# Entra pelo COMPOSE_FILE do .env: o instalador so inclui este arquivo quando acha uma placa NVIDIA.
 services:
   ollama:
     deploy:

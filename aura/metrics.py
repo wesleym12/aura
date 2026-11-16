@@ -2,6 +2,7 @@
 
 No Linux o container enxerga a maquina inteira quando o /proc do host esta montado em /host_proc
 (docker-compose.linux.yml). Mesmo formato do agente do Windows, para a tela tratar igual.
+No Windows quem mede o PC e o agente do Windows (host-agent): estas metricas ficam para o servidor Linux.
 """
 import os
 import shutil

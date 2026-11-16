@@ -2,6 +2,7 @@
 
 Login: voce cria um app gratis em developer.spotify.com, cola o Client ID e entra com a sua conta (OAuth com
 PKCE: nao precisa de segredo). A A.U.R.A. guarda so o refresh token (em secrets) e renova o acesso sozinha.
+O login abre no navegador do computador; o endereco de retorno usa 127.0.0.1 (o Spotify nao aceita "localhost").
 Ela toca em qualquer aparelho seu com Spotify aberto (PC, celular, Echo...); se nenhum estiver ativo e o
 controle do computador estiver ligado, abre o Spotify do PC e toca nele.
 """

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Instalador da A.U.R.A. para Linux (desktop ou servidor: Debian, Ubuntu, Fedora...).
 # Analisa o computador, recomenda "modelo local" ou "so Gemini", pergunta o essencial, gera o .env e sobe tudo.
+# Neste computador: instala tambem o app de mesa (janela e entalhe). Servidor na rede: senha e HTTPS.
 #
 #   ./instalar.sh            instala (ou reconfigura: o que ja estiver no .env vira o padrao das perguntas)
 #   ./instalar.sh --analisar so mostra a analise do computador, sem mudar nada

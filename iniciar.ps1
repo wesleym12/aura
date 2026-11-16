@@ -1,4 +1,5 @@
-# Liga a A.U.R.A. inteira: Docker Desktop, containers, agente do Windows e abre o Command Center.
+# Liga a A.U.R.A. inteira: Docker Desktop, containers, agente do Windows e abre o app de mesa (janela ou
+# entalhe; sem o app instalado, abre no Edge/Chrome em modo aplicativo).
 # Uso: .\iniciar.ps1                 (na pasta do projeto; abre o navegador no fim)
 #      .\iniciar.ps1 -SemNavegador   (usado pelo inicio automatico no logon)
 param([switch]$SemNavegador)

@@ -1,5 +1,6 @@
 # Instalador da A.U.R.A. para Windows: analisa o computador, recomenda "modelo local" ou "so Gemini",
 # pergunta o essencial e gera o .env. O iniciar.ps1 chama este script sozinho na primeira vez.
+#   .\instalar.ps1 -App         instala (ou atualiza) so o app de mesa (janela e entalhe)
 #   .\instalar.ps1              instala ou reconfigura (o que ja estiver no .env vira o padrao das perguntas)
 #   .\instalar.ps1 -Analisar    so mostra a analise
 #   .\instalar.ps1 -Completar   sem perguntas: so preenche o que faltar no .env (usado pelo iniciar.ps1)

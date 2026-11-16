@@ -1,5 +1,5 @@
 # So no Linux (desktop ou servidor): deixa a A.U.R.A. medir a maquina inteira (CPU, RAM, temperatura, rede)
-# para o painel do topo. Somente leitura.
+# para o painel do topo. Somente leitura. Entra pelo COMPOSE_FILE do .env (o instalar.sh coloca sozinho).
 services:
   aura:
     volumes:

@@ -1,4 +1,4 @@
-"""Quem pode falar com a A.U.R.A.
+"""Quem pode falar com a A.U.R.A. (e de onde: so deste computador, ou da rede com senha).
 
 Dois jeitos de rodar:
 - So nesta maquina (padrao no Windows): porta presa em 127.0.0.1, sem senha. A protecao e aceitar so o

@@ -2,6 +2,7 @@
 o microfone em HTTPS (ou em localhost). Na primeira vez gera um certificado proprio (autoassinado, 10 anos) em
 /data/tls para os nomes de AURA_TLS_NAMES (ex.: meuservidor.local, 192.168.0.10). O navegador avisa uma vez
 ("conexao nao particular"): clique em Avancado -> continuar.
+Sem AURA_TLS (padrao: Windows e Linux "neste computador"): HTTP, com a porta presa em 127.0.0.1 pelo AURA_BIND.
 """
 import ipaddress
 import os
