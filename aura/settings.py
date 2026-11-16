@@ -41,6 +41,7 @@ DEFAULTS = {
     "quiet_mode": False,        # modo so executar: faz o pedido e nao responde em voz alta
     "face_acc": "",             # acessorio do rostinho (vazio = nenhum)
     "face_color": "branco",     # cor da cabeca do rostinho
+    "wake_aliases": [],         # como o Whisper ouve a palavra de ativacao na sua voz ("Ensinar a palavra")
     "agenda_alert": 10,         # avisar dos compromissos da Google Agenda X minutos antes (0 = nao avisa)
 }
 
@@ -130,6 +131,10 @@ def _validate(key, value):
     elif key == "face_color":
         if value not in ('branco', 'grafite', 'azul', 'rosa', 'verde', 'lilas', 'amarelo'):
             raise ValueError("cor desconhecida")
+    elif key == "wake_aliases":
+        if not isinstance(value, list):
+            raise ValueError("wake_aliases deve ser uma lista")
+        value = list(dict.fromkeys(" ".join(str(v).split())[:30] for v in value if str(v).strip()))[:10]
     elif key == "agenda_alert":
         value = max(0, min(int(value or 0), 120))
     elif key == "city":

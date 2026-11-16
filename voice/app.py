@@ -182,8 +182,17 @@ async def ws(sock: WebSocket):
     wake_on = False
     follow = False                           # a voz te segue: so detecta a lingua se a tela pedir (padrao: portugues)
     word = "Aura"
+    aliases: list[str] = []                  # jeitos como o Whisper ouve a palavra na voz da pessoa ("Ensinar a palavra")
     spotter: Recorder | None = None          # trechos falados que o Whisper confere se comecam com a palavra
     rec: Recorder | None = None
+    probe: Recorder | None = None            # "Ensinar a palavra": ouve UMA frase e conta o que o Whisper entendeu
+
+    def wake_match(text: str) -> tuple[bool, str]:
+        for w in [word, *aliases]:
+            found, rest = match_wake(text, w)
+            if found:
+                return found, rest
+        return False, ""
     try:
         while True:
             msg = await sock.receive()
@@ -194,6 +203,7 @@ async def ws(sock: WebSocket):
                 if cmd.get("cmd") == "wake":
                     wake_on = bool(cmd.get("enabled"))
                     word = (cmd.get("word") or word).strip() or "Aura"
+                    aliases = [str(a).strip()[:30] for a in (cmd.get("aliases") or []) if str(a).strip()][:10]
                     follow = bool(cmd.get("follow", follow))
                     spotter = Recorder(.6, 8, None, spot=True)
                 elif cmd.get("cmd") == "listen":
@@ -214,11 +224,29 @@ async def ws(sock: WebSocket):
                     await sock.send_json({"event": "transcribing"})
                     text, lang = await asyncio.to_thread(transcribe, audio, None, follow)
                     await sock.send_json({"event": "transcript", "text": text, "lang": lang} if text else {"event": "no_speech"})
+                elif cmd.get("cmd") == "probe":
+                    probe = Recorder(end_silence=.6, max_sec=6, nospeech_sec=7)
+                    await sock.send_json({"event": "listening", "probe": True})
                 elif cmd.get("cmd") == "cancel":
-                    rec = None
+                    rec = probe = None
                 continue
 
             pcm = np.frombuffer(msg["bytes"], dtype=np.int16)
+            if probe is not None:
+                state = probe.feed(pcm)
+                if state is None:
+                    continue
+                audio, probe = probe.audio(), None
+                if state == "nospeech":
+                    await sock.send_json({"event": "probe", "text": "", "rms": 0, "match": False})
+                    continue
+                f = audio.astype(np.float32) / 32768.0
+                rms = float(np.sqrt(np.mean(f ** 2))) if len(f) else 0.0
+                text, _ = await asyncio.to_thread(transcribe, audio, word, False)
+                found, _rest = match_wake(text, word)
+                await sock.send_json({"event": "probe", "text": text, "rms": round(rms, 4), "match": found,
+                                      "alias": (not found) and wake_match(text)[0]})
+                continue
             if rec is not None:
                 if rec.end_silence > 600:      # segurando a tecla: so grava, quem encerra e o "release"
                     rec.chunks.append(pcm)
@@ -242,7 +270,7 @@ async def ws(sock: WebSocket):
                     continue
                 audio, spotter = spotter.audio(), Recorder(.6, 8, None, spot=True)
                 text, lang = await asyncio.to_thread(transcribe, audio, word, follow)
-                found, rest = match_wake(text, word)
+                found, rest = wake_match(text)
                 if not found:
                     log.debug("sem palavra de ativacao em: %r", text)
                     continue

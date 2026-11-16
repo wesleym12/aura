@@ -938,6 +938,14 @@
   html[data-face='lilas'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #f6f1ff 0%, #e0d5ff 55%, #c3b2f5 100%); }
   html[data-face='amarelo'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #fffbe8 0%, #fff0b8 55%, #f5d97e 100%); }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  .wt-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: -4px 0 12px; }
+  .wt-row .btn { margin: 0; }
+  .wake-teach { padding: 12px 14px; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--text) 3%, transparent); }
+  .wake-teach[hidden] { display: none; }
+  .wt-list { margin: 8px 0; padding-left: 20px; font-size: 13px; line-height: 1.7; }
+  .wt-ok { color: var(--ok); font-weight: 600; } .wt-bad { color: var(--bad); }
+  .wt-c { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; }
+  .wt-c small { font-size: 11.5px; }
   .cfg-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 14px; }
   .cfg-tile { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
     background: color-mix(in srgb, var(--text) 3%, transparent); }
@@ -1264,6 +1272,9 @@
       <label class="field"><span class="label">Palavra de ativação</span>
         <input id="cfg-wake" maxlength="40" autocomplete="off" placeholder="Aura"></label>
       <p class="hint" id="cfg-wake-hint"></p>
+      <div class="wt-row"><button class="btn ghost" type="button" id="wake-teach-btn">🎙 Ensinar a palavra</button>
+        <small class="hint">Fale a palavra 5 vezes: ela vê como entende a sua voz e passa a aceitar esses jeitos.</small></div>
+      <div class="wake-teach" id="wake-teach" hidden></div>
       <label class="field"><span class="label">Seu nome</span>
         <input id="cfg-user" maxlength="30" autocomplete="off"></label>
       <div class="field"><span class="label">Saudação ao abrir</span>
@@ -2547,7 +2558,7 @@ const idleText = () => (voice.wakeOn ? `Diga “${cfg.wake_word}”` : `${greeti
 const greetingText = () => cfg.greeting_text
   .replaceAll('{saudacao}', greeting()).replaceAll('{usuario}', cfg.user_name).replaceAll('{assistente}', cfg.assistant_name);
 const sendWake = () => voice.ws?.readyState === 1 && voice.ws.send(JSON.stringify({
-  cmd: 'wake', enabled: voice.wakeOn, word: cfg.wake_word, follow: cfg.follow_language === true }));
+  cmd: 'wake', enabled: voice.wakeOn, word: cfg.wake_word, aliases: cfg.wake_aliases || [], follow: cfg.follow_language === true }));
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 // processador de audio: entrega o microfone em blocos (o AudioContext ja roda a 16 kHz)
 const WORKLET = `class P extends AudioWorkletProcessor { process(i) { const c = i[0] && i[0][0]; if (c) this.port.postMessage(c.slice(0)); return true; } } registerProcessor('aura-pcm', P);`;
@@ -2726,6 +2737,8 @@ function beep() {
 }
 
 function onVoiceEvent(ev) {
+  if (ev.event === 'probe') { voice.probeDone?.(ev); return; }          // "Ensinar a palavra"
+  if (ev.event === 'listening' && ev.probe) return;
   // modo Live: a ativacao continua local; dai em diante a conversa vai para o Gemini
   if (useLive() && (ev.event === 'wake' || ev.event === 'transcript')) {
     if (ev.event === 'wake') { beep(); voice.awakeUntil = Date.now() + AWAKE_MS; }
@@ -3863,6 +3876,79 @@ $('notch-pill').onclick = () => notchExpand(true);
 $('cfg-quiet').onclick = async () => { await saveSettings({ quiet_mode: cfg.quiet_mode !== true }); renderSettings(); };
 $('cfg-city').onchange = (e) => saveSettings({ city: e.target.value.trim() });
 $('cfg-agalert').onchange = (e) => saveSettings({ agenda_alert: +e.target.value });
+// ----- Ensinar a palavra de ativacao: fala 5 vezes, ve como o Whisper entendeu e guarda os jeitos da sua voz -----
+// Nao e treinar um modelo: as variacoes que o Whisper ouve na SUA voz (ex.: "Áurea") passam a valer como a palavra.
+// Palavras comuns ("hora", "agora"...) vem desmarcadas: com elas ela acordaria no meio das suas conversas.
+const COMMON_WORDS = new Set(['hora', 'ora', 'agora', 'aula', 'ouro', 'outra', 'aurora', 'laura', 'aura', 'a', 'e', 'o', 'ok', 'oi', 'ai', 'ah', 'oh', 'é']);
+const normW = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+function simW(a, b) {                                 // parecido (0 a 1), pela distancia de edicao
+  a = normW(a).replace(/ /g, ''); b = normW(b).replace(/ /g, '');
+  if (!a || !b) return 0;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return 1 - d[a.length][b.length] / Math.max(a.length, b.length);
+}
+function probeOnce() {
+  return new Promise(async (ok) => {
+    const t = setTimeout(() => { voice.probeDone = null; ok({ text: '', rms: 0, match: false, timeout: true }); }, 12000);
+    voice.probeDone = (ev) => { clearTimeout(t); voice.probeDone = null; ok(ev); };
+    try { voice.recording = true; await voiceCmd({ cmd: 'probe' }); } catch (e) { clearTimeout(t); ok({ text: '', rms: 0, error: e.message }); }
+  });
+}
+async function teachWake() {
+  const box = $('wake-teach'), word = cfg.wake_word || 'Aura';
+  box.hidden = false;
+  const heard = [];
+  const draw = (msg) => {
+    box.innerHTML = `<b>${msg}</b><ol class="wt-list">${heard.map(h => `<li>${h.text ? `“${h.text.replace(/[<>&]/g, '')}”` : '<i>nada ouvido</i>'}
+      ${h.match ? '<span class="wt-ok">✓ reconheceu</span>' : h.alias ? '<span class="wt-ok">✓ pelo apelido</span>' : '<span class="wt-bad">✗ não reconheceu</span>'}</li>`).join('')}</ol>`;
+  };
+  for (let i = 1; i <= 5; i++) {
+    draw(`Fale “${word}” (${i} de 5)… ${i === 1 ? 'do jeito que você chama no dia a dia.' : i === 3 ? 'agora um pouco mais longe do microfone.' : i === 5 ? 'última: rápido, como quem chama de passagem.' : ''}`);
+    setState('listening', `Ensinar a palavra: fale “${word}” (${i}/5)`);
+    const r = await probeOnce();
+    if (r.error) { box.innerHTML = `<b class="wt-bad">Não consegui usar o microfone: ${r.error}</b>`; voice.recording = false; setState('idle', idleText()); return; }
+    heard.push(r);
+    await new Promise(z => setTimeout(z, 500));
+  }
+  voice.recording = false; setState('idle', idleText());
+  const hits = heard.filter(h => h.match || h.alias).length;
+  const rmsAvg = heard.filter(h => h.rms).reduce((a, h) => a + h.rms, 0) / (heard.filter(h => h.rms).length || 1);
+  // candidatos: primeiras 1-2 palavras do que ela ouviu, parecidas com a palavra, que ainda nao valem
+  const cands = new Map();
+  for (const h of heard) {
+    if (h.match || !h.text) continue;
+    const ws = normW(h.text).split(' ');
+    for (const c of [ws[0], ws.slice(0, 2).join(' ')]) {
+      if (c && simW(c, word) >= .5 && normW(c) !== normW(word) && !(cfg.wake_aliases || []).some(a => normW(a) === c)) cands.set(c, simW(c, word));
+    }
+  }
+  const list = [...cands.keys()].sort((a, b) => cands.get(b) - cands.get(a)).slice(0, 4);
+  const low = rmsAvg && rmsAvg < .012;
+  box.innerHTML = `<b>${hits} de 5 reconhecidas.</b>
+    <ol class="wt-list">${heard.map(h => `<li>${h.text ? `“${h.text.replace(/[<>&]/g, '')}”` : '<i>nada ouvido</i>'}
+      ${h.match ? '<span class="wt-ok">✓</span>' : h.alias ? '<span class="wt-ok">✓ apelido</span>' : '<span class="wt-bad">✗</span>'}</li>`).join('')}</ol>
+    ${low ? '<p class="hint wt-bad">O microfone está baixo: aumente o volume de entrada no Windows ou fale mais perto.</p>' : ''}
+    ${list.length ? `<p class="hint">Jeitos como ela ouviu a sua voz. Marque os que devem valer como “${word.replace(/[<>&]/g, '')}”:</p>
+      ${list.map(c => `<label class="wt-c"><input type="checkbox" value="${c}" ${COMMON_WORDS.has(c) ? '' : 'checked'}> “${c}”
+        ${COMMON_WORDS.has(c) ? '<small class="wt-bad">palavra comum: ela acordaria no meio das conversas</small>' : ''}</label>`).join('')}
+      <span class="with-btn"><button class="btn" type="button" id="wt-save">Salvar</button><button class="btn ghost" type="button" id="wt-again">De novo</button></span>`
+      : `<p class="hint">${hits >= 4 ? 'Ela já reconhece bem a sua voz. Nada a mudar.' : 'Não apareceu um jeito parecido o suficiente para guardar. Tente de novo falando com calma.'}</p>
+      <span class="with-btn"><button class="btn ghost" type="button" id="wt-again">De novo</button></span>`}
+    ${(cfg.wake_aliases || []).length ? `<p class="hint">Já valem: ${(cfg.wake_aliases).map(a => `“${a.replace(/[<>&]/g, '')}”`).join(', ')} <button class="btn ghost" type="button" id="wt-clear">Limpar</button></p>` : ''}`;
+  box.querySelector('#wt-again')?.addEventListener('click', teachWake);
+  box.querySelector('#wt-clear')?.addEventListener('click', async () => { await saveSettings({ wake_aliases: [] }); sendWake(); teachWake(); });
+  box.querySelector('#wt-save')?.addEventListener('click', async () => {
+    const add = [...box.querySelectorAll('.wt-c input:checked')].map(i => i.value);
+    await saveSettings({ wake_aliases: [...(cfg.wake_aliases || []), ...add] }); sendWake();
+    box.innerHTML = `<b class="wt-ok">Pronto: ${add.length ? add.map(a => `“${a}”`).join(', ') + ' agora também valem.' : 'nada novo guardado.'}</b>
+      <p class="hint">Teste: diga “${word.replace(/[<>&]/g, '')}” com o “Sempre ouvindo” ligado.</p>`;
+  });
+}
+$('wake-teach-btn').onclick = () => teachWake();
+
 
 // ----- avisos dos compromissos da Google Agenda (janela e entalhe) -----
 // Busca os compromissos das proximas horas a cada 5 min e confere a cada 20 s; X min antes de cada um, avisa.
