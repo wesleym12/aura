@@ -462,6 +462,22 @@ async def agenda(start: str = "", days: int = 7):
     return {"connected": True, "email": secrets.get("google_email"), "start": s.isoformat(), "events": evs}
 
 
+_agenda_alerted: dict[str, float] = {}
+
+
+@app.post("/api/agenda/alert")
+def agenda_alert(body: dict):
+    """A tela vai avisar de um compromisso: so a primeira (janela, entalhe ou celular) avisa de verdade."""
+    import time as _t
+    key = f"{body.get('id', '')}|{body.get('start', '')}"
+    now = _t.time()
+    for k in [k for k, v in _agenda_alerted.items() if now - v > 2 * 86400]:
+        _agenda_alerted.pop(k, None)
+    first = key not in _agenda_alerted
+    _agenda_alerted.setdefault(key, now)
+    return {"first": first}
+
+
 @app.post("/api/agenda")
 async def agenda_create(body: dict):
     from datetime import date as _date, datetime as _dt, timedelta as _td

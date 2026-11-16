@@ -166,7 +166,7 @@ nada passa por servidores de terceiros (a A.U.R.A. fala direto com o Google, com
 - **Conectar:** clique em **Conectar** no serviço. O login abre no seu navegador (o Google não aceita login
   dentro de janelas de app); depois de autorizar, pode fechar a aba: a A.U.R.A. percebe e atualiza sozinha.
 - **O que cada serviço faz:**
-  - **Agenda:** ver, criar, alterar e apagar eventos.
+  - **Agenda:** ver, criar, alterar e apagar eventos. Antes de cada compromisso (10 min, ajustável em Geral) ela apita, fala o aviso e mostra no entalhe; só uma tela avisa.
   - **Gmail:** buscar, ler, rascunhar e enviar.
   - **Drive:** buscar e ler.
   - **Docs e Sheets:** ler, criar e acrescentar.

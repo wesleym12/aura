@@ -1277,6 +1277,8 @@
         <button class="toggle" id="cfg-ontop" type="button" aria-pressed="false">Desligado</button></div>
       <div class="field row"><span><span class="label">Modo só executar</span><br><small class="hint">Faz o que você pediu e fica quieta: a resposta aparece escrita e um bipe avisa que terminou, sem falar. Também por voz: "liga o modo silencioso".</small></span>
         <button class="toggle" id="cfg-quiet" type="button" aria-pressed="false">Desligado</button></div>
+      <div class="field row"><span><span class="label">Avisar dos compromissos</span><br><small class="hint">Antes de cada compromisso da Google Agenda ela apita, fala o aviso e mostra no entalhe (o celular continua avisando pelo Google).</small></span>
+        <select id="cfg-agalert" class="cn-sel"><option value="0">Não avisar</option><option value="5">5 min antes</option><option value="10">10 min antes</option><option value="15">15 min antes</option><option value="30">30 min antes</option><option value="60">1 hora antes</option></select></div>
       <label class="field"><span class="label">Cidade do clima</span>
         <input id="cfg-city" maxlength="80" placeholder="ex.: Campo Grande, MS" autocomplete="off"></label>
       <p class="hint">Para "vai chover hoje?". Use cidade e estado (ex.: Campo Grande, MS) para não cair numa cidade de mesmo nome. Só isso vai para o Open-Meteo (gratuito, sem conta).</p>
@@ -3316,6 +3318,7 @@ function renderSettings() {
   $('cfg-quiet').setAttribute('aria-pressed', String(cfg.quiet_mode === true));
   $('cfg-quiet').textContent = cfg.quiet_mode === true ? 'Ligado' : 'Desligado';
   if (document.activeElement !== $('cfg-city')) $('cfg-city').value = cfg.city || '';
+  $('cfg-agalert').value = String(cfg.agenda_alert ?? 10);
   $('cfg-speed').value = cfg.voice_speed; $('cfg-speed-v').textContent = Number(cfg.voice_speed).toFixed(2) + '×';
   renderVoices(); renderPersonalities();
 }
@@ -3859,6 +3862,40 @@ function renderConvo() {
 $('notch-pill').onclick = () => notchExpand(true);
 $('cfg-quiet').onclick = async () => { await saveSettings({ quiet_mode: cfg.quiet_mode !== true }); renderSettings(); };
 $('cfg-city').onchange = (e) => saveSettings({ city: e.target.value.trim() });
+$('cfg-agalert').onchange = (e) => saveSettings({ agenda_alert: +e.target.value });
+
+// ----- avisos dos compromissos da Google Agenda (janela e entalhe) -----
+// Busca os compromissos das proximas horas a cada 5 min e confere a cada 20 s; X min antes de cada um, avisa.
+// O servidor garante que so uma tela avisa (janela, entalhe ou celular abertos ao mesmo tempo).
+const agAlert = { list: [], fetched: 0, done: new Set() };
+async function agendaAlertTick() {
+  const lead = +(cfg.agenda_alert ?? 10);
+  if (!lead) return;
+  if (Date.now() - agAlert.fetched > 5 * 60 * 1000) {
+    agAlert.fetched = Date.now();
+    const j = await fetch('/api/agenda?days=2').then(r => r.json()).catch(() => null);
+    agAlert.list = j?.connected ? j.events.filter(e => !e.all_day) : [];
+  }
+  const now = Date.now();
+  for (const ev of agAlert.list) {
+    const t = new Date(ev.start).getTime(), key = ev.id + '|' + ev.start;
+    if (agAlert.done.has(key) || now < t - lead * 60000 || now > t + 2 * 60000) continue;
+    agAlert.done.add(key);
+    const r = await fetch('/api/agenda/alert', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: ev.id, start: ev.start }) }).then(x => x.json()).catch(() => null);
+    if (!r?.first) continue;                                   // outra tela ja avisou
+    const hora = new Date(ev.start).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const mins = Math.round((t - now) / 60000);
+    const fala = mins > 1 ? `Daqui a ${mins} minutos: ${ev.title}${ev.location ? ', em ' + ev.location : ''}.` : `Agora: ${ev.title}.`;
+    try { beep(); setTimeout(beep, 600); } catch {}
+    if (cfg.quiet_mode !== true) { try { playSpeech(fetchSpeech(fala), { status: false }); } catch {} }
+    flash(`📅 ${ev.title} às ${hora}`);
+    entry('notice', `📅 Compromisso às ${hora}: ${ev.title}${ev.location ? ' (' + ev.location + ')' : ''}.`);
+    window.entAct?.('alarm', `<span class="np-alarm">📅 ${ev.title.replace(/[<>&]/g, '')} às ${hora}</span>`, 10, 60000);
+  }
+}
+setInterval(agendaAlertTick, 20000);
+setTimeout(agendaAlertTick, 8000);
 $('cfg-ontop').onclick = async () => {
   if (!desk.api) return;
   await desk.api.set_on_top($('cfg-ontop').getAttribute('aria-pressed') !== 'true'); renderDesk();

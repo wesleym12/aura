@@ -41,6 +41,7 @@ DEFAULTS = {
     "quiet_mode": False,        # modo so executar: faz o pedido e nao responde em voz alta
     "face_acc": "",             # acessorio do rostinho (vazio = nenhum)
     "face_color": "branco",     # cor da cabeca do rostinho
+    "agenda_alert": 10,         # avisar dos compromissos da Google Agenda X minutos antes (0 = nao avisa)
 }
 
 NATIVE_VOICES = {"pm_alex", "pm_santa", "pf_dora"}
@@ -129,6 +130,8 @@ def _validate(key, value):
     elif key == "face_color":
         if value not in ('branco', 'grafite', 'azul', 'rosa', 'verde', 'lilas', 'amarelo'):
             raise ValueError("cor desconhecida")
+    elif key == "agenda_alert":
+        value = max(0, min(int(value or 0), 120))
     elif key == "city":
         value = " ".join(str(value or "").split())[:80]
     elif key == "quick_texts":
