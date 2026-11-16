@@ -13,6 +13,10 @@ sent: list = []
 
 async def fake_run(cmd, timeout=20, **args):
     sent.append((cmd, args))
+    if cmd == "clip_set":
+        assert len(args["text"]) == 20, "senha com tamanho errado"
+    if cmd == "metrics":
+        return True, '{"cpu": 12, "ram": 93, "gpu": 5, "gpu_temp": 50, "uptime_s": 90000, "os_name": "Windows 11"}'
     if cmd == "focus" and args.get("title") == "YouTube":
         return False, "nenhuma janela com 'YouTube'"
     return True, "ok"
@@ -34,6 +38,15 @@ CASES = [
     ("digitar", {"texto": "oi"}, "type", {"text": "oi"}),
     ("teclas", {"atalho": "ctrl+s"}, "keys", {"combo": "ctrl+s"}),
     ("youtube", {}, "open_in_tab", {"url": "https://www.youtube.com/", "match": "YouTube"}),
+    ("desligar_pc", {"minutos": 30}, "shutdown", {"delay": 1800}),
+    ("midia", {"acao": "volume", "nivel": 30}, "media", {"action": "set_volume", "level": 30}),
+    ("gerar_senha", {"tamanho": 20}, "clip_set", {}),
+    ("procurar_arquivo", {"nome": "relatorio"}, "find_files", {"query": "relatorio"}),
+    ("mostrar_arquivo", {"caminho": r"C:\Users\x\a.pdf"}, "reveal", {"path": r"C:\Users\x\a.pdf"}),
+    ("ver_area_de_trabalho", {}, "desktop_scan", {}),
+    ("organizar_area_de_trabalho", {}, "desktop_organize", {}),
+    ("desfazer_organizacao", {}, "desktop_undo", {}),
+    ("status_pc", {}, "metrics", {}),
 ]
 
 

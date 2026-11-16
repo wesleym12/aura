@@ -12,14 +12,52 @@ Add-Type -Namespace AuraAgent -Name Keys -MemberDefinition @'
 public static extern short GetAsyncKeyState(int vKey);
 '@
 
+# ---- volume do sistema (Core Audio): ler e ajustar o volume exato ----
+if (-not ('AuraVol' -as [type])) {
+Add-Type -TypeDefinition @"
+using System; using System.Runtime.InteropServices;
+[Guid("5CDF2C82-841E-4546-9722-0CF74078229A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IAuraEndpointVolume {
+  int a(); int b(); int c(); int d();
+  int SetMasterVolumeLevelScalar(float level, ref Guid ctx);
+  int e(); int GetMasterVolumeLevelScalar(out float level);
+  int f(); int g(); int h(); int i(); int SetMute(bool mute, ref Guid ctx); int GetMute(out bool mute);
+}
+[Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IAuraMMDevice { int Activate(ref Guid id, int ctx, IntPtr p, [MarshalAs(UnmanagedType.IUnknown)] out object o); }
+[Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IAuraMMDeviceEnumerator { int a(); int GetDefaultAudioEndpoint(int flow, int role, out IAuraMMDevice d); }
+[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")] class AuraMMDeviceEnumerator {}
+public static class AuraVol {
+  static IAuraEndpointVolume Ep() {
+    var en = (IAuraMMDeviceEnumerator)(new AuraMMDeviceEnumerator()); IAuraMMDevice dev; en.GetDefaultAudioEndpoint(0, 1, out dev);
+    var iid = typeof(IAuraEndpointVolume).GUID; object o; dev.Activate(ref iid, 23, IntPtr.Zero, out o); return (IAuraEndpointVolume)o;
+  }
+  public static int Get() { float v; Ep().GetMasterVolumeLevelScalar(out v); return (int)Math.Round(v * 100); }
+  public static bool Muted() { bool m; Ep().GetMute(out m); return m; }
+  public static void Set(int level) { var g = Guid.Empty; Ep().SetMasterVolumeLevelScalar(Math.Max(0, Math.Min(100, level)) / 100f, ref g); Ep().SetMute(false, ref g); }
+}
+"@
+}
+
 # ---- metricas numa thread separada (leitura leva ~1 s e nao pode atrasar o atalho) ----
-$shared = [hashtable]::Synchronized(@{ json = '{}' })
+$shared = [hashtable]::Synchronized(@{ json = '{}'; art = ''; artKey = '' })
 $metricsPs = [powershell]::Create()
 [void]$metricsPs.AddScript({
     param($shared)
     $ErrorActionPreference = "SilentlyContinue"
     $osInfo = Get-CimInstance Win32_OperatingSystem
     $osName = "$($osInfo.Caption) (build $($osInfo.BuildNumber))".Replace("Microsoft ", "")
+    # o que esta tocando em qualquer programa (Spotify, YouTube no navegador...), pelos controles de midia do Windows
+    $mgr = $null
+    try {
+        Add-Type -AssemblyName System.Runtime.WindowsRuntime
+        $asTask = ([System.WindowsRuntimeSystemExtensions].GetMethods() | Where-Object {
+            $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1' })[0]
+        function Await($op, [Type]$t) { $task = $asTask.MakeGenericMethod($t).Invoke($null, @($op)); [void]$task.Wait(2000); $task.Result }
+        [void][Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType = WindowsRuntime]
+        $mgr = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
+    } catch { $mgr = $null }
     while ($true) {
         $os = Get-CimInstance Win32_OperatingSystem
         $cpu = (Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter "Name='_Total'").PercentProcessorTime
@@ -30,6 +68,37 @@ $metricsPs = [powershell]::Create()
             $p = ($smi | Select-Object -First 1).Split(",") | ForEach-Object { [double]$_.Trim() }
             $gpu = [int]$p[0]; $gpuTemp = [int]$p[1]; $vram = [int][math]::Round(100 * $p[2] / $p[3])
         }
+        $med = $null
+        if ($mgr) {
+            try {
+                $ses = $mgr.GetCurrentSession()
+                if ($ses) {
+                    $p = Await ($ses.TryGetMediaPropertiesAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])
+                    $id = [string]$ses.SourceAppUserModelId
+                    $key = "$id|$($p.Title)|$($p.Artist)"
+                    if ($key -ne $shared.artKey) {               # musica nova: pega a capa uma vez so
+                        $shared.artKey = $key; $shared.art = ''
+                        if ($p.Thumbnail) {
+                            try {
+                                $rs = Await ($p.Thumbnail.OpenReadAsync()) ([Windows.Storage.Streams.IRandomAccessStreamWithContentType])
+                                $ms = New-Object System.IO.MemoryStream
+                                [System.IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($rs).CopyTo($ms)
+                                $shared.art = [Convert]::ToBase64String($ms.ToArray())
+                            } catch {}
+                        }
+                    }
+                    $app = switch -Regex ($id) { 'spotify' { 'Spotify' } 'msedge' { 'Edge' } 'chrome' { 'Chrome' } 'firefox' { 'Firefox' }
+                                                 default { ($id -split '[\\!]')[-1] -replace '\.exe$', '' } }
+                    if ($p.Title) {
+                        $med = [ordered]@{ title = $p.Title; artist = $p.Artist; app = $app
+                                           playing = ($ses.GetPlaybackInfo().PlaybackStatus.ToString() -eq 'Playing')
+                                           art = [bool]$shared.art; key = [string]$key.GetHashCode() }
+                    }
+                }
+            } catch {}
+        }
+        $vol = $null; $muted = $null
+        try { $vol = [AuraVol]::Get(); $muted = [AuraVol]::Muted() } catch {}
         $shared.json = ([ordered]@{
             cpu      = [int]$cpu
             ram      = [int][math]::Round(100 * (1 - $os.FreePhysicalMemory / $os.TotalVisibleMemorySize))
@@ -41,7 +110,10 @@ $metricsPs = [powershell]::Create()
             procs    = (Get-Process).Count
             os       = "WIN"
             os_name  = $osName
-        } | ConvertTo-Json -Compress)
+            media    = $med
+            volume   = $vol
+            muted    = $muted
+        } | ConvertTo-Json -Compress -Depth 3)
         Start-Sleep -Milliseconds 1500
     }
 }).AddArgument($shared)
@@ -55,6 +127,10 @@ $listener.Start()
 Write-Host "Aura host-agent em http://127.0.0.1:$port (metrics, ptt)"
 
 $streams = New-Object System.Collections.ArrayList   # paginas ouvindo o /ptt
+$script:clipItems = New-Object System.Collections.ArrayList   # historico do que foi copiado (so na memoria)
+$script:clipUntil = Get-Date
+$script:clipLast = ""
+$script:clipNext = Get-Date
 $utf8 = [Text.Encoding]::UTF8
 
 function Send-Event($res, [string]$text) {
@@ -83,6 +159,23 @@ function Handle($ctx) {
             $res.AddHeader("Cache-Control", "no-store")
             $res.OutputStream.Write($b, 0, $b.Length)
             $res.Close()
+        }
+        "/art" {
+            # capa da musica que esta tocando (a pagina pede quando a musica muda)
+            if ($shared.art) {
+                $b = [Convert]::FromBase64String($shared.art)
+                $res.ContentType = "image/jpeg"; $res.AddHeader("Cache-Control", "no-store")
+                $res.OutputStream.Write($b, 0, $b.Length)
+            } else { $res.StatusCode = 404 }
+            $res.Close()
+        }
+        "/clip" {
+            # historico do que voce copiou (texto). So grava enquanto a pagina pede com ?on=1 (opcao ligada).
+            if ($ctx.Request.QueryString["on"] -eq "1") { $script:clipUntil = (Get-Date).AddSeconds(30) }
+            if ($ctx.Request.QueryString["clear"] -eq "1") { $script:clipItems.Clear() }
+            $b = $utf8.GetBytes((ConvertTo-Json -Compress -InputObject @($script:clipItems)))
+            $res.ContentType = "application/json"; $res.AddHeader("Cache-Control", "no-store")
+            $res.OutputStream.Write($b, 0, $b.Length); $res.Close()
         }
         "/ptt" {
             $res.ContentType = "text/event-stream"
@@ -119,12 +212,49 @@ Add-Type -Namespace AuraAgent -Name Win -MemberDefinition @'
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern void mouse_event(uint f, uint dx, uint dy, uint d, System.UIntPtr e);
 '@
-$script:desktopCmds = @("windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media")
+$script:desktopCmds = @("windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media",
+                        "clip_set", "find_files", "reveal", "desktop_scan", "desktop_organize", "desktop_undo", "metrics")
 $script:uiElems = @()
 
 function Press-Key([byte]$vk) {
     [AuraAgent.Win]::keybd_event($vk, 0, 0, [UIntPtr]::Zero)
     [AuraAgent.Win]::keybd_event($vk, 0, 2, [UIntPtr]::Zero)
+}
+
+# Organiza os arquivos soltos da area de trabalho em pastas por tipo (atalhos, programas e pastas ficam onde estao).
+# Guarda cada movimento para o Desfazer. $only = so conta, sem mexer.
+function Desktop-Organize([bool]$only) {
+    $desk = [Environment]::GetFolderPath('Desktop')
+    $kinds = [ordered]@{
+        Imagens = 'jpg|jpeg|png|gif|webp|bmp|heic|svg|tif|tiff'; PDFs = 'pdf'; Documentos = 'doc|docx|txt|rtf|odt|md'
+        Planilhas = 'xls|xlsx|xlsm|csv|ods'; Apresentacoes = 'ppt|pptx|odp'; Compactados = 'zip|rar|7z|tar|gz'
+        Videos = 'mp4|mkv|avi|mov|wmv|webm'; Audios = 'mp3|wav|m4a|ogg|flac'
+    }
+    $skip = 'lnk|url|exe|msi|bat|cmd|ps1|ini|appref-ms'
+    $files = @(Get-ChildItem -LiteralPath $desk -File | Where-Object { $_.Extension.TrimStart('.') -notmatch "^($skip)$" -and -not $_.Attributes.HasFlag([IO.FileAttributes]::Hidden) })
+    $plan = @{}
+    foreach ($f in $files) {
+        $ext = $f.Extension.TrimStart('.').ToLower(); $k = 'Outros'
+        foreach ($name in $kinds.Keys) { if ($ext -match "^($($kinds[$name]))$") { $k = $name; break } }
+        if (-not $plan[$k]) { $plan[$k] = New-Object System.Collections.ArrayList }
+        [void]$plan[$k].Add($f)
+    }
+    $summary = ($plan.Keys | Sort-Object | ForEach-Object { "$($plan[$_].Count) $($_.ToLower())" }) -join ", "
+    if (-not $files) { return @{ ok = $true; output = "a area de trabalho ja esta organizada: nenhum arquivo solto" } }
+    if ($only) { return @{ ok = $true; output = "$($files.Count) arquivo(s) solto(s): $summary" } }
+    $root = Join-Path $desk "Organizado pela AURA"; $moves = @()
+    foreach ($k in $plan.Keys) {
+        $dir = Join-Path $root $k; New-Item -ItemType Directory -Force -Path $dir | Out-Null
+        foreach ($f in $plan[$k]) {
+            $to = Join-Path $dir $f.Name; $i = 2
+            while (Test-Path -LiteralPath $to) { $to = Join-Path $dir ("{0} ({1}){2}" -f $f.BaseName, $i, $f.Extension); $i++ }
+            Move-Item -LiteralPath $f.FullName -Destination $to
+            $moves += @{ from = $f.FullName; to = $to }
+        }
+    }
+    $logDir = Join-Path $env:LOCALAPPDATA "AURA"; New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+    ConvertTo-Json -InputObject @($moves) | Set-Content -Path (Join-Path $logDir "desktop-undo.json") -Encoding UTF8
+    return @{ ok = $true; output = "organizei $($files.Count) arquivo(s) em 'Organizado pela AURA': $summary" }
 }
 
 function Invoke-Desktop($c) {
@@ -216,6 +346,60 @@ function Invoke-Desktop($c) {
                 return @{ ok = $true; output = "clicou em '$label'" }
             } catch { return @{ ok = $false; output = "nao consegui clicar em '$label'" } }
         }
+        "clip_set" {
+            $t = [string]$a.text
+            if (-not $t) { return @{ ok = $false; output = "nada para copiar" } }
+            try { [System.Windows.Forms.Clipboard]::SetText($t); $script:clipLast = $t; return @{ ok = $true; output = "copiado ($($t.Length) caracteres)" } }
+            catch { return @{ ok = $false; output = "nao consegui copiar: $_" } }
+        }
+        "find_files" {
+            # indice de pesquisa do Windows (rapido): nome do arquivo, na pasta do usuario, mais recentes primeiro
+            $q = ([string]$a.query).Trim() -replace "[\'%_\[\]]", ' '
+            if ($q.Length -lt 2) { return @{ ok = $false; output = "diga parte do nome do arquivo" } }
+            $root = $env:USERPROFILE.Replace('\', '/')
+            $words = ($q -split '\s+' | Where-Object { $_ } | ForEach-Object { "System.FileName LIKE '%$_%'" }) -join " AND "
+            # ItemUrl tem o caminho real (o ItemPathDisplay vem traduzido, "C:\Usuarios\...", e nao abre)
+            $sql = "SELECT TOP 15 System.ItemUrl, System.DateModified FROM SYSTEMINDEX WHERE $words AND SCOPE='file:$root' " +
+                   "AND System.ItemUrl NOT LIKE '%/AppData/%' ORDER BY System.DateModified DESC"
+            try {
+                $con = New-Object -ComObject ADODB.Connection
+                $con.Open("Provider=Search.CollatorDSO;Extended Properties='Application=Windows';")
+                $rs = $con.Execute($sql); $out = @()
+                while (-not $rs.EOF) {
+                    $path = ([string]$rs.Fields.Item('System.ItemUrl').Value -replace '^file:', '').Replace('/', '\')
+                    $out += "$path  ($(([datetime]$rs.Fields.Item('System.DateModified').Value).ToString('dd/MM/yyyy')))"
+                    $rs.MoveNext()
+                }
+                $rs.Close(); $con.Close()
+            } catch { return @{ ok = $false; output = "a pesquisa do Windows nao respondeu: $_" } }
+            if (-not $out) { return @{ ok = $true; output = "nenhum arquivo com '$q' na pasta do usuario" } }
+            return @{ ok = $true; output = ($out -join "`n") }
+        }
+        "reveal" {
+            # mostra o arquivo selecionado no Explorador (so dentro da pasta do usuario)
+            $p = [string]$a.path
+            if (-not $p -or -not (Test-Path -LiteralPath $p) -or -not ([IO.Path]::GetFullPath($p).StartsWith($env:USERPROFILE, [StringComparison]::OrdinalIgnoreCase))) {
+                return @{ ok = $false; output = "arquivo nao encontrado na pasta do usuario" }
+            }
+            Start-Process explorer.exe -ArgumentList "/select,`"$([IO.Path]::GetFullPath($p))`""
+            return @{ ok = $true; output = "mostrando $p no Explorador" }
+        }
+        "desktop_scan" { return (Desktop-Organize $true) }
+        "desktop_organize" { return (Desktop-Organize $false) }
+        "desktop_undo" {
+            $log = Join-Path $env:LOCALAPPDATA "AURA\desktop-undo.json"
+            if (-not (Test-Path $log)) { return @{ ok = $false; output = "nada para desfazer" } }
+            $moves = @(Get-Content $log -Raw | ConvertFrom-Json); $n = 0
+            foreach ($m in $moves) {
+                if ((Test-Path -LiteralPath $m.to) -and -not (Test-Path -LiteralPath $m.from)) { Move-Item -LiteralPath $m.to -Destination $m.from; $n++ }
+            }
+            Remove-Item $log
+            $dir = Join-Path ([Environment]::GetFolderPath('Desktop')) "Organizado pela AURA"
+            Get-ChildItem -LiteralPath $dir -Directory -ErrorAction SilentlyContinue | Where-Object { -not (Get-ChildItem -LiteralPath $_.FullName -Force) } | Remove-Item
+            if ((Test-Path $dir) -and -not (Get-ChildItem -LiteralPath $dir -Force)) { Remove-Item -LiteralPath $dir }
+            return @{ ok = $true; output = "$n arquivo(s) voltaram para a area de trabalho" }
+        }
+        "metrics" { return @{ ok = $true; output = $shared.json } }
         "open_in_tab" {
             # abre o endereco NA ABA que ja mostra o site (ex.: YouTube), em vez de abrir outra janela.
             # So digita depois de confirmar que a janela em foco e mesmo a do site: nunca digita na janela errada.
@@ -280,11 +464,20 @@ function Invoke-Desktop($c) {
             return @{ ok = $true; output = "data:image/jpeg;base64," + [Convert]::ToBase64String($ms.ToArray()) }
         }
         "media" {
+            if ([string]$a.action -eq "set_volume") {              # volume exato (0 a 100)
+                try { [AuraVol]::Set([int]$a.level); return @{ ok = $true; output = "volume: $([AuraVol]::Get())%" } }
+                catch { return @{ ok = $false; output = "nao consegui mudar o volume" } }
+            }
             $vk = @{ volume_up = 0xAF; volume_down = 0xAE; mute = 0xAD; play_pause = 0xB3; next = 0xB0; previous = 0xB1 }[[string]$a.action]
             if (-not $vk) { return @{ ok = $false; output = "acao de midia desconhecida" } }
             $n = 1; if ($a.times) { $n = [Math]::Min(10, [int]$a.times) }
             1..$n | ForEach-Object { Press-Key ([byte]$vk) }
-            return @{ ok = $true; output = "midia: $($a.action)" }
+            $out = "midia: $($a.action)"
+            if ([string]$a.action -like "volume_*" -or [string]$a.action -eq "mute") {
+                Start-Sleep -Milliseconds 120
+                try { $out = if ([AuraVol]::Muted()) { "som mudo" } else { "volume: $([AuraVol]::Get())%" } } catch {}
+            }
+            return @{ ok = $true; output = $out }
         }
     }
 }
@@ -404,5 +597,20 @@ while ($listener.IsListening) {
         Broadcast ("data: {""down"":" + $down.ToString().ToLower() + "}`n`n")
     }
     if (((Get-Date) - $lastBeat).TotalSeconds -gt 15) { Broadcast ": ping`n`n"; $lastBeat = Get-Date }
+    if ((Get-Date) -lt $script:clipUntil -and (Get-Date) -ge $script:clipNext) {
+        $script:clipNext = (Get-Date).AddSeconds(1)
+        try {
+            $txt = [System.Windows.Forms.Clipboard]::GetText()
+            if ($txt -and $txt -ne $script:clipLast) {
+                $script:clipLast = $txt
+                $item = $txt.Trim(); if ($item.Length -gt 1000) { $item = $item.Substring(0, 1000) }
+                if ($item) {
+                    $script:clipItems.Remove($item)
+                    $script:clipItems.Insert(0, $item)
+                    while ($script:clipItems.Count -gt 25) { $script:clipItems.RemoveAt($script:clipItems.Count - 1) }
+                }
+            }
+        } catch {}
+    }
     Start-Sleep -Milliseconds 25
 }

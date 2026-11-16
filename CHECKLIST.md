@@ -20,6 +20,10 @@ Testes de uso real (com as suas contas e aparelhos). Marque com `[x]` quando pas
 - [ ] **Modo conversa no motor próprio** (sem Gemini Live): responde e volta a esperar "Aura".
 - [ ] **Aplicativo na área de trabalho:** Configurações → Geral → Instalar (ou o atalho A.U.R.A.), voz funcionando na janela do app.
 - [ ] **App de mesa (Windows):** modo entalhe (pílula muda de cor ao ouvir/pensar/falar, clique abre, clique fora recolhe, some com programa maximizado, voz com ela recolhida) e modo janela; trocar em Geral → Modo de exibição; fecha ao Encerrar.
+- [ ] **Entalhe vivo:** com música tocando (Spotify/YouTube) a pílula mostra o nome e o player do Início tem capa e controles; mudar o volume mostra a barra.
+- [ ] **Rotina:** "timer de 1 minuto" (pílula conta e alarme fala no fim), "me lembra de X em 2 minutos", "modo foco", tarefa com subtarefa, "bebi um copo de água".
+- [ ] **Utilidades:** clima, dólar, notícias, "15% de 230", "gera uma senha de 16" (cola com Ctrl+V), "copia meu pix" (salvo em Textos), "procura o arquivo X", "organiza minha área de trabalho" e "desfaz a organização".
+- [ ] **Expressões e modos:** rostinho feliz/triste/carinho conforme a conversa; arrastar a pílula para o monitor 2 (e ela volta lá ao reabrir); modo só executar (só bipe, sem fala).
 - [ ] **Encerrar A.U.R.A.** com "Fechar também o Docker Desktop".
 - [ ] **Iniciar com o Windows:** reiniciar o PC e conferir se tudo sobe sozinho (`iniciar.log`).
 - [ ] **Instalação em Linux (neste computador):** `bash instalar.sh` → opção 1, app de mesa no menu, entalhe e janela, microfone funcionando.

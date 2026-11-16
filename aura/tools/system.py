@@ -16,23 +16,28 @@ def _ready() -> bool:
     return hostbridge.agent_online()
 
 
-async def _power(cmd: str, label: str) -> str:
-    ok, out = await hostbridge.run(cmd, delay=DELAY)
+async def _power(cmd: str, label: str, minutes: float = 0) -> str:
+    delay = max(DELAY, min(int(float(minutes or 0) * 60), 24 * 3600))
+    ok, out = await hostbridge.run(cmd, delay=delay)
     if not ok:
         return f"Nao consegui {label}: {out}"
-    hostbridge.pending_shutdown.update({"cmd": cmd, "label": label, "at": time.time() + DELAY})
-    return (f"O PC vai {label} em {DELAY} segundos. Avise o usuario que ele pode cancelar dizendo 'cancela' "
+    hostbridge.pending_shutdown.update({"cmd": cmd, "label": label, "at": time.time() + delay})
+    when = f"{delay} segundos" if delay < 120 else f"{round(delay / 60)} minutos"
+    return (f"O PC vai {label} em {when}. Avise o usuario que ele pode cancelar dizendo 'cancela' "
             f"ou no botao Cancelar da tela. ({out})")
 
 
-@tool("Desliga o computador (com 30 segundos para cancelar).", sensitive=True, available=_ready)
-async def desligar_pc() -> str:
-    return await _power("shutdown", "desligar")
+@tool("Desliga o computador: agora (30 segundos para cancelar) ou daqui a X minutos ('desliga o PC em 30 minutos').",
+      {"minutos": {"type": "number", "x-optional": True, "description": "daqui a quantos minutos (vazio = 30 segundos)"}},
+      sensitive=True, available=_ready)
+async def desligar_pc(minutos: float = 0) -> str:
+    return await _power("shutdown", "desligar", minutos)
 
 
-@tool("Reinicia o computador (com 30 segundos para cancelar).", sensitive=True, available=_ready)
-async def reiniciar_pc() -> str:
-    return await _power("restart", "reiniciar")
+@tool("Reinicia o computador: agora (30 segundos para cancelar) ou daqui a X minutos.",
+      {"minutos": {"type": "number", "x-optional": True}}, sensitive=True, available=_ready)
+async def reiniciar_pc(minutos: float = 0) -> str:
+    return await _power("restart", "reiniciar", minutos)
 
 
 @tool("Cancela um desligamento ou reinicio agendado.", available=_ready)

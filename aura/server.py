@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile, WebSocket
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
-from . import (access, actions, attachments, autostart, backup, metrics, brain, conversations, facts, gcal, homeassistant, hostbridge,
+from . import (access, actions, rotina, attachments, autostart, backup, metrics, brain, conversations, facts, gcal, homeassistant, hostbridge,
                instructions, live, spotify,
                llm, mcpclient, memory, scheduler, secrets, settings, telegram, workdir)
 from .tools import desktop
@@ -24,6 +24,7 @@ secrets.init()
 mcpclient.init()
 instructions.init()               # cria memoria/INSTRUCOES.md, SOBRE-MIM.md e skills/ na primeira vez
 scheduler.init()
+rotina.init()                    # tarefas, timers e habitos
 backup.start()                    # backup automatico: ao ligar e a cada 6 h (so se algo mudou)
 
 
@@ -940,6 +941,96 @@ def host_status():
         p.clear()
     return {"agent": hostbridge.agent_online(), "dryrun": hostbridge.DRYRUN,
             "pending": {"label": p["label"], "seconds": left} if p else None}
+
+
+# ---- rotina: tarefas, timers/lembretes/foco e habitos (entalhe e app) ----
+def _need(x, what="item"):
+    if not x:
+        raise HTTPException(404, f"{what} nao encontrado")
+    return x
+
+
+def _bad(fn, *a, **kw):
+    try:
+        return fn(*a, **kw)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/rotina")
+def rotina_snapshot():
+    return rotina.snapshot()
+
+
+@app.post("/api/tasks")
+def task_add(body: dict):
+    return _bad(rotina.add_task, str(body.get("title", "")), str(body.get("priority") or "media"),
+                body.get("parent") or None, str(body.get("due") or ""))
+
+
+@app.patch("/api/tasks/{tid}")
+def task_edit(tid: str, body: dict):
+    if "done" in body:
+        _need(rotina.set_done(tid, bool(body["done"])), "tarefa")
+    return _need(rotina.update_task(tid, title=body.get("title"), priority=body.get("priority"), due=body.get("due")), "tarefa")
+
+
+@app.delete("/api/tasks/{tid}")
+def task_delete(tid: str):
+    _need(rotina.delete_task(tid), "tarefa")
+    return {"ok": True}
+
+
+@app.post("/api/timers")
+def timer_add(body: dict):
+    if body.get("kind") == "cronometro":
+        return rotina.start_stopwatch(str(body.get("label") or ""))
+    secs = float(body.get("seconds") or 0)
+    if secs <= 0:
+        raise HTTPException(400, "duracao invalida")
+    return rotina.add_timer(secs, str(body.get("label") or ""), str(body.get("kind") or "timer"), int(body.get("then_break") or 0))
+
+
+@app.delete("/api/timers/{tid}")
+def timer_stop(tid: str):
+    return _need(rotina.stop_timer(tid), "timer")
+
+
+@app.post("/api/timers/{tid}/fire")
+def timer_fire(tid: str):
+    return rotina.fire(tid) or {"timer": None, "next": None}
+
+
+@app.post("/api/habits")
+def habit_add(body: dict):
+    return _bad(rotina.add_habit, str(body.get("name", "")), int(body.get("target") or 1), str(body.get("unit") or ""),
+                str(body.get("icon") or ""))
+
+
+@app.post("/api/habits/{hid}/log")
+def habit_log(hid: str, body: dict):
+    return _need(rotina.log_habit(hid, int(body.get("delta", 1))), "habito")
+
+
+@app.delete("/api/habits/{hid}")
+def habit_delete(hid: str):
+    _need(rotina.delete_habit(hid), "habito")
+    return {"ok": True}
+
+
+@app.post("/api/media")
+async def media_control(body: dict):
+    """Botoes do player do entalhe: tocar/pausar, proxima, anterior e volume (pelo agente do Windows)."""
+    action = str(body.get("action", ""))
+    if action not in ("play_pause", "next", "previous", "volume_up", "volume_down", "mute", "set_volume"):
+        raise HTTPException(400, "acao invalida")
+    args = {"action": action}
+    if action == "set_volume":
+        args["level"] = max(0, min(100, int(body.get("level") or 0)))
+    ok, out = await hostbridge.run("media", **args)
+    if not ok:
+        raise HTTPException(409, out)
+    return {"ok": True, "detail": out}
 
 
 @app.post("/api/host/cancel")

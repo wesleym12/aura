@@ -73,6 +73,8 @@ def _instructions(sid: str, s: "brain.Session") -> str:
     return (settings.system_prompt(s.ctx) + "\n" + now_line()
             + "\n\nVoce esta numa conversa POR VOZ em tempo real: fale de forma natural e curta, sem listas nem markdown."
             + " Antes de usar uma ferramenta demorada, avise em uma frase curta o que vai fazer."
+            + (" MODO SO EXECUTAR ligado: faca o pedido e responda em no maximo 3 palavras (ex.: 'Feito.'), sem avisos."
+               if settings.get().get("quiet_mode") else "")
             + (f"\n\nO que voce sabe sobre o usuario (memoria; para outras coisas use buscar_memoria):\n{facts_txt}" if known else "")
             + (f"\n\nConversa ate agora:\n{history}" if history else ""))
 

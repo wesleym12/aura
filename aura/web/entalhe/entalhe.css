@@ -88,3 +88,178 @@ body[data-sleep] .e-brand small::before { background: #8a96a3; }
 #e-conv #f { flex: none; margin: 0; }
 #e-conv .e-hello { margin: auto; text-align: center; color: var(--e-dim); }
 #e-conv .e-hello .np-face { margin: 0 auto 12px; transform: scale(1.6); }
+
+/* ----- Inicio: conversa + coluna "agora" (player; nas proximas fases timers, tarefas e habitos) ----- */
+.e-home { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 14px; flex: 1; min-height: 0; }
+.e-chat { display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
+.e-aside { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+.e-sugs { display: flex; gap: 6px; flex-wrap: wrap; }
+.e-sugs .e-chip { font-weight: 500; color: #c3cad5; }
+.e-sugs .e-chip:hover { color: var(--e-acc2); border-color: rgba(255, 154, 31, .45); }
+#e-conv #log { flex: 1; }
+.e-card { padding: 12px; border-radius: 14px; background: var(--e-card); border: 1px solid var(--e-line); }
+.e-player { display: flex; flex-direction: column; gap: 10px; }
+.e-pl-top { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.e-pl-top .e-txt { min-width: 0; }
+.e-pl-top b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.e-pl-top small { display: block; color: var(--e-dim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.e-art { flex: none; width: 46px; height: 46px; border-radius: 10px; overflow: hidden; display: grid; place-items: center;
+  background: linear-gradient(135deg, #2a2f3b, #191d26); color: var(--e-acc); }
+.e-art img { width: 100%; height: 100%; object-fit: cover; }
+.e-art svg { width: 22px; height: 22px; }
+.e-pl-ctl { display: flex; justify-content: center; gap: 10px; }
+.e-pl-ctl .acc { width: 38px; height: 38px; }
+.e-vol { display: flex; align-items: center; gap: 8px; color: var(--e-dim); font-size: 12px; }
+.e-vol svg { width: 16px; height: 16px; flex: none; }
+.e-vol input { flex: 1; accent-color: var(--e-acc); min-width: 0; }
+.e-vol b { width: 34px; text-align: right; font-weight: 600; color: var(--e-text); }
+.e-player > .e-btn { align-self: flex-start; }
+
+/* ----- pilula recolhida: atividade (musica, volume, timer) entre o rosto e o relogio ----- */
+.np-act { display: inline-flex; align-items: center; gap: 7px; max-width: 250px; color: #e6e9ef;
+  font: 600 12.5px "Exo 2", "Segoe UI", sans-serif; white-space: nowrap; }
+.np-act[hidden] { display: none; }
+.np-song { overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.np-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; flex: none; }
+.np-eq b { width: 3px; border-radius: 2px; background: #3ccf8e; animation: np-eq .9s ease-in-out infinite; }
+.np-eq b:nth-child(2) { animation-delay: -.3s; } .np-eq b:nth-child(3) { animation-delay: -.6s; }
+@keyframes np-eq { 0%, 100% { height: 4px; } 50% { height: 12px; } }
+.np-vol { display: inline-flex; align-items: center; gap: 7px; }
+.np-vol svg { width: 15px; height: 15px; }
+.np-vol i { position: relative; width: 70px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+.np-vol i b { position: absolute; inset: 0 auto 0 0; background: #ff9a1f; border-radius: 3px; transition: width .2s; }
+
+/* ----- rotina: tarefas, timers e habitos ----- */
+.e-sel { width: auto; padding-right: 8px; }
+.e-num { width: 84px; }
+.e-dim { color: var(--e-dim); font-size: 12.5px; }
+.e-ctitle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
+  font: 500 10.5px "JetBrains Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--e-dim); }
+.e-link { background: none; border: 0; color: var(--e-acc2); font: 600 11px "Exo 2", sans-serif; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.e-card .e-item { background: none; padding: 6px 0; }
+.e-check { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 6px; border: 2px solid #4a5263; background: none; cursor: pointer; position: relative; }
+.e-check[aria-pressed="true"] { background: #3ccf8e; border-color: #3ccf8e; }
+.e-check[aria-pressed="true"]::after { content: ""; position: absolute; left: 4px; top: 0; width: 5px; height: 9px; border: solid #0b0d12; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.e-task.done b { text-decoration: line-through; color: var(--e-dim); }
+.e-task.sub { margin-left: 28px; padding-top: 6px; padding-bottom: 6px; }
+.e-task.mini b { font-weight: 500; font-size: 13px; }
+.e-prio { flex: none; padding: 1px 8px; border-radius: 99px; font-size: 11px; background: rgba(255, 255, 255, .06); color: var(--e-dim); }
+.e-prio.p-alta { color: #ff8b8b; background: rgba(255, 107, 107, .14); }
+.e-prio.p-baixa { color: #8fb8ff; background: rgba(110, 160, 255, .12); }
+.e-timer { align-items: center; }
+.e-tico { flex: none; font-size: 16px; }
+.e-tleft { flex: none; font: 600 15px "JetBrains Mono", monospace; color: var(--e-acc2); }
+.e-bar { display: block; height: 4px; margin-top: 5px; border-radius: 3px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.e-bar b { display: block; height: 100%; background: var(--e-acc); border-radius: 3px; transition: width 1s linear; }
+.e-hgrid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+.e-habit b span { font-size: 13px; color: var(--e-dim); font-weight: 500; }
+.e-habit.ok .e-bar b { background: #3ccf8e; }
+.e-hbtn { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+.e-hbtn .e-x { margin-left: auto; }
+.e-hmini { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.e-habit.mini { padding: 10px; position: relative; }
+.e-habit.mini b { font-size: 17px; }
+.e-habit.mini .e-hbtn { position: absolute; top: 6px; right: 6px; margin: 0; }
+.e-habit.mini .e-icon { width: 24px; height: 24px; font-size: 14px; }
+/* pilula: timer correndo e aviso */
+.np-timer { display: inline-flex; align-items: center; gap: 5px; overflow: hidden; text-overflow: ellipsis; max-width: 230px; }
+.np-timer b { font: 600 13px "JetBrains Mono", monospace; color: #ffb54d; }
+.np-alarm { color: #ffb54d; animation: np-pulse 1s ease-in-out infinite; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+@keyframes np-pulse { 50% { opacity: .55; } }
+
+/* ----- expressoes do rostinho (desenho proprio da A.U.R.A.) ----- */
+.e-brand .np-face { cursor: grab; }
+.np-face::before, .np-face::after { content: ""; position: absolute; opacity: 0; transition: opacity .2s; pointer-events: none; }
+/* bochechas (carinho) */
+body[data-mood="carinho"] .np-face::before, body[data-mood="carinho"] .np-face::after { opacity: .85; top: 14px; width: 6px; height: 3.5px;
+  border-radius: 50%; background: #ff8fb1; }
+body[data-mood="carinho"] .np-face::before { left: 4px; } body[data-mood="carinho"] .np-face::after { right: 4px; }
+/* olhos em arco: feliz, rindo e carinho */
+body[data-mood="feliz"] .np-face .eye, body[data-mood="rindo"] .np-face .eye, body[data-mood="carinho"] .np-face .eye {
+  top: 9px; height: 5px; background: none; border-top: 2.5px solid #14161a; border-radius: 50% 50% 0 0; animation: none; }
+body[data-mood="feliz"] .np-face .mouth, body[data-mood="carinho"] .np-face .mouth { opacity: 1; top: 16.5px; width: 7px; height: 3px;
+  margin-left: -3.5px; background: none; border-bottom: 2px solid #14161a; border-radius: 0 0 6px 6px; }
+body[data-mood="rindo"] .np-face { animation: np-laugh .32s ease-in-out infinite; }
+body[data-mood="rindo"] .np-face .mouth { opacity: 1; top: 15px; width: 8px; height: 5px; margin-left: -4px; background: #14161a; border-radius: 1px 1px 6px 6px; }
+@keyframes np-laugh { 50% { transform: translateY(-1.5px) rotate(-3deg); } }
+/* surpresa: olhos grandes e boca em O */
+body[data-mood="surpreso"] .np-face .eye { top: 7px; width: 7.5px; height: 9px; animation: none; }
+body[data-mood="surpreso"] .np-face .mouth { opacity: 1; top: 17px; width: 4px; height: 4px; margin-left: -2px; background: none; border: 1.5px solid #14161a; border-radius: 50%; }
+/* triste: olhos caidos e uma lagrima */
+body[data-mood="triste"] .np-face .eye { top: 11px; height: 3.5px; border-radius: 0 0 50% 50%; animation: none; }
+body[data-mood="triste"] .np-face .mouth { opacity: 1; top: 18px; width: 6px; height: 3px; margin-left: -3px; background: none; border-top: 1.8px solid #14161a; border-radius: 6px 6px 0 0; }
+body[data-mood="triste"] .np-face::after { opacity: 1; left: 10px; top: 15px; width: 3px; height: 4px; border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+  background: #5ab8ff; animation: np-tear 1.6s ease-in infinite; }
+@keyframes np-tear { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(6px); opacity: 0; } }
+/* brava: olhos cortados na diagonal */
+body[data-mood="bravo"] .np-face .eye { top: 9px; height: 6px; animation: none; }
+body[data-mood="bravo"] .np-face .l { clip-path: polygon(0 35%, 100% 0, 100% 100%, 0 100%); }
+body[data-mood="bravo"] .np-face .r { clip-path: polygon(0 0, 100% 35%, 100% 100%, 0 100%); }
+body[data-mood="bravo"] .np-face { --np: #ff6b6b; box-shadow: 0 0 0 2px var(--np), 0 0 10px var(--np); }
+/* cochilando: olhos fechados e um "z" subindo */
+body[data-mood="sono"] .np-face .eye { top: 11px; height: 1.6px; border-radius: 2px; animation: none; }
+body[data-mood="sono"] .np-face::after { opacity: 1; content: "z"; right: -9px; top: -8px; color: #9aa4b2; font: 700 10px "Exo 2", sans-serif;
+  animation: np-z 2.4s ease-in-out infinite; }
+@keyframes np-z { 0% { transform: translate(0, 4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(4px, -6px); opacity: 0; } }
+/* parada: olha para os lados ou pisca duas vezes */
+body[data-idle="olhar"] .np-face .eye { animation: np-look2 1.8s ease-in-out; }
+@keyframes np-look2 { 0%, 100% { transform: none; } 25%, 40% { transform: translateX(-2.5px); } 60%, 80% { transform: translateX(2.5px); } }
+body[data-idle="piscar"] .np-face .eye { animation: np-blink2 .9s ease-in-out; }
+@keyframes np-blink2 { 0%, 30%, 60%, 100% { transform: scaleY(1); } 15%, 45% { transform: scaleY(.1); } }
+/* musica tocando: balanca no ritmo */
+body.np-groove:not([data-mood]):not([data-state="thinking"]) .np-face { animation: np-bob .9s ease-in-out infinite; }
+@keyframes np-bob { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg) translateY(-1px); } }
+
+/* ===== layout 2: Inicio limpo, Rotina em abas, configuracoes completas ===== */
+/* Inicio: conversa vazia = saudacao no meio com 4 ideias */
+.e-chat.fresh #log { display: none; }
+.e-hello { display: none; }
+.e-chat.fresh .e-hello { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; gap: 4px; }
+.e-hello .np-face { transform: scale(1.9); margin-bottom: 22px; }
+.e-hello h3 { margin: 0; font: 700 21px "Exo 2", sans-serif; }
+.e-hello small { color: var(--e-dim); }
+.e-hello p { margin: 16px 0 6px; color: var(--e-dim); font-size: 13px; }
+.e-hello .e-sugs { justify-content: center; max-width: 470px; }
+.e-sugs .e-chip { padding: 6px 12px; font-size: 12.5px; }
+/* coluna "agora": um cartao so */
+.e-home { grid-template-columns: minmax(0, 1fr) 248px; }
+.e-now { display: flex; flex-direction: column; gap: 2px; padding: 12px 12px 10px; }
+.e-now .e-ctitle { margin: 10px 0 2px; padding-top: 10px; border-top: 1px solid var(--e-line); }
+.e-now #e-extra > .e-ctitle:first-child { margin-top: 8px; }
+.e-np-none { display: flex; align-items: center; gap: 8px; color: var(--e-dim); font-size: 13px; }
+.e-np-none svg { width: 16px; height: 16px; color: var(--e-acc); }
+.e-np-none .e-link { margin-left: auto; }
+.e-player { display: flex; flex-direction: column; gap: 8px; }
+.e-player .e-art { width: 42px; height: 42px; }
+.e-player .e-pl-ctl .e-icon { width: 30px; height: 30px; }
+.e-player .e-pl-ctl .acc { width: 34px; height: 34px; }
+.e-none { margin: 2px 0; }
+.e-hrow { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+.e-hrow .e-bar { margin: 0; }
+.e-hrow small { color: var(--e-dim); font-variant-numeric: tabular-nums; }
+.e-hrow .e-icon { width: 22px; height: 22px; font-size: 13px; }
+.e-hrow.ok .e-bar b { background: #3ccf8e; }
+/* abas (Rotina e Ajustes) */
+.e-tabs { display: flex; gap: 4px; padding: 3px; margin-bottom: 12px; border-radius: 11px; background: var(--e-side);
+  border: 1px solid var(--e-line); overflow-x: auto; scrollbar-width: none; position: sticky; top: 0; z-index: 2; }
+.e-tabs::-webkit-scrollbar { display: none; }
+.e-tabs button { display: inline-flex; align-items: center; gap: 7px; flex: none; padding: 6px 12px; border: 0; border-radius: 8px;
+  background: none; color: #a9b2bf; font: 600 12.5px "Exo 2", sans-serif; cursor: pointer; white-space: nowrap; }
+.e-tabs button:hover { color: var(--e-text); background: rgba(255, 255, 255, .04); }
+.e-tabs button.on { background: rgba(255, 154, 31, .15); color: var(--e-acc2); }
+.e-tabs svg { width: 15px; height: 15px; flex: none; }
+.e-tabs em { font-style: normal; font-size: 11px; color: var(--e-dim); }
+.e-tabs em:empty { display: none; }
+/* configuracoes do modo janela dentro do entalhe */
+#ent .cfg-main { display: block; height: auto; max-height: none; overflow: visible; padding: 0; background: none; border: 0; }
+#ent .cfg-pane-head { padding: 0 0 8px; border: 0; }
+#ent .cfg-pane-head h3 { font-size: 15px; }
+#ent #cfg-done { display: none; }
+#ent .modal-foot { position: static; padding: 14px 0 4px; background: none; }
+#ent .pane { padding: 0; }
+
+/* Ajustes: grupos em cima, telas do grupo embaixo */
+.e-cfggrp { margin-bottom: 8px; }
+.e-cfgtabs { position: static; margin-bottom: 14px; background: none; border: 0; padding: 0; }
+.e-cfgtabs[hidden] { display: none; }
+.e-cfgtabs button { border: 1px solid var(--e-line); }

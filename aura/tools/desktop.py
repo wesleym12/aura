@@ -208,10 +208,13 @@ async def tirar_print() -> str:
 @tool(
     "Pausa/continua (play_pause), pula (next) ou volta (previous) a musica ou video que esta tocando em QUALQUER "
     "programa (YouTube no navegador, Spotify, VLC...) e controla o volume do PC. Use para 'pausa a musica', "
-    "'pausa o YouTube', 'continua', 'proxima', 'aumenta/abaixa o volume', 'muta'.",
-    {"acao": {"type": "string", "enum": ["volume_up", "volume_down", "mute", "play_pause", "next", "previous"]},
-     "vezes": {"type": "integer", "description": "Quantas vezes (volume), ate 10", "x-optional": True}},
+    "'pausa o YouTube', 'continua', 'proxima', 'aumenta/abaixa o volume', 'muta', 'volume em 30' (acao=volume, nivel=30).",
+    {"acao": {"type": "string", "enum": ["volume_up", "volume_down", "volume", "mute", "play_pause", "next", "previous"]},
+     "vezes": {"type": "integer", "description": "Quantas vezes (volume_up/volume_down), ate 10", "x-optional": True},
+     "nivel": {"type": "integer", "description": "Volume exato de 0 a 100 (so com acao=volume)", "x-optional": True}},
     available=_ready,
 )
-async def midia(acao: str, vezes: int = 1) -> str:
+async def midia(acao: str, vezes: int = 1, nivel: int | None = None) -> str:
+    if acao == "volume":
+        return await _do("media", action="set_volume", level=max(0, min(100, int(nivel if nivel is not None else 50))))
     return await _do("media", action=acao, times=vezes)

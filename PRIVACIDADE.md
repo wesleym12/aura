@@ -14,7 +14,7 @@ conta, servidor central, telemetria nem estatística de uso.
 | Recurso | Para onde vai | O quê |
 |---|---|---|
 | Modo **só Gemini** / Gemini Live / modelo da nuvem no seletor | Google, ou o provedor escolhido (OpenAI, Groq…) | suas mensagens, o áudio depois da palavra de ativação, memórias relevantes ao pedido e o texto das memórias para a busca por significado |
-| Contas Claude / Codex | Anthropic / OpenAI | o pedido delegado e arquivos da pasta de trabalho que o agente ler |
+| Clima, cotações e notícias (quando você pede) | Open-Meteo, AwesomeAPI e Google Notícias | só a cidade, as moedas ou o tema pedidos (sem conta e sem chave) |
 | Google (Agenda, Gmail, Drive…), Spotify, Home Assistant, conectores MCP, Telegram | o próprio serviço | só o necessário para cada ação que você pedir |
 | Imagens (Nano Banana), documentos sem visão local | Google | a imagem ou o documento enviado |
 

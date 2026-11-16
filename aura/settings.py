@@ -35,6 +35,10 @@ DEFAULTS = {
     "follow_language": False,   # a voz te segue: detecta a lingua da fala (desligado = sempre portugues, mais preciso)
     "workdir": "",              # pasta de trabalho (vazio = aura/workspace)
     "desktop_control": False,   # controle do computador (desligado ate voce ligar)
+    "city": "",                 # cidade do clima (vazio = pergunta / usa a que o usuario falar)
+    "quick_texts": [],          # textos rapidos para copiar: [{"name": "pix", "text": "..."}]
+    "clip_history": False,      # historico do que voce copiou (so na memoria do agente do Windows)
+    "quiet_mode": False,        # modo so executar: faz o pedido e nao responde em voz alta
 }
 
 NATIVE_VOICES = {"pm_alex", "pm_santa", "pf_dora"}
@@ -107,7 +111,8 @@ def _validate(key, value):
     elif key == "personality":
         if value not in PERSONALITIES:
             raise ValueError("jeito desconhecido")
-    elif key in ("greeting", "auto_learn", "follow_language", "desktop_control", "conversation_mode"):
+    elif key in ("greeting", "auto_learn", "follow_language", "desktop_control", "conversation_mode", "clip_history",
+                 "quiet_mode"):
         value = bool(value)
     elif key == "workdir":
         from .workdir import validate
@@ -116,6 +121,13 @@ def _validate(key, value):
         from .llm import PROVIDERS
         if value not in PROVIDERS:
             raise ValueError("provedor desconhecido")
+    elif key == "city":
+        value = " ".join(str(value or "").split())[:80]
+    elif key == "quick_texts":
+        if not isinstance(value, list):
+            raise ValueError("quick_texts deve ser uma lista")
+        value = [{"name": " ".join(str(t.get("name", "")).split())[:40], "text": str(t.get("text", ""))[:2000]}
+                 for t in value if isinstance(t, dict) and str(t.get("name", "")).strip() and str(t.get("text", "")).strip()][:50]
     elif key == "llm_model":
         value = str(value).strip()[:120]
     elif key == "telegram_chats":

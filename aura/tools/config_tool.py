@@ -12,7 +12,11 @@ EDITABLE = {
     "wake_word": "palavra de ativacao",
     "greeting_text": "texto da saudacao ao abrir",
     "live_voice": "voz do modo Gemini Live (ex.: Orus, Kore, Puck)",
+    "quiet_mode": "modo so executar / silencioso: faz e nao fala a resposta (valor: ligado ou desligado)",
+    "conversation_mode": "modo conversa: continua ouvindo depois de responder (valor: ligado ou desligado)",
+    "city": "cidade do clima",
 }
+BOOLS = {"quiet_mode", "conversation_mode"}
 
 
 @tool(
@@ -28,6 +32,8 @@ def alterar_configuracao(chave: str, valor: str) -> str:
         return f"Erro: '{chave}' nao pode ser alterada por aqui."
     old = settings.get()[chave]
     try:
+        if chave in BOOLS:      # "ligado"/"sim"/"true" -> True (bool("false") seria True)
+            valor = str(valor).strip().lower() in ("ligado", "liga", "ligar", "sim", "true", "1", "on", "ativado", "ativa")
         new = settings.update({chave: float(valor) if chave == "voice_speed" else valor})[chave]
     except (ValueError, TypeError) as e:
         return f"Erro: valor invalido para {EDITABLE[chave]}: {e}"
@@ -35,4 +41,6 @@ def alterar_configuracao(chave: str, valor: str) -> str:
         return f"{EDITABLE[chave]} ja era '{new}'."
     actions.record("alterar_configuracao", f"Mudou {EDITABLE[chave].split(' (')[0].split(':')[0]}: {old} → {new}",
                    "settings", {"old": {chave: old}, "new": {chave: new}})
+    if chave in BOOLS:
+        return f"Pronto: {EDITABLE[chave].split(':')[0]} {'ligado' if new else 'desligado'}."
     return f"Pronto: {EDITABLE[chave].split(' (')[0]} agora e '{new}'."

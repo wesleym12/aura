@@ -118,7 +118,7 @@ if WIN:
     class MONITORINFO(ctypes.Structure):
         _fields_ = [("cbSize", wintypes.DWORD), ("rcMonitor", wintypes.RECT), ("rcWork", wintypes.RECT), ("dwFlags", wintypes.DWORD)]
 
-    def covered(own_title: str) -> bool:
+    def covered(own_title: str, anchor=(0, 0)) -> bool:
         h = u32.GetForegroundWindow()
         if not h:
             return False
@@ -129,9 +129,12 @@ if WIN:
         u32.GetWindowTextW(h, buf, 256)
         if buf.value == own_title:
             return False
+        mon = u32.MonitorFromWindow(h, 2)
+        if mon != u32.MonitorFromPoint(wintypes.POINT(*anchor), 1):
+            return False                     # so importa o monitor onde o entalhe esta
         mi = MONITORINFO(cbSize=ctypes.sizeof(MONITORINFO))
-        if not u32.GetMonitorInfoW(u32.MonitorFromWindow(h, 2), ctypes.byref(mi)) or not mi.dwFlags & 1:
-            return False                     # so importa o monitor principal, onde o entalhe fica
+        if not u32.GetMonitorInfoW(mon, ctypes.byref(mi)):
+            return False
         if u32.IsZoomed(h):
             return True
         r = wintypes.RECT()
@@ -188,9 +191,10 @@ if WIN:
     u32.MonitorFromPoint.restype = wintypes.HMONITOR
     u32.MonitorFromPoint.argtypes = [wintypes.POINT, wintypes.DWORD]
 
-    def place_top_center(hwnd: int, w: int, h: int) -> bool:
-        """Tamanho e posicao numa chamada so, no topo e no centro do monitor principal (pixels reais, com a escala
-        do Windows). Mover e redimensionar separado fazia o entalhe ir escorregando para o lado a cada abre/fecha."""
+    def place_top_center(hwnd: int, w: int, h: int, anchor=(0, 0)) -> bool:
+        """Tamanho e posicao numa chamada so, no topo e no centro do monitor do entalhe (o que contem o ponto
+        "anchor"; 0,0 = principal), em pixels reais com a escala do Windows. Mover e redimensionar separado fazia o
+        entalhe ir escorregando para o lado a cada abre/fecha."""
         if not hwnd:
             return False
         try:
@@ -198,12 +202,27 @@ if WIN:
         except (AttributeError, OSError):
             scale = 1
         mi = MONITORINFO(cbSize=ctypes.sizeof(MONITORINFO))
-        if not u32.GetMonitorInfoW(u32.MonitorFromPoint(wintypes.POINT(0, 0), 1), ctypes.byref(mi)):
+        if not u32.GetMonitorInfoW(u32.MonitorFromPoint(wintypes.POINT(*anchor), 1), ctypes.byref(mi)):
             return False
         m = mi.rcMonitor
         pw, ph = round(w * scale), round(h * scale)
         x = m.left + (m.right - m.left - pw) // 2
         return bool(u32.SetWindowPos(hwnd, None, x, m.top, pw, ph, 0x0004 | 0x0010))   # NOZORDER | NOACTIVATE
+
+    u32.GetAsyncKeyState.restype = ctypes.c_short
+
+    def drag_follow(hwnd: int) -> tuple[int, int]:
+        """Arrastar o entalhe: a pilula segue o mouse enquanto o botao esquerdo esta apertado. Devolve onde soltou."""
+        r = wintypes.RECT()
+        u32.GetWindowRect(hwnd, ctypes.byref(r))
+        w, h = r.right - r.left, r.bottom - r.top
+        pt = wintypes.POINT()
+        while u32.GetAsyncKeyState(0x01) & 0x8000:
+            u32.GetCursorPos(ctypes.byref(pt))
+            u32.SetWindowPos(hwnd, None, pt.x - w // 2, pt.y - h // 2, 0, 0, 0x0001 | 0x0004 | 0x0010)  # NOSIZE|NOZORDER|NOACTIVATE
+            time.sleep(0.012)
+        u32.GetCursorPos(ctypes.byref(pt))
+        return pt.x, pt.y
 
     def focus_elsewhere() -> bool:
         """O foco foi para outro programa? (janelas deste processo, como o seletor de arquivos, nao contam)"""
@@ -217,7 +236,7 @@ else:
     import shutil
     import subprocess
 
-    def covered(own_title: str) -> bool:
+    def covered(own_title: str, anchor=(0, 0)) -> bool:
         """Linux com X11 (xprop instalado). No Wayland o sistema nao conta: o entalhe fica sempre visivel."""
         if not shutil.which("xprop") or not os.getenv("DISPLAY"):
             return False
@@ -252,8 +271,11 @@ else:
     def bring_front(hwnd: int):
         pass
 
-    def place_top_center(hwnd: int, w: int, h: int) -> bool:
+    def place_top_center(hwnd: int, w: int, h: int, anchor=(0, 0)) -> bool:
         return False                         # no Linux o pywebview (Qt) posiciona
+
+    def drag_follow(hwnd: int) -> tuple[int, int]:
+        return 0, 0
 
 
 class App:
@@ -263,8 +285,11 @@ class App:
         conf = load_conf()
         self._mode = conf.get("mode", "janela")
         self._on_top = bool(conf.get("on_top", False))   # entalhe sempre por cima (nao some com programa maximizado)
+        self._anchor = tuple(conf.get("monitor") or (0, 0))  # um ponto do monitor escolhido (arrastando a pilula)
+        self._dragging = False
         self._win = None
         self._switched = False    # a janela atual veio de uma troca de modo (nao da abertura do app)
+        self._pill_w = PILL[0]    # a pilula cresce para mostrar a musica, um timer ou o volume
         self._hwnd = 0            # janela do entalhe no Windows (achada quando aparece)
         self._expanded = False
         self._hidden = False
@@ -290,10 +315,36 @@ class App:
         threading.Thread(target=self._reopen, daemon=True).start()     # recria a janela no outro formato
         return self.info()
 
+    def drag_start(self):
+        """Segurou e arrastou a pilula: ela segue o mouse e, ao soltar, vai para o topo do monitor onde caiu."""
+        if self._mode != "entalhe" or self._dragging or not self._hwnd:
+            return self.info()
+        if self._expanded:                  # arrastou pelo rostinho do painel aberto: vira pilula e segue o mouse
+            self.collapse()
+        self._dragging = True
+        try:
+            x, y = drag_follow(self._hwnd)
+            if (x, y) != (0, 0):
+                self._anchor = (x, y)
+                save_conf(monitor=[x, y])
+        finally:
+            self._dragging = False
+            self._place(self._pill_w, PILL[1])
+        return self.info()
+
     def expand(self):
-        if self._mode == "entalhe" and not self._expanded:
+        if self._mode == "entalhe" and not self._expanded and not self._dragging:
             self._expanded = True
             self._place(*PANEL)
+        return self.info()
+
+    def set_pill(self, width):
+        """A pagina pede a largura da pilula recolhida (cabe o que ela esta mostrando)."""
+        w = max(PILL[0], min(460, int(width or 0)))
+        if w != self._pill_w:
+            self._pill_w = w
+            if self._mode == "entalhe" and not self._expanded and self._win:
+                self._place(w, PILL[1])
         return self.info()
 
     def pin(self):
@@ -305,7 +356,7 @@ class App:
     def collapse(self):
         if self._mode == "entalhe" and self._expanded:
             self._expanded = self._pinned = self._focused = False
-            self._place(*PILL)
+            self._place(self._pill_w, PILL[1])
         return self.info()
 
     def quit(self):
@@ -329,7 +380,7 @@ class App:
     def _place(self, w, h):
         if self._mode == "entalhe":
             self._hwnd = self._hwnd or find_hwnd(self._title)
-            if place_top_center(self._hwnd, w, h):
+            if place_top_center(self._hwnd, w, h, self._anchor):
                 return
         sw, _ = self._screen()
         self._win.resize(w, h)
@@ -349,7 +400,7 @@ class App:
 
             def shown():
                 self._hwnd = find_hwnd(self._title)
-                self._place(*PILL)           # o tamanho inicial de janela sem moldura sai torto no Windows
+                self._place(self._pill_w, PILL[1])           # o tamanho inicial de janela sem moldura sai torto no Windows
                 style_window(self._hwnd, taskbar=False)
                 if prev:
                     u32.SetForegroundWindow(prev)    # aparecer nao rouba o foco de quem voce estava usando
@@ -406,7 +457,7 @@ class App:
                 if self._hidden and w:
                     w.show(); self._hidden = False
                 continue
-            hide = not self._on_top and covered(self._title)
+            hide = not self._on_top and covered(self._title, self._anchor)
             if hide != self._hidden:
                 (w.hide if hide else w.show)()
                 self._hidden = hide

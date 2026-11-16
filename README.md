@@ -128,6 +128,21 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
 - **Clicar, digitar e atalhos sempre pedem Autorizar.**
 - **Energia e Wi-Fi:** desligar, reiniciar, suspender e Wi-Fi pedem Autorizar, e desligar ou reiniciar têm 30 s para cancelar. `AURA_POWER_DRYRUN=1` no `.env` só simula.
 
+### Rotina: tarefas, timers e hábitos
+- **Tarefas:** "adiciona na lista: comprar café", prioridade (alta, média, baixa), subtarefas e prazo. Concluir a principal conclui as subtarefas; feitas somem no fim do dia.
+- **Timers e lembretes:** "timer de 10 minutos para a pizza", "me lembra de ligar pro cliente em 30 minutos" (ou "às 15h", "amanhã 9h"). Vários correm juntos, aparecem na pílula e tocam alarme falado no fim. Com a janela e o entalhe abertos, só um avisa.
+- **Foco e cronômetro:** "modo foco" (25 min + 5 de pausa, que começa sozinha) e "inicia/para o cronômetro".
+- **Hábitos:** água (meta 8 copos) já vem pronta; crie outros ("cria o hábito leitura com meta 20 páginas") e registre com "bebi um copo de água". Lembrete de pausa opcional a cada 50 min.
+
+### Utilidades rápidas
+- **Clima** ("vai chover hoje?"), **cotações** ("quanto está o dólar?"), **notícias** ("notícias de hoje"): serviços gratuitos e sem conta (Open-Meteo, AwesomeAPI, Google Notícias), que só recebem a cidade, as moedas ou o tema pedidos.
+- **Contas exatas** ("quanto é 15% de 230"), **dias que faltam** ("pro Natal"), **sorteios** (cara ou coroa, dado, número, escolher da lista).
+- **Senha forte** ("gera uma senha de 20"): vai direto para a área de transferência, sem aparecer no chat nem ser falada.
+- **Textos prontos** (aba Textos do entalhe): salve Pix, endereço, assinatura… e peça "copia meu pix". **Histórico do que você copiou** é opcional, fica só na memória do PC e some ao reiniciar.
+- **Arquivos:** "procura o arquivo relatório" (pesquisa do Windows, mais recentes primeiro) e "mostra esse arquivo" (abre a pasta com ele selecionado).
+- **Organizar a área de trabalho:** conta os arquivos soltos, pede Autorizar e move para pastas por tipo em "Organizado pela AURA" (atalhos e programas ficam). "Desfaz a organização" devolve tudo.
+- **PC:** "como está meu PC?" (avisa se a memória ou a temperatura estão no limite), volume exato ("volume em 30") e "desliga o PC em 30 minutos" (com Autorizar e Cancelar).
+
 ### Imagens (Nano Banana)
 - "Cria uma imagem de...", ou anexe uma foto e peça uma edição. Usa a chave do Gemini.
 - **Precisa de faturamento ativo na chave** (o plano gratuito tem cota 0 para imagens).
@@ -206,7 +221,13 @@ Catálogo no estilo do Claude/ChatGPT: o Google e 28 servidores MCP oficiais. Na
 - **Iniciar com o Windows** (Geral): grava `Aura.vbs` na pasta Inicializar, que roda o `iniciar.ps1` escondido no logon. Desligar apaga o arquivo. Pelo terminal: `.\autostart.ps1`, `-Status` ou `-Remover`.
 - **App de mesa** (Windows e Linux, `desktop/aura_app.py`): a A.U.R.A. fora do navegador, em dois modos (Geral → **Modo de exibição**):
   - **Janela:** uma janela própria, como um aplicativo comum.
-  - **Entalhe:** um rostinho (cabeça branca com dois olhinhos) e o relógio no topo da tela. Ele reage ao estado: pisca quando está pronta, brilho azul ao ouvir, roxo olhando para os lados ao pensar, laranja mexendo a boca ao falar. **Passe o mouse** e abre a interface própria do entalhe: menu lateral (Conversa, Histórico, Memória, Agenda, Agendados, Música, Casa, Meu PC, Ajustes) e uma tela por vez, desenhada para o painel. Tire o mouse e ela recolhe; **clicando** dentro, fica aberta até você clicar em outro programa. A voz e a palavra de ativação continuam funcionando com ela recolhida, e um pedido de Autorizar abre o painel sozinho. Em Ajustes → "Todas as configurações" a A.U.R.A. passa para o modo janela.
+  - **Entalhe:** um rostinho (cabeça branca com dois olhinhos) e o relógio no topo da tela.
+    - **Estado e expressões:** brilho azul ao ouvir, roxo olhando para os lados ao pensar, laranja mexendo a boca ao falar. Muda de cara conforme a conversa (feliz, rindo, surpresa, triste com lágrima, bochechas coradas com um "obrigado", brava com xingamento). Parada, olha em volta e pisca; balança com música tocando e cochila (com um "z") depois de 20 minutos sem ninguém.
+    - **Pílula viva:** mostra a música tocando em qualquer programa (Spotify, YouTube…), o volume quando muda, o timer correndo e os avisos (alarme, lembrete, pausa). Ela cresce para caber e volta ao tamanho normal.
+    - **Passe o mouse** e abre a interface própria do entalhe: Início (sugestões, conversa, player com capa e volume, timers, tarefas e água), Tarefas, Timers, Hábitos, Textos, Histórico, Memória, Agenda, Agendados, Música, Casa, Meu PC e Ajustes. Tire o mouse e ela recolhe; **clicando** dentro, fica aberta até você clicar em outro programa.
+    - **Outro monitor:** segure a pílula (ou o rostinho do painel aberto) e arraste. Ela vai para o topo do monitor onde você soltar e lembra dele.
+    - A voz e a palavra de ativação continuam funcionando com ela recolhida, e um pedido de Autorizar abre o painel sozinho. Em Ajustes → "Todas as configurações" a A.U.R.A. passa para o modo janela.
+  - **Modo só executar** (Ajustes do entalhe, ou "liga o modo silencioso"): faz o pedido, mostra a resposta escrita e só dá um bipe, sem falar.
   - **Entalhe acima das janelas** (Geral): ligado, ele fica sempre visível, por cima de tudo; desligado, some quando um programa está maximizado ou em tela cheia.
   - Abrir o atalho de novo traz a janela para a frente (ou abre o entalhe). No logon, só o modo entalhe aparece sozinho.
 - **Aplicativo pelo navegador (PWA):** para quem não usa o app de mesa (ou acessa de outro aparelho): a A.U.R.A. é instalável pelo Edge/Chrome, numa janela própria com ícone no menu Iniciar.

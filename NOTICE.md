@@ -11,6 +11,7 @@ Ela é distribuída **em código-fonte**: cada instalação baixa e monta os com
 | Componente | Uso | Licença |
 |---|---|---|
 | FastAPI, Uvicorn, httpx, websockets, psutil | servidor | MIT / BSD-3-Clause |
+| defusedxml | leitura segura do RSS de notícias | PSF-2.0 |
 | pypdf, python-docx, openpyxl, python-pptx, Pillow | leitura de documentos e imagens | BSD-3-Clause / MIT / MIT-CMU |
 | google-genai | Gemini / Gemini Live | Apache-2.0 |
 | mcp (Model Context Protocol) | conectores | MIT |
@@ -38,6 +39,9 @@ Spotify, Telegram e os serviços dos conectores MCP.
 
 - **Gemini no plano gratuito:** o Google pode usar o conteúdo para melhorar os produtos dele. Veja os termos da
   Gemini API.
+- **Clima:** dados do [Open-Meteo](https://open-meteo.com/) (licença CC BY 4.0, uso não comercial gratuito).
+  **Cotações:** [AwesomeAPI](https://docs.awesomeapi.com.br/). **Notícias:** manchetes do Google Notícias (RSS), que
+  pertencem aos respectivos veículos e aparecem só como títulos e fonte.
 - **YouTube:** a busca usa a API oficial (YouTube Data API v3, com a sua chave). Sem chave, ela só abre a página de
   resultados no seu navegador.
 

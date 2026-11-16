@@ -258,6 +258,13 @@
   .cfg-nav .tab.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); box-shadow: 0 0 12px var(--glow); }
   .cfg-nav .tab.active svg { color: var(--accent); }
   .cfg-nav .tab[hidden], .cfg-grp[hidden] { display: none; }
+  /* grupos como submenus: clicar no nome do grupo abre/fecha (procurar mostra tudo) */
+  .cfg-grp { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; border-radius: 6px; padding: 2px 4px 2px 0; }
+  .cfg-grp:hover { color: var(--text); }
+  .cfg-grp::after { content: ""; width: 7px; height: 7px; margin-right: 4px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg) translateY(-2px); transition: transform .15s; }
+  .cfg-grp.fold::after { transform: rotate(-45deg); }
+  .cfg-nav:not(.searching) .tab.folded { display: none; }
   .cfg-main { display: flex; flex-direction: column; min-height: 0; padding: 16px 22px 14px; }
   .cfg-pane-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .cfg-pane-acts .btn { margin: 2px 0 0; padding: 7px 16px; white-space: nowrap; }
@@ -1054,7 +1061,7 @@
       <label class="cfg-find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <input id="cfg-find" placeholder="Procurar" autocomplete="off" aria-label="Procurar nas configurações"></label>
       <div class="cfg-grp">Preferências</div>
-      <button class="tab active" role="tab" data-tab="geral" data-k="tema nome palavra ativacao saudacao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Geral</button>
+      <button class="tab active" role="tab" data-tab="geral" data-k="tema nome palavra ativacao saudacao entalhe janela modo exibicao silencioso executar cidade clima iniciar windows"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Geral</button>
       <button class="tab" role="tab" data-tab="aparencia" data-k="aparencia tema claro escuro orbe animacao cor esfera galaxia aneis onda holograma"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18M3.5 9h17M3.5 15h17"/></svg>Aparência</button>
       <button class="tab" role="tab" data-tab="motor" data-k="modelo motor cerebro provedor chave gemini live ollama nuvem fala lingua"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>Modelos</button>
       <button class="tab" role="tab" data-tab="voz" data-k="voz jeito personalidade velocidade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12h2M6 8v8M10 5v14M14 8v8M18 10v4M22 12h0"/></svg>Voz e jeito</button>
@@ -1065,8 +1072,8 @@
       <button class="tab" role="tab" data-tab="backup" data-k="backup restaurar excluir copia seguranca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>Backups</button>
       <div class="cfg-grp">Personalização</div>
       <button class="tab" role="tab" data-tab="skills" data-k="skills guias skill.md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M8 7h8M8 11h6"/></svg>Skills</button>
-      <button class="tab" role="tab" data-tab="conn" data-k="conectores conexoes google agenda calendario mcp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/></svg>Conectores</button>
-      <button class="tab" role="tab" data-tab="plugins" data-k="plugins python codigo controle computador programas janelas desktop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6v4a2 2 0 1 0 0 0h4v6h-2a2 2 0 1 0 0 4h2v4h-6v-2a2 2 0 1 0-4 0v2H3v-6h2a2 2 0 1 0 0-4H3V7h6z"/></svg>Plugins</button>
+      <button class="tab" role="tab" data-tab="conn" data-k="conectores conexoes google agenda calendario gmail drive docs planilhas mcp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M17.5 14v7M14 17.5h7"/></svg>Conectores</button>
+      <button class="tab" role="tab" data-tab="plugins" data-k="plugins python codigo controle computador programas janelas desktop spotify musica casa inteligente home assistant telegram youtube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6v4a2 2 0 1 0 0 0h4v6h-2a2 2 0 1 0 0 4h2v4h-6v-2a2 2 0 1 0-4 0v2H3v-6h2a2 2 0 1 0 0-4H3V7h6z"/></svg>Plugins</button>
     </aside>
     <div class="cfg-main">
     <div class="cfg-pane-head">
@@ -1214,6 +1221,11 @@
         <span class="with-btn"><button class="btn ghost" type="button" data-desk="janela">Janela</button><button class="btn ghost" type="button" data-desk="entalhe">Entalhe</button></span></div>
       <div class="field row" id="cfg-ontop-row" hidden><span><span class="label">Entalhe acima das janelas</span><br><small class="hint">Ligado: o entalhe fica sempre visível, por cima de tudo, mesmo com um programa maximizado ou em tela cheia. Desligado: ele some nesses casos e volta quando o programa sai.</small></span>
         <button class="toggle" id="cfg-ontop" type="button" aria-pressed="false">Desligado</button></div>
+      <div class="field row"><span><span class="label">Modo só executar</span><br><small class="hint">Faz o que você pediu e fica quieta: a resposta aparece escrita e um bipe avisa que terminou, sem falar. Também por voz: "liga o modo silencioso".</small></span>
+        <button class="toggle" id="cfg-quiet" type="button" aria-pressed="false">Desligado</button></div>
+      <label class="field"><span class="label">Cidade do clima</span>
+        <input id="cfg-city" maxlength="80" placeholder="ex.: Curitiba" autocomplete="off"></label>
+      <p class="hint">Para "vai chover hoje?". Só o nome da cidade vai para o Open-Meteo (gratuito, sem conta).</p>
     </section>
 
     <section class="pane" data-pane="voz" hidden>
@@ -1238,8 +1250,15 @@
 
     <section class="pane" data-pane="motor" hidden>
       <div class="field row"><span><span class="label">Motor</span><br><small class="hint" id="cfg-engine-hint"></small></span>
-        <div class="seg" id="cfg-engine"><button data-v="local">Próprio (ouvir + pensar + falar)</button><button data-v="live">Gemini Live</button></div></div>
+        <div class="seg" id="cfg-engine"><button data-v="local" title="Whisper ouve, o modelo escolhido pensa, Kokoro/Piper falam">Próprio</button><button data-v="live">Gemini Live</button></div></div>
 
+      <h3 class="sub"><b>Fala local</b> · Whisper ouve · Kokoro e Piper falam</h3>
+      <div class="field row"><span><span class="label">A voz te segue</span><br>
+        <small class="hint">O Whisper descobre a língua que você falou e a resposta volta nessa língua, com uma voz dela (Piper baixa a voz na primeira vez).</small></span>
+        <button class="toggle" id="cfg-follow" aria-pressed="true">Ligada</button></div>
+
+      <!-- abaixo, so o que vale para o motor escolhido: Proprio = provedores; Gemini Live = chave do Gemini -->
+      <div id="motor-local">
       <h3 class="sub"><b>Cérebro</b> · o modelo que pensa (motor próprio)</h3>
       <div class="brain-box">
         <div class="two">
@@ -1262,17 +1281,16 @@
           <button class="btn" id="llm-save" type="button">Salvar e testar</button>
         </div>
       </div>
+      </div>
 
+      <div id="motor-live" hidden>
       <h3 class="sub"><b>Gemini Live</b> · áudio direto, o mais rápido (nuvem)</h3>
       <label class="field"><span class="label">Chave do Gemini</span>
         <span class="with-btn"><input id="gem-key" type="password" autocomplete="off" placeholder="cole a chave do Google AI Studio">
           <button class="btn ghost" id="gem-save" type="button">Salvar</button><button class="btn ghost" id="gem-rm" type="button">Remover</button></span></label>
       <p class="hint">As vozes do Gemini ficam em <b>Voz e jeito</b> (aparecem lá quando o motor é Gemini Live).</p>
+      </div>
 
-      <h3 class="sub"><b>Fala local</b> · Whisper ouve · Kokoro e Piper falam</h3>
-      <div class="field row"><span><span class="label">A voz te segue</span><br>
-        <small class="hint">O Whisper descobre a língua que você falou e a resposta volta nessa língua, com uma voz dela (Piper baixa a voz na primeira vez).</small></span>
-        <button class="toggle" id="cfg-follow" aria-pressed="true">Ligada</button></div>
     </section>
 
     <section class="pane" data-pane="mic" hidden>
@@ -2301,7 +2319,7 @@ async function run(fn, { speak = false, lang = null } = {}) {
       const body = entry('bot', ev.text); body.parentElement.classList.add('ack');
       log.appendChild(wait.parentElement);                    // "processando" continua por ultimo
       setState('thinking', 'Trabalhando nisso');
-      if (speak) ackSpeech = playSpeech(fetchSpeech(ev.text, null, lang), { status: false });
+      if (speak && cfg.quiet_mode !== true) ackSpeech = playSpeech(fetchSpeech(ev.text, null, lang), { status: false });
     } else if (ev.type === 'tool') {
       wait.textContent = `Usando ${ev.tool}...`;
     }
@@ -2309,7 +2327,10 @@ async function run(fn, { speak = false, lang = null } = {}) {
   try {
     res = await fn(onEvent); wait.parentElement.remove();
     // pede a fala ja, enquanto o texto e digitado na tela
-    const audio = speak && res.status === 'done' && res.reply ? fetchSpeech(res.reply, null, lang) : null;
+    // modo so executar: nao fala a resposta (fica escrita); um bipe avisa que terminou
+    const quiet = cfg.quiet_mode === true;
+    const audio = speak && !quiet && res.status === 'done' && res.reply ? fetchSpeech(res.reply, null, lang) : null;
+    if (speak && quiet && res.status === 'done') { try { beep(); } catch {} }
     if (ackSpeech) await ackSpeech;                             // nao fala por cima do aviso
     await render(res);
     if (audio) await playSpeech(audio);
@@ -2790,6 +2811,7 @@ function liveReset() {
 function liveFailed(detail) { entry('err', 'Gemini Live: ' + detail); }
 
 function livePlay(buf) {
+  if (cfg.quiet_mode === true) return;            // modo so executar: a resposta fica so escrita
   const ctx = getPlayCtx();
   const pcm = new Int16Array(buf), f = new Float32Array(pcm.length);
   for (let i = 0; i < pcm.length; i++) f[i] = pcm[i] / 32768;
@@ -3119,6 +3141,9 @@ function renderSettings() {
   $('cfg-theme').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === curTheme()));
   $('cfg-greeting').setAttribute('aria-pressed', String(cfg.greeting));
   $('cfg-greeting').textContent = cfg.greeting ? 'Ligada' : 'Desligada';
+  $('cfg-quiet').setAttribute('aria-pressed', String(cfg.quiet_mode === true));
+  $('cfg-quiet').textContent = cfg.quiet_mode === true ? 'Ligado' : 'Desligado';
+  if (document.activeElement !== $('cfg-city')) $('cfg-city').value = cfg.city || '';
   $('cfg-speed').value = cfg.voice_speed; $('cfg-speed-v').textContent = Number(cfg.voice_speed).toFixed(2) + '×';
   renderVoices(); renderPersonalities();
 }
@@ -3293,6 +3318,10 @@ const PANE_SUB = {
 };
 function showPane(name) {
   const tab = document.querySelector(`.cfg-nav .tab[data-tab="${name}"]`); if (!tab) return;
+  if (tab.classList.contains('folded')) {             // abriu uma secao de um grupo fechado: abre o grupo
+    let g = tab.previousElementSibling; while (g && !g.classList.contains('cfg-grp')) g = g.previousElementSibling;
+    if (g) cfgFold(g, false);
+  }
   document.querySelectorAll('.cfg-nav .tab').forEach(x => { x.classList.toggle('active', x === tab); x.setAttribute('aria-selected', String(x === tab)); });
   document.querySelectorAll('.pane').forEach(p => { p.hidden = p.dataset.pane !== name; });
   tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });       // celular: a faixa de secoes acompanha
@@ -3320,6 +3349,20 @@ $('cfg-find').oninput = (e) => {
     g.hidden = !any;
   });
 };
+// submenus: so o grupo da secao aberta comeca aberto; clicar no nome do grupo abre/fecha
+function cfgFold(g, fold) {
+  g.classList.toggle('fold', fold);
+  for (let n = g.nextElementSibling; n && !n.classList.contains('cfg-grp'); n = n.nextElementSibling) n.classList.toggle('folded', fold);
+}
+document.querySelectorAll('.cfg-nav .cfg-grp').forEach(g => {
+  let has = false;
+  for (let n = g.nextElementSibling; n && !n.classList.contains('cfg-grp'); n = n.nextElementSibling) if (n.classList.contains('active')) has = true;
+  cfgFold(g, !has);
+  g.setAttribute('role', 'button'); g.tabIndex = 0;
+  g.onclick = () => cfgFold(g, !g.classList.contains('fold'));
+  g.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); g.click(); } };
+});
+$('cfg-find').addEventListener('input', (e) => document.querySelector('.cfg-nav').classList.toggle('searching', !!e.target.value.trim()));
 $('cfg-find').onkeydown = (e) => { if (e.key === 'Enter') document.querySelector('.cfg-nav .tab:not([hidden])')?.click(); };
 for (const [id, key] of [['cfg-assistant', 'assistant_name'], ['cfg-user', 'user_name'], ['cfg-wake', 'wake_word'], ['cfg-greeting-text', 'greeting_text']]) {
   $(id).addEventListener('change', async (e) => {
@@ -3466,12 +3509,20 @@ $('bk-now').onclick = async () => {
 const llmState = { providers: [], current: null, keys: {} };
 const provOf = (id) => llmState.providers.find(p => p.id === id) || {};
 
+// qual motor esta sendo mostrado (pode ser o Gemini Live antes de ter a chave, para colar a chave)
+let motorView = null;
+function showMotor(v) {
+  $('motor-local').hidden = v === 'live';
+  $('motor-live').hidden = v !== 'live';
+  $('cfg-engine').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+}
 async function renderMotorTab() {
   const info = await fetch('/api/llm').then(r => r.json()).catch(() => null);
   if (info) Object.assign(llmState, info);
   // motor
+  if (motorView === cfg.engine || (motorView === 'live' && live.available)) motorView = null;
+  showMotor(motorView || cfg.engine);
   $('cfg-engine').querySelectorAll('button').forEach(b => {
-    b.classList.toggle('on', b.dataset.v === cfg.engine);
     // sem chave o Gemini Live fica clicavel, mas "apagado": ao clicar, explica e leva ao campo da chave
     b.classList.toggle('need-key', b.dataset.v === 'live' && !live.available);
     b.title = b.dataset.v === 'live' && !live.available ? 'Precisa da chave do Google AI Studio (campo abaixo)' : '';
@@ -3594,8 +3645,11 @@ $('llm-key-rm').onclick = async () => { await saveKey($('llm-provider').value, '
 $('gem-save').onclick = async () => {
   const v = $('gem-key').value.trim(); if (!v) return;
   const j = await saveKey('gemini', v);
-  await loadLiveStatus(); renderMotorTab();
-  flash(j.live ? 'Chave do Gemini salva. O motor Gemini Live já pode ser escolhido.' : 'Chave salva.');
+  await loadLiveStatus();
+  // estava escolhendo o Gemini Live (e faltava a chave): agora ja liga
+  if (motorView === 'live' && live.available && cfg.engine !== 'live') { await saveSettings({ engine: 'live' }); updateModelUI(); }
+  renderMotorTab();
+  flash(j.live ? (cfg.engine === 'live' ? 'Chave salva. Gemini Live ligado.' : 'Chave do Gemini salva. O motor Gemini Live já pode ser escolhido.') : 'Chave salva.');
 };
 $('gem-rm').onclick = async () => {
   await saveKey('gemini', ''); if (live.ws) liveSleep();
@@ -3611,6 +3665,8 @@ function renderConvo() {
   $('cfg-convo').setAttribute('aria-pressed', String(on)); $('cfg-convo').textContent = on ? 'Ligado' : 'Desligado';
 }
 $('notch-pill').onclick = () => notchExpand(true);
+$('cfg-quiet').onclick = async () => { await saveSettings({ quiet_mode: cfg.quiet_mode !== true }); renderSettings(); };
+$('cfg-city').onchange = (e) => saveSettings({ city: e.target.value.trim() });
 $('cfg-ontop').onclick = async () => {
   if (!desk.api) return;
   await desk.api.set_on_top($('cfg-ontop').getAttribute('aria-pressed') !== 'true'); renderDesk();
@@ -3642,6 +3698,7 @@ async function renderMicTab() {
 
 $('cfg-engine').onclick = async (e) => {
   const v = e.target.closest('button')?.dataset?.v; if (!v) return;
+  motorView = v; showMotor(v);                    // mostra na hora so o que vale para esse motor
   if (v === 'live' && !live.available) {
     // sem chave nao ha como conectar: explica e leva ao campo certo
     llmMsg('');
