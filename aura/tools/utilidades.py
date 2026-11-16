@@ -57,17 +57,28 @@ async def clima(cidade: str = "", dias: int = 3, salvar: bool = False) -> str:
         return "Nao sei a sua cidade. Pergunte ao usuario qual e (e chame de novo com salvar=true para guardar)."
     if salvar or not settings.get().get("city"):
         settings.update({"city": city})
-    try:
-        g = await asyncio.to_thread(_geocode, city)
-        r = await asyncio.to_thread(httpx.get, "https://api.open-meteo.com/v1/forecast", params={
-            "latitude": g["latitude"], "longitude": g["longitude"], "timezone": "auto", "forecast_days": max(1, min(int(dias or 3), 7)),
-            "current": "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation",
-            "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum"},
-            headers=UA, timeout=10)
-        r.raise_for_status()
-    except (httpx.HTTPError, ValueError) as e:
-        return f"Nao consegui ver o clima: {e}"
-    j, cur = r.json(), r.json()["current"]
+    params = {"timezone": "auto", "forecast_days": max(1, min(int(dias or 3), 7)),
+              "current": "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,precipitation",
+              "daily": "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum"}
+    err = None
+    for attempt in range(3):            # o Open-Meteo as vezes falha um instante (atualizando os dados): tenta de novo
+        try:
+            g = await asyncio.to_thread(_geocode, city)
+            r = await asyncio.to_thread(httpx.get, "https://api.open-meteo.com/v1/forecast",
+                                        params={**params, "latitude": g["latitude"], "longitude": g["longitude"]}, headers=UA, timeout=12)
+            r.raise_for_status()
+            j = r.json()
+            cur = j["current"]
+            break
+        except ValueError as e:
+            if "nao achei a cidade" in str(e):
+                return f"Nao achei a cidade '{city}'. Peca ao usuario o nome com o estado (ex.: 'Campo Grande, MS')."
+            err = e
+        except (httpx.HTTPError, KeyError) as e:
+            err = e
+        await asyncio.sleep(1 + attempt)
+    else:
+        return f"O servico de clima nao respondeu agora ({type(err).__name__}). Tente de novo em instantes."
     place = ", ".join(x for x in (g.get("name"), g.get("admin1")) if x)
     out = [f"{place} agora: {cur['temperature_2m']:.0f}°C (sensação {cur['apparent_temperature']:.0f}°C), "
            f"{WMO.get(cur['weather_code'], 'tempo variado')}, umidade {cur['relative_humidity_2m']}%, vento {cur['wind_speed_10m']:.0f} km/h."]
