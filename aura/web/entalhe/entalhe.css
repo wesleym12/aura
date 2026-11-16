@@ -269,3 +269,11 @@ body.np-groove:not([data-mood]):not([data-state="thinking"]) .np-face { animatio
 .np-st i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #b48cff; animation: np-pulse 1s ease-in-out infinite; }
 .np-st.st-listening i { background: #3ec7ff; }
 .np-st.st-speaking i { background: #ff9a1f; }
+
+/* Inicio: agenda de hoje */
+.e-agrow { display: flex; align-items: baseline; gap: 10px; padding: 4px 0; font-size: 13px; min-width: 0; }
+.e-agrow b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.e-aghr { flex: none; width: 52px; font: 600 12px "JetBrains Mono", monospace; color: var(--e-dim); }
+.e-agrow.next .e-aghr { color: var(--e-acc2); }
+.e-agrow.next b { font-weight: 700; }
+.e-agrow.past { opacity: .45; }

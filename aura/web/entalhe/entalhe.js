@@ -556,6 +556,7 @@
       + (pend.length ? pend.slice(0, 3).map(t => `<div class="e-item e-task mini"><button class="e-check" type="button" data-done="${esc(t.id)}" aria-pressed="false"></button>
           <div class="e-txt"><b>${esc(t.title)}</b></div>${t.priority === 'alta' ? '<span class="e-prio p-alta">!</span>' : ''}</div>`).join('')
         : `<p class="e-dim e-none">Nada pendente.</p>`)
+      + agendaHtml(go)
       + (rot.data.habits.length ? `<div class="e-ctitle">Hoje ${go('habitos', 'abrir')}</div>` + rot.data.habits.slice(0, 3).map(h => `
           <div class="e-hrow${h.count >= h.target ? ' ok' : ''}"><span>${esc(h.icon || '•')} ${esc(h.name)}</span>
             <i class="e-bar"><b style="width:${Math.min(100, 100 * h.count / h.target)}%"></b></i>
@@ -563,6 +564,32 @@
     bindTimerBtns(el); bindTaskBtns(el); bindHabitBtns(el);
     el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => open(b.dataset.go));
   }
+  // agenda de hoje (Google Agenda): busca a cada 5 min; o proximo compromisso fica em destaque e os que ja
+  // passaram ficam apagados
+  const agHoje = { list: null, at: 0 };
+  async function loadAgendaHoje(force) {
+    if (!force && Date.now() - agHoje.at < 5 * 60 * 1000) return;
+    agHoje.at = Date.now();
+    const j = await getJSON('/api/agenda?days=1').catch(() => null);
+    agHoje.list = j?.connected ? j.events : null;
+    drawExtra();
+  }
+  function agendaHtml(go) {
+    if (!agHoje.list) return '';                       // Google Agenda nao conectado: nao mostra
+    const now = Date.now();
+    const hm = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const next = agHoje.list.find(e => !e.all_day && new Date(e.end).getTime() > now);
+    const rows = agHoje.list.map(e => {
+      const past = !e.all_day && new Date(e.end).getTime() <= now;
+      return `<div class="e-agrow${past ? ' past' : ''}${e === next ? ' next' : ''}" title="${esc(e.title)}${e.location ? ' · ' + esc(e.location) : ''}">
+        <span class="e-aghr">${e.all_day ? 'dia todo' : hm(e.start)}</span><b>${esc(e.title)}</b></div>`;
+    }).join('');
+    return `<div class="e-ctitle">Agenda de hoje ${go('agenda', 'abrir')}</div>`
+      + (rows || '<p class="e-dim e-none">Nada marcado para hoje.</p>');
+  }
+  setInterval(() => loadAgendaHoje(false), 60 * 1000);
+  setTimeout(() => loadAgendaHoje(true), 1500);
+
   function badges() {
     const n = { tarefas: rot.data.tasks.filter(t => !t.done && !t.parent).length, timers: running().length,
       habitos: rot.data.habits.filter(h => h.count < h.target).length };
