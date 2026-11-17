@@ -3492,6 +3492,13 @@ $('cfg-close').onclick = closeSettings; $('cfg-done').onclick = closeSettings;
 // ===== Encerrar a A.U.R.A. (desliga todos os servicos; o agente do Windows e quem para os containers) =====
 $('cfg-quit').onclick = async () => {
   if (!hostAgent) {
+    const up = await fetch('/api/status').then(r => r.ok).catch(() => false);
+    if (!up) {                                       // o Docker parou por fora: so resta fechar a janela
+      const msg = 'Os serviços da A.U.R.A. já estão desligados.\n\nPara ligar de novo: rode o iniciar.ps1 na pasta da A.U.R.A.';
+      if (!desk.api) { alert(msg); return; }
+      if (confirm(msg + '\n\nFechar o app?')) desk.api.quit();
+      return;
+    }
     alert('Para encerrar por aqui é preciso o agente do Windows.\n\nNo Linux, encerre pelo terminal, na pasta da A.U.R.A.:\n  docker compose --profile \'*\' stop\n\nPara ligar de novo:  docker compose up -d');
     return;
   }
