@@ -142,6 +142,7 @@
   // ---------- telas ----------
   const R = {
     conversa() {
+      loadAgendaHoje(30 * 1000);                       // voltou ao Inicio: busca de novo se passou meio minuto
       const wake = tool(ICON(I.ear), () => { $('wake-btn').click(); wake.blur(); }, 'e-btn e-icon');
       wake.title = `Sempre ouvindo: atende quando você diz "${cfg.wake_word || 'Aura'}" (liga/desliga)`;
       const sync = () => wake.classList.toggle('on', $('wake-btn').getAttribute('aria-pressed') === 'true');
@@ -357,6 +358,7 @@
       tool('Hoje e próximos 7 dias', () => {}, 'e-btn').disabled = true;
       try {
         const j = await getJSON('/api/agenda?days=7');
+        loadAgendaHoje(0);                               // o Inicio mostra o mesmo que a Agenda acabou de ver
         if (!j.connected) {
           el.innerHTML = empty('Google Agenda não conectado', 'Conecte a sua conta Google em Ajustes → Personalização → Conectores. <button class="e-link" type="button" data-cfg="conn">Abrir</button>');
           return;
@@ -583,11 +585,11 @@
     bindTimerBtns(el); bindTaskBtns(el); bindHabitBtns(el);
     el.querySelectorAll('[data-go]').forEach(b => b.onclick = () => open(b.dataset.go));
   }
-  // agenda de hoje (Google Agenda): busca a cada 5 min; o proximo compromisso fica em destaque e os que ja
-  // passaram ficam apagados
+  // agenda de hoje (Google Agenda): busca a cada 5 min, ao voltar ao Inicio e ao abrir a Agenda; o proximo
+  // compromisso fica em destaque e os que ja passaram ficam apagados
   const agHoje = { list: null, at: 0 };
-  async function loadAgendaHoje(force) {
-    if (!force && Date.now() - agHoje.at < 5 * 60 * 1000) return;
+  async function loadAgendaHoje(maxAge = 5 * 60 * 1000) {
+    if (Date.now() - agHoje.at < maxAge) return;
     agHoje.at = Date.now();
     const j = await getJSON('/api/agenda?days=1').catch(() => null);
     agHoje.list = j?.connected ? j.events : null;
@@ -606,8 +608,7 @@
     return `<div class="e-ctitle">Agenda de hoje ${go('agenda', 'abrir')}</div>`
       + (rows || '<p class="e-dim e-none">Nada marcado para hoje.</p>');
   }
-  setInterval(() => loadAgendaHoje(false), 60 * 1000);
-  setTimeout(() => loadAgendaHoje(true), 1500);
+  setInterval(() => loadAgendaHoje(), 60 * 1000);
 
   function badges() {
     const n = { tarefas: rot.data.tasks.filter(t => !t.done && !t.parent).length, timers: running().length,

@@ -51,7 +51,7 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
   - **Spotify no servidor:** cadastre como Redirect URI o endereço mostrado no card (ex.: `https://meuservidor.local:8765/api/spotify/callback`).
 - A primeira instalação leva de 10 a 30 min. A A.U.R.A. **sobe sozinha** quando a máquina liga (o Docker reinicia os containers). Atualizar: `./atualizar.sh`. Reconfigurar: `bash instalar.sh`.
 - Se já houver um Home Assistant na máquina (porta 8123), ele não é instalado de novo: conecte o seu em Plugins → Casa inteligente → "Usar outro Home Assistant".
-- **O que é só do Windows:** controle do computador (abrir programas, YouTube na mesma aba, clicar), Ctrl+Espaço global e "Iniciar com o Windows". No Linux, as métricas do topo vêm da própria máquina.
+- **O que é só do Windows:** controle do computador (abrir programas, YouTube na mesma aba, clicar), Ctrl+Espaço global e "Iniciar com o Windows".
 
 | Serviço | Papel |
 |---|---|
