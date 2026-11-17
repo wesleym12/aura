@@ -462,6 +462,17 @@ async def agenda(start: str = "", days: int = 7):
     return {"connected": True, "email": secrets.get("google_email"), "start": s.isoformat(), "events": evs}
 
 
+@app.get("/api/clima")
+async def clima_tela():
+    """Clima atual da cidade salva (Geral -> Cidade do clima), para o Inicio do entalhe e o topo da janela."""
+    from .tools.utilidades import clima_agora
+    city = settings.get().get("city") or ""
+    if not city:
+        return {"ok": False, "reason": "sem cidade"}
+    data = await asyncio.to_thread(clima_agora, city)
+    return {"ok": bool(data), **(data or {})}
+
+
 _agenda_alerted: dict[str, float] = {}
 
 

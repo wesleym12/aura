@@ -36,6 +36,7 @@
     biblioteca: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>',
   };
   // menu lateral curto; cada grupo tem as suas telas em abas (submenu)
+  let wakeWatch = null, micWatch = null;           // observa o "Sempre ouvindo" de verdade (o botao do Inicio acompanha)
   const VIEWS = [['conversa', 'Início'], ['rotina', 'Rotina'], ['apps', 'Apps'], ['biblioteca', 'Biblioteca']];
   const GROUPS = {
     rotina: [['tarefas', 'Tarefas'], ['timers', 'Timers'], ['habitos', 'Hábitos'], ['agendados', 'Agendados']],
@@ -75,7 +76,7 @@
   // com o que esta tocando (e, nas proximas fases, timers, tarefas e habitos)
   const conv = $v('conversa');
   conv.innerHTML = `<div class="e-home"><div class="e-chat fresh"><div class="e-hello" id="e-hello"></div></div>
-    <aside class="e-aside"><div class="e-card e-now"><div id="e-player"></div><div id="e-extra"></div></div></aside></div>`;
+    <aside class="e-aside"><div class="e-card e-now"><div id="e-wx"></div><div id="e-player"></div><div id="e-extra"></div></div></aside></div>`;
   const chat = conv.querySelector('.e-chat');
   chat.append($('log'), $('attach-row'), $('f'));
   // conversa vazia: em vez da lista de mensagens, uma saudacao com 4 sugestoes; com mensagens, so a conversa
@@ -102,6 +103,16 @@
   window.entDrawSugs = drawSugs;
   drawSugs(); setTimeout(syncFresh, 0);
 
+  // clima de agora (vem do motor da pagina: window.WX)
+  function drawWx() {
+    const el = conv.querySelector('#e-wx'), w = window.WX;
+    if (!w) { el.innerHTML = cfg.city ? '' : `<div class="e-wx none"><span>Clima</span><button class="e-link" type="button" data-cfg="geral">definir cidade</button></div>`; return; }
+    el.innerHTML = `<div class="e-wx" title="Sensação ${w.feels}° · ${esc(w.desc)}"><span class="e-wx-ic">${wxIcon(w.code, w.day)}</span>
+      <div class="e-txt"><b>${w.temp}° <small>${esc(w.desc)}</small></b><small>${esc(w.city)} · ${w.min}° a ${w.max}° · chuva ${w.rain}%</small></div></div>`;
+  }
+  document.addEventListener('aura-wx', drawWx);
+  setTimeout(drawWx, 0);
+
   // ---------- navegacao ----------
   function show(k) {
     if (groupOf(k)) { tab[groupOf(k)] = k; k = groupOf(k); }
@@ -121,7 +132,7 @@
     root.querySelector('#e-name').textContent = $('hdr-name').textContent;
     const st = document.body.dataset.state, sleep = document.body.hasAttribute('data-sleep');
     root.querySelector('#e-st').textContent = sleep ? 'Dormindo' : ({ listening: 'Ouvindo', thinking: 'Pensando', speaking: 'Falando' })[st] || 'Pronta';
-    if (at('pc')) renderPcTiles();
+    if (at('pc')) syncPcSwitch();
   }, 1000);
 
   const tool = (html, onclick, cls = 'e-btn') => { const b = E('button', { type: 'button', className: cls }, html); b.onclick = onclick; tools.append(b); return b; };
@@ -131,10 +142,22 @@
   // ---------- telas ----------
   const R = {
     conversa() {
-      const wake = tool(`${ICON(I.ear)}Sempre ouvindo`, () => { $('wake-btn').click(); setTimeout(sync, 400); });
+      const wake = tool(ICON(I.ear), () => $('wake-btn').click(), 'e-btn e-icon');
+      wake.title = `Sempre ouvindo: atende quando você diz "${cfg.wake_word || 'Aura'}" (liga/desliga)`;
       const sync = () => wake.classList.toggle('on', $('wake-btn').getAttribute('aria-pressed') === 'true');
       sync();
-      tool(ICON(I.mic), () => $('mic-btn').click(), 'e-btn e-icon').title = 'Falar agora';
+      // acompanha o estado real (ligar o microfone demora): muda quando o botao de verdade muda
+      wakeWatch?.disconnect();
+      wakeWatch = new MutationObserver(sync);
+      wakeWatch.observe($('wake-btn'), { attributes: true, attributeFilter: ['aria-pressed'] });
+      const mic = tool(ICON(I.mic), () => $('mic-btn').click(), 'e-btn e-icon');
+      mic.title = 'Falar agora';
+      // aceso enquanto ela esta ouvindo (o botao de verdade ganha a classe "rec")
+      const syncMic = () => mic.classList.toggle('on', $('mic-btn').classList.contains('rec'));
+      syncMic();
+      micWatch?.disconnect();
+      micWatch = new MutationObserver(syncMic);
+      micWatch.observe($('mic-btn'), { attributes: true, attributeFilter: ['class'] });
       tool(`${ICON(I.plus)}Nova`, () => newConv()).title = 'Nova conversa';
       setTimeout(() => $('t').focus(), 50);
     },
@@ -417,8 +440,7 @@
 
     pc() {
       const el = $v('pc');
-      el.innerHTML = `<div class="e-grid" id="e-pt"></div>
-        <div class="e-set"><span>Controle do computador<small>Abrir programas e sites, ler a tela e, com o seu Autorizar, clicar e digitar.</small></span>
+      el.innerHTML = `<div class="e-set"><span>Controle do computador<small>Abrir programas e sites, ler a tela e, com o seu Autorizar, clicar e digitar.</small></span>
           <button class="e-switch" type="button" id="e-pcc" aria-pressed="false"></button></div>
         <div class="e-sec">Atalhos</div>
         <div class="e-row" style="flex-wrap:wrap">
@@ -426,9 +448,9 @@
           <button class="e-btn" type="button" data-a="Quais janelas estão abertas?">Janelas abertas</button>
           <button class="e-btn" type="button" data-a="Bloqueia o computador">Bloquear o PC</button>
         </div>`;
-      el.querySelector('#e-pcc').onclick = () => { $('pc-btn').click(); setTimeout(renderPcTiles, 600); };
+      el.querySelector('#e-pcc').onclick = () => { $('pc-btn').click(); setTimeout(syncPcSwitch, 600); };
       el.querySelectorAll('[data-a]').forEach(b => b.onclick = () => ask(b.dataset.a));
-      renderPcTiles();
+      syncPcSwitch();
     },
 
   };
@@ -467,13 +489,10 @@
     showPane(b.dataset.cfg); show('ajustes');
   });
 
-  function renderPcTiles() {
-    const el = $v('pc').querySelector('#e-pt'); if (!el) return;
-    const v = (id) => $(id)?.textContent || '--';
-    el.innerHTML = [['CPU', 'v-cpu'], ['RAM', 'v-ram'], ['GPU', 'v-gpu'], ['TEMP', 'v-temp'], ['REDE', 'v-net']]
-      .map(([k, id]) => `<div class="e-tile"><small>${k}</small><b>${esc(v(id))}</b></div>`).join('');
+  function syncPcSwitch() {
     $v('pc').querySelector('#e-pcc')?.setAttribute('aria-pressed', String($('pc-btn').getAttribute('aria-pressed') === 'true'));
   }
+
 
   // ---------- rotina: tarefas, timers e habitos (servidor guarda; aqui conta o tempo e toca o alarme) ----------
   const rot = { data: { timers: [], tasks: [], habits: [] }, skew: 0, fired: new Set() };

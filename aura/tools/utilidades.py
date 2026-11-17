@@ -46,6 +46,38 @@ def _geocode(city: str) -> dict:
     return res
 
 
+_wx_cache: dict = {"key": "", "at": 0.0, "data": None}
+
+
+def clima_agora(city: str) -> dict | None:
+    """Clima atual + hoje para a tela (entalhe e topo da janela). Guarda por 15 min (o Open-Meteo atualiza de hora em hora)."""
+    import time as _t
+    city = (city or "").strip()
+    if not city:
+        return None
+    if _wx_cache["key"] == city and _t.time() - _wx_cache["at"] < 900:
+        return _wx_cache["data"]
+    for attempt in range(3):
+        try:
+            g = _geocode(city)
+            r = httpx.get("https://api.open-meteo.com/v1/forecast", headers=UA, timeout=12, params={
+                "latitude": g["latitude"], "longitude": g["longitude"], "timezone": "auto", "forecast_days": 1,
+                "current": "temperature_2m,apparent_temperature,weather_code,is_day",
+                "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max"})
+            r.raise_for_status()
+            j = r.json()
+            cur, d = j["current"], j["daily"]
+            data = {"city": g.get("name", city), "temp": round(cur["temperature_2m"]), "feels": round(cur["apparent_temperature"]),
+                    "code": cur["weather_code"], "day": bool(cur.get("is_day", 1)), "desc": WMO.get(cur["weather_code"], "tempo variado"),
+                    "max": round(d["temperature_2m_max"][0]), "min": round(d["temperature_2m_min"][0]),
+                    "rain": d["precipitation_probability_max"][0] or 0}
+            _wx_cache.update(key=city, at=_t.time(), data=data)
+            return data
+        except (httpx.HTTPError, ValueError, KeyError):
+            _t.sleep(1 + attempt)
+    return _wx_cache["data"] if _wx_cache["key"] == city else None
+
+
 @tool("Previsao do tempo: agora, hoje e os proximos dias (temperatura, chuva, vento). Use para 'vai chover hoje?', "
       "'como esta o clima?', 'previsao para amanha'. Sem cidade usa a cidade salva.",
       {"cidade": {"type": "string", "x-optional": True},

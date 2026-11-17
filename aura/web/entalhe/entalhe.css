@@ -277,3 +277,11 @@ body.np-groove:not([data-mood]):not([data-state="thinking"]) .np-face { animatio
 .e-agrow.next .e-aghr { color: var(--e-acc2); }
 .e-agrow.next b { font-weight: 700; }
 .e-agrow.past { opacity: .45; }
+
+/* Inicio: clima de agora no topo do cartao */
+.e-wx { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid var(--e-line); }
+.e-wx.none { justify-content: space-between; color: var(--e-dim); font-size: 13px; }
+.e-wx-ic { font-size: 26px; line-height: 1; }
+.e-wx b { display: block; font: 700 18px "Exo 2", sans-serif; }
+.e-wx b small { font: 500 12.5px "Exo 2", sans-serif; color: var(--e-dim); text-transform: capitalize; }
+.e-wx .e-txt > small { display: block; color: var(--e-dim); font-size: 11.5px; }

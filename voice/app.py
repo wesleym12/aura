@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import re
+import time
 import unicodedata
 import wave
 from pathlib import Path
@@ -176,6 +177,10 @@ def health():
     return {"ok": True, "wake": "whisper", "stt": WHISPER_MODEL, "tts": TTS_VOICE}
 
 
+# "Ensinar a palavra": enquanto uma tela ensina, as outras (janela, entalhe, celular) nao acordam com a palavra
+_teaching = {"until": 0.0}
+
+
 @app.websocket("/ws")
 async def ws(sock: WebSocket):
     await sock.accept()
@@ -225,7 +230,8 @@ async def ws(sock: WebSocket):
                     text, lang = await asyncio.to_thread(transcribe, audio, None, follow)
                     await sock.send_json({"event": "transcript", "text": text, "lang": lang} if text else {"event": "no_speech"})
                 elif cmd.get("cmd") == "probe":
-                    probe = Recorder(end_silence=.6, max_sec=6, nospeech_sec=7)
+                    probe = Recorder(end_silence=.9, max_sec=6, nospeech_sec=8)
+                    _teaching["until"] = time.time() + 25
                     await sock.send_json({"event": "listening", "probe": True})
                 elif cmd.get("cmd") == "cancel":
                     rec = probe = None
@@ -269,6 +275,8 @@ async def ws(sock: WebSocket):
                 if spotter.feed(pcm) is None:
                     continue
                 audio, spotter = spotter.audio(), Recorder(.6, 8, None, spot=True)
+                if time.time() < _teaching["until"]:
+                    continue                       # outra tela esta ensinando a palavra: nao e um chamado
                 text, lang = await asyncio.to_thread(transcribe, audio, word, follow)
                 found, rest = wake_match(text)
                 if not found:

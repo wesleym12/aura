@@ -946,6 +946,11 @@
   .wt-ok { color: var(--ok); font-weight: 600; } .wt-bad { color: var(--bad); }
   .wt-c { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; }
   .wt-c small { font-size: 11.5px; }
+  .metrics[hidden] { display: none !important; }
+  .wx { display: flex; align-items: center; gap: 8px; margin-left: auto; font: 600 14px "Exo 2", sans-serif; color: var(--text); white-space: nowrap; }
+  .wx[hidden] { display: none; }
+  .wx .wx-ic { font-size: 20px; line-height: 1; }
+  .wx small { color: var(--dim); font-weight: 500; }
   .cfg-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 14px; }
   .cfg-tile { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
     background: color-mix(in srgb, var(--text) 3%, transparent); }
@@ -976,7 +981,8 @@
     <span class="mode-pill" id="hdr-mode">Modelo local</span>
   </div>
   <div class="spacer"></div>
-  <div class="metrics" id="metrics" title="Métricas do Windows">
+  <div class="wx" id="wx" hidden></div>
+  <div class="metrics" id="metrics" title="Métricas do Windows" hidden>
     <div class="metric t-cpu"><div class="gauge"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/><circle class="val" id="g-cpu" cx="18" cy="18" r="15" stroke-dasharray="0 100"/></svg></div><span class="k">CPU</span><span class="v" id="v-cpu">--</span></div>
     <div class="metric t-ram"><div class="gauge"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/><circle class="val" id="g-ram" cx="18" cy="18" r="15" stroke-dasharray="0 100"/></svg></div><span class="k">RAM</span><span class="v" id="v-ram">--</span></div>
     <div class="metric t-gpu"><div class="gauge"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/><circle class="val" id="g-gpu" cx="18" cy="18" r="15" stroke-dasharray="0 100"/></svg></div><span class="k">GPU</span><span class="v" id="v-gpu">--</span></div>
@@ -3876,6 +3882,26 @@ $('notch-pill').onclick = () => notchExpand(true);
 $('cfg-quiet').onclick = async () => { await saveSettings({ quiet_mode: cfg.quiet_mode !== true }); renderSettings(); };
 $('cfg-city').onchange = (e) => saveSettings({ city: e.target.value.trim() });
 $('cfg-agalert').onchange = (e) => saveSettings({ agenda_alert: +e.target.value });
+
+// ----- clima (cidade salva em Geral): no topo da janela e no Inicio do entalhe; atualiza a cada 15 min -----
+const wxIcon = (c, day = true) => c <= 1 ? (day ? '☀️' : '🌙') : c === 2 ? (day ? '⛅' : '☁️') : c === 3 ? '☁️' : c <= 48 ? '🌫️'
+  : c <= 67 ? '🌧️' : c <= 77 ? '❄️' : c <= 82 ? '🌦️' : '⛈️';
+window.WX = null;
+async function loadWx() {
+  const j = await fetch('/api/clima').then(r => r.json()).catch(() => null);
+  window.WX = j?.ok ? j : null;
+  const el = $('wx');
+  if (window.WX) {
+    const w = window.WX;
+    el.innerHTML = `<span class="wx-ic">${wxIcon(w.code, w.day)}</span>${w.temp}° <small>${w.city.replace(/[<>&]/g, '')}</small>`;
+    el.title = `${w.city}: ${w.desc}, sensação ${w.feels}°. Hoje ${w.min}° a ${w.max}°, chance de chuva ${w.rain}%.`;
+  }
+  el.hidden = !window.WX;
+  document.dispatchEvent(new Event('aura-wx'));
+}
+setTimeout(loadWx, 2000);
+setInterval(loadWx, 15 * 60 * 1000);
+$('cfg-city').addEventListener('change', () => setTimeout(loadWx, 800));
 // ----- Ensinar a palavra de ativacao: fala 5 vezes, ve como o Whisper entendeu e guarda os jeitos da sua voz -----
 // Nao e treinar um modelo: as variacoes que o Whisper ouve na SUA voz (ex.: "Áurea") passam a valer como a palavra.
 // Palavras comuns ("hora", "agora"...) vem desmarcadas: com elas ela acordaria no meio das suas conversas.
@@ -3905,13 +3931,22 @@ async function teachWake() {
     box.innerHTML = `<b>${msg}</b><ol class="wt-list">${heard.map(h => `<li>${h.text ? `“${h.text.replace(/[<>&]/g, '')}”` : '<i>nada ouvido</i>'}
       ${h.match ? '<span class="wt-ok">✓ reconheceu</span>' : h.alias ? '<span class="wt-ok">✓ pelo apelido</span>' : '<span class="wt-bad">✗ não reconheceu</span>'}</li>`).join('')}</ol>`;
   };
+  const dica = (i) => i === 1 ? 'do jeito que você chama no dia a dia' : i === 3 ? 'um pouco mais longe do microfone'
+    : i === 5 ? 'rápido, como quem chama de passagem' : 'normalmente';
   for (let i = 1; i <= 5; i++) {
-    draw(`Fale “${word}” (${i} de 5)… ${i === 1 ? 'do jeito que você chama no dia a dia.' : i === 3 ? 'agora um pouco mais longe do microfone.' : i === 5 ? 'última: rápido, como quem chama de passagem.' : ''}`);
+    // com calma: avisa, espera um instante, bipa e so entao comeca a ouvir (o bipe nao entra na gravacao)
+    draw(`Rodada ${i} de 5: prepare-se para falar “${word}” ${dica(i)}…`);
+    setState('idle', `Ensinar a palavra: prepare-se (${i}/5)`);
+    await new Promise(z => setTimeout(z, 1600));
+    try { beep(); } catch {}
+    await new Promise(z => setTimeout(z, 350));
+    draw(`🎙 Fale agora: “${word}” (${i} de 5)`);
     setState('listening', `Ensinar a palavra: fale “${word}” (${i}/5)`);
     const r = await probeOnce();
     if (r.error) { box.innerHTML = `<b class="wt-bad">Não consegui usar o microfone: ${r.error}</b>`; voice.recording = false; setState('idle', idleText()); return; }
     heard.push(r);
-    await new Promise(z => setTimeout(z, 500));
+    draw(r.text ? `Ouvi: “${r.text.replace(/[<>&]/g, '')}”` : 'Não ouvi nada nesta rodada.');
+    await new Promise(z => setTimeout(z, 1200));
   }
   voice.recording = false; setState('idle', idleText());
   const hits = heard.filter(h => h.match || h.alias).length;
