@@ -2961,7 +2961,7 @@ async function liveBegin(text) {
 }
 
 // 2 minutos sem fala de nenhum lado: encerra a sessao na nuvem (volta a dormir)
-function liveTouch() { clearTimeout(live.idle); live.idle = setTimeout(liveSleep, AWAKE_MS); }
+function liveTouch() { clearTimeout(live.idle); live.idle = setTimeout(() => live.confirmCard ? liveTouch() : liveSleep(), AWAKE_MS); }
 
 function liveSleep() {
   clearTimeout(live.idle);
@@ -2972,7 +2972,7 @@ function liveSleep() {
 }
 
 function liveReset() {
-  live.ws = null; live.ready = false; live.streaming = false; liveKeepAwake();
+  live.ws = null; live.ready = false; live.streaming = false; live.confirmCard = null; liveKeepAwake();   // cartao pendente vira "expirou"
   liveStopAudio(); live.userBody = live.botBody = null;
   refreshVoiceButtons();
 }
@@ -3033,7 +3033,8 @@ function onLiveEvent(ev) {
   } else if (ev.type === 'turn_complete') {
     live.userBody = live.botBody = null; loadHistory();
     // sem o modo conversa: terminou de responder -> encerra a sessao e volta a esperar "Aura"
-    if (cfg.conversation_mode !== true && !voice.ptt) { live.endAfterAudio = true; liveMaybeSleep(); }
+    // (com um Autorizar pendente nao: o pedido vive nesta sessao e se perderia com ela)
+    if (cfg.conversation_mode !== true && !voice.ptt && !live.confirmCard) { live.endAfterAudio = true; liveMaybeSleep(); }
   } else if (ev.type === 'tool') {
     liveKeepAwake();
     setState('thinking', `Usando ${ev.tool}`);
@@ -3047,7 +3048,13 @@ function onLiveEvent(ev) {
     const pre = document.createElement('pre'); pre.textContent = ev.action.tool + '\n' + JSON.stringify(ev.action.args, null, 2);
     const ok = document.createElement('button'); ok.className = 'btn'; ok.textContent = 'Autorizar';
     const no = document.createElement('button'); no.className = 'btn ghost'; no.textContent = 'Recusar';
-    const go = (approve) => { ok.disabled = no.disabled = true; live.ws?.send(JSON.stringify({ type: 'confirm', approve })); };
+    const go = (approve) => {
+      ok.disabled = no.disabled = true;
+      if (live.confirmCard?.ok !== ok || live.ws?.readyState !== 1) { lab.textContent = '⌛ Esse pedido expirou: peça de novo'; return; }
+      live.confirmCard = null;
+      live.ws.send(JSON.stringify({ type: 'confirm', approve }));
+      lab.textContent = approve ? '✓ Autorizado' : '✕ Recusado';
+    };
     ok.onclick = () => go(true); no.onclick = () => go(false);
     box.append(lab, pre, ok, no); body.appendChild(box);
     live.confirmCard = { ok, no, lab };            // se a resposta vier falada ("sim, pode"), o cartao mostra

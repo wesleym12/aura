@@ -218,6 +218,13 @@ function Undo-LogPath {
     return (Join-Path $dir "desktop-undo.json")
 }
 
+# Le o registro do Desfazer como lista. No PowerShell 5.1 o ConvertFrom-Json entrega o array inteiro como um item so;
+# o ForEach-Object o desmonta em um movimento por item.
+function Read-UndoLog([string]$log) {
+    if (-not (Test-Path -LiteralPath $log)) { return @() }
+    try { return @(Get-Content -LiteralPath $log -Raw -Encoding UTF8 | ConvertFrom-Json | ForEach-Object { $_ }) } catch { return @() }
+}
+
 # Organiza os arquivos soltos da area de trabalho em pastas por tipo (atalhos, programas e pastas ficam onde estao).
 # Guarda cada movimento para o Desfazer. $only = so conta, sem mexer.
 function Desktop-Organize([bool]$only) {
@@ -243,7 +250,7 @@ function Desktop-Organize([bool]$only) {
     # registro do Desfazer: caminho fixo, soma com o que ja havia e e gravado a cada arquivo movido
     $log = Undo-LogPath
     $moves = New-Object System.Collections.ArrayList
-    if (Test-Path -LiteralPath $log) { try { foreach ($m in @(Get-Content -LiteralPath $log -Raw | ConvertFrom-Json)) { [void]$moves.Add(@{ from = $m.from; to = $m.to }) } } catch {} }
+    foreach ($m in (Read-UndoLog $log)) { [void]$moves.Add(@{ from = $m.from; to = $m.to }) }
     foreach ($k in $plan.Keys) {
         $dir = Join-Path $root $k; New-Item -ItemType Directory -Force -Path $dir | Out-Null
         foreach ($f in $plan[$k]) {
@@ -389,16 +396,18 @@ function Invoke-Desktop($c) {
         "desktop_undo" {
             $log = Undo-LogPath
             $dir = Join-Path ([Environment]::GetFolderPath('Desktop')) "Organizado pela AURA"
-            if (Test-Path -LiteralPath $log) { $moves = @(Get-Content -LiteralPath $log -Raw | ConvertFrom-Json) }
-            elseif (Test-Path -LiteralPath $dir) {
+            $moves = Read-UndoLog $log
+            if (-not $moves.Count -and (Test-Path -LiteralPath $dir)) {
                 # sem o registro: tudo que esta em "Organizado pela AURA" veio da area de trabalho, volta para la
                 $moves = @(Get-ChildItem -LiteralPath $dir -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -File } |
                            ForEach-Object { [pscustomobject]@{ from = (Join-Path ([Environment]::GetFolderPath('Desktop')) $_.Name); to = $_.FullName } })
-            } else { return @{ ok = $false; output = "nada para desfazer" } }
+            }
+            if (-not $moves.Count) { return @{ ok = $false; output = "nada para desfazer" } }
             $n = 0
             foreach ($m in $moves) {
                 if ((Test-Path -LiteralPath $m.to) -and -not (Test-Path -LiteralPath $m.from)) { Move-Item -LiteralPath $m.to -Destination $m.from; $n++ }
             }
+            if (-not $n) { return @{ ok = $false; output = "nenhum arquivo voltou: eles ja nao estao em 'Organizado pela AURA'" } }
             if (Test-Path -LiteralPath $log) { Remove-Item -LiteralPath $log }
             Get-ChildItem -LiteralPath $dir -Directory -ErrorAction SilentlyContinue | Where-Object { -not (Get-ChildItem -LiteralPath $_.FullName -Force) } | Remove-Item
             if ((Test-Path $dir) -and -not (Get-ChildItem -LiteralPath $dir -Force)) { Remove-Item -LiteralPath $dir }

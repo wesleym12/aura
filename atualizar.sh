@@ -6,6 +6,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 DOCKER=(docker); docker info >/dev/null 2>&1 || DOCKER=(sudo docker)
 git pull --ff-only
+# instalacoes antigas citam no .env o docker-compose.linux.yml, que saiu do projeto
+[ -f .env ] && sed -i 's/:docker-compose\.linux\.yml//' .env
 "${DOCKER[@]}" compose up -d --build
 "${DOCKER[@]}" image prune -f >/dev/null
 echo "A.U.R.A. atualizada."

@@ -1,3 +1,0 @@
-# Antes montava o /proc do Linux para as metricas de hardware, que sairam do projeto.
-# Fica vazio so para nao quebrar instalacoes antigas que ainda o citam no COMPOSE_FILE do .env.
-services: {}
