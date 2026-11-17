@@ -4,7 +4,6 @@ name: aura
 # que o instalador (instalar.ps1 / instalar.sh) preenche conforme o computador:
 #   docker-compose.gpu.yml      placa NVIDIA para o modelo local
 #   docker-compose.windows.yml  "Iniciar com o Windows"
-#   docker-compose.linux.yml    metricas do servidor Linux
 #   COMPOSE_PROFILES=local      modelo local (Ollama). Sem ele = "so Gemini": nem instala o Ollama
 #   COMPOSE_PROFILES=casa       Home Assistant junto (deixe de fora se ja tiver um)
 #   (os dois: COMPOSE_PROFILES=local,casa)

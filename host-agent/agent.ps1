@@ -1,5 +1,5 @@
-# Agente do Windows para o Command Center da Aura.
-# - /metrics : CPU/RAM/GPU reais do PC (o container so enxerga a VM do WSL).
+# Agente do Windows para a A.U.R.A.
+# - /metrics : nome do Windows, musica tocando (qualquer programa) e volume do sistema. Sem dados de hardware.
 # - /ptt     : canal ao vivo (Server-Sent Events) do atalho global Ctrl+Espaco (segurar para falar).
 #              So observa essas duas teclas, nada mais, e funciona com qualquer janela em foco.
 # Usa so o que ja vem no Windows. Escuta apenas em localhost:8766 e so responde para a pagina da Aura.
@@ -59,15 +59,6 @@ $metricsPs = [powershell]::Create()
         $mgr = Await ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()) ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])
     } catch { $mgr = $null }
     while ($true) {
-        $os = Get-CimInstance Win32_OperatingSystem
-        $cpu = (Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter "Name='_Total'").PercentProcessorTime
-        $net = (Get-CimInstance Win32_PerfFormattedData_Tcpip_NetworkInterface | Measure-Object BytesTotalPersec -Sum).Sum
-        $gpu = $null; $gpuTemp = $null; $vram = $null
-        $smi = & nvidia-smi --query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>$null
-        if ($smi) {
-            $p = ($smi | Select-Object -First 1).Split(",") | ForEach-Object { [double]$_.Trim() }
-            $gpu = [int]$p[0]; $gpuTemp = [int]$p[1]; $vram = [int][math]::Round(100 * $p[2] / $p[3])
-        }
         $med = $null
         if ($mgr) {
             try {
@@ -100,14 +91,6 @@ $metricsPs = [powershell]::Create()
         $vol = $null; $muted = $null
         try { $vol = [AuraVol]::Get(); $muted = [AuraVol]::Muted() } catch {}
         $shared.json = ([ordered]@{
-            cpu      = [int]$cpu
-            ram      = [int][math]::Round(100 * (1 - $os.FreePhysicalMemory / $os.TotalVisibleMemorySize))
-            gpu      = $gpu
-            gpu_temp = $gpuTemp
-            vram     = $vram
-            net_kbs  = [math]::Round($net / 1024, 1)
-            uptime_s = [int]((Get-Date) - $os.LastBootUpTime).TotalSeconds
-            procs    = (Get-Process).Count
             os       = "WIN"
             os_name  = $osName
             media    = $med
@@ -214,7 +197,7 @@ Add-Type -Namespace AuraAgent -Name Win -MemberDefinition @'
 [System.Runtime.InteropServices.DllImport("user32.dll")] public static extern void mouse_event(uint f, uint dx, uint dy, uint d, System.UIntPtr e);
 '@
 $script:desktopCmds = @("windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media",
-                        "clip_set", "find_files", "reveal", "desktop_scan", "desktop_organize", "desktop_undo", "metrics", "yt_videos")
+                        "clip_set", "find_files", "reveal", "desktop_scan", "desktop_organize", "desktop_undo", "yt_videos")
 $script:uiElems = @()
 
 # so "restaura" a janela se ela estiver minimizada: restaurar uma janela maximizada tira ela do maximizado
@@ -225,6 +208,14 @@ function Show-Front([IntPtr]$h) {
 function Press-Key([byte]$vk) {
     [AuraAgent.Win]::keybd_event($vk, 0, 0, [UIntPtr]::Zero)
     [AuraAgent.Win]::keybd_event($vk, 0, 2, [UIntPtr]::Zero)
+}
+
+# registro do Desfazer da organizacao (pasta de dados locais do usuario, criada se faltar)
+function Undo-LogPath {
+    $base = [Environment]::GetFolderPath('LocalApplicationData')
+    if (-not $base) { $base = Join-Path $env:USERPROFILE "AppData\Local" }
+    $dir = Join-Path $base "AURA"; New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    return (Join-Path $dir "desktop-undo.json")
 }
 
 # Organiza os arquivos soltos da area de trabalho em pastas por tipo (atalhos, programas e pastas ficam onde estao).
@@ -248,18 +239,21 @@ function Desktop-Organize([bool]$only) {
     $summary = ($plan.Keys | Sort-Object | ForEach-Object { "$($plan[$_].Count) $($_.ToLower())" }) -join ", "
     if (-not $files) { return @{ ok = $true; output = "a area de trabalho ja esta organizada: nenhum arquivo solto" } }
     if ($only) { return @{ ok = $true; output = "$($files.Count) arquivo(s) solto(s): $summary" } }
-    $root = Join-Path $desk "Organizado pela AURA"; $moves = @()
+    $root = Join-Path $desk "Organizado pela AURA"
+    # registro do Desfazer: caminho fixo, soma com o que ja havia e e gravado a cada arquivo movido
+    $log = Undo-LogPath
+    $moves = New-Object System.Collections.ArrayList
+    if (Test-Path -LiteralPath $log) { try { foreach ($m in @(Get-Content -LiteralPath $log -Raw | ConvertFrom-Json)) { [void]$moves.Add(@{ from = $m.from; to = $m.to }) } } catch {} }
     foreach ($k in $plan.Keys) {
         $dir = Join-Path $root $k; New-Item -ItemType Directory -Force -Path $dir | Out-Null
         foreach ($f in $plan[$k]) {
             $to = Join-Path $dir $f.Name; $i = 2
             while (Test-Path -LiteralPath $to) { $to = Join-Path $dir ("{0} ({1}){2}" -f $f.BaseName, $i, $f.Extension); $i++ }
-            Move-Item -LiteralPath $f.FullName -Destination $to
-            $moves += @{ from = $f.FullName; to = $to }
+            Move-Item -LiteralPath $f.FullName -Destination $to -ErrorAction Stop
+            [void]$moves.Add(@{ from = $f.FullName; to = $to })
+            ConvertTo-Json -InputObject @($moves) | Set-Content -LiteralPath $log -Encoding UTF8
         }
     }
-    $logDir = Join-Path $env:LOCALAPPDATA "AURA"; New-Item -ItemType Directory -Force -Path $logDir | Out-Null
-    ConvertTo-Json -InputObject @($moves) | Set-Content -Path (Join-Path $logDir "desktop-undo.json") -Encoding UTF8
     return @{ ok = $true; output = "organizei $($files.Count) arquivo(s) em 'Organizado pela AURA': $summary" }
 }
 
@@ -393,19 +387,23 @@ function Invoke-Desktop($c) {
         "desktop_scan" { return (Desktop-Organize $true) }
         "desktop_organize" { return (Desktop-Organize $false) }
         "desktop_undo" {
-            $log = Join-Path $env:LOCALAPPDATA "AURA\desktop-undo.json"
-            if (-not (Test-Path $log)) { return @{ ok = $false; output = "nada para desfazer" } }
-            $moves = @(Get-Content $log -Raw | ConvertFrom-Json); $n = 0
+            $log = Undo-LogPath
+            $dir = Join-Path ([Environment]::GetFolderPath('Desktop')) "Organizado pela AURA"
+            if (Test-Path -LiteralPath $log) { $moves = @(Get-Content -LiteralPath $log -Raw | ConvertFrom-Json) }
+            elseif (Test-Path -LiteralPath $dir) {
+                # sem o registro: tudo que esta em "Organizado pela AURA" veio da area de trabalho, volta para la
+                $moves = @(Get-ChildItem -LiteralPath $dir -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -File } |
+                           ForEach-Object { [pscustomobject]@{ from = (Join-Path ([Environment]::GetFolderPath('Desktop')) $_.Name); to = $_.FullName } })
+            } else { return @{ ok = $false; output = "nada para desfazer" } }
+            $n = 0
             foreach ($m in $moves) {
                 if ((Test-Path -LiteralPath $m.to) -and -not (Test-Path -LiteralPath $m.from)) { Move-Item -LiteralPath $m.to -Destination $m.from; $n++ }
             }
-            Remove-Item $log
-            $dir = Join-Path ([Environment]::GetFolderPath('Desktop')) "Organizado pela AURA"
+            if (Test-Path -LiteralPath $log) { Remove-Item -LiteralPath $log }
             Get-ChildItem -LiteralPath $dir -Directory -ErrorAction SilentlyContinue | Where-Object { -not (Get-ChildItem -LiteralPath $_.FullName -Force) } | Remove-Item
             if ((Test-Path $dir) -and -not (Get-ChildItem -LiteralPath $dir -Force)) { Remove-Item -LiteralPath $dir }
             return @{ ok = $true; output = "$n arquivo(s) voltaram para a area de trabalho" }
         }
-        "metrics" { return @{ ok = $true; output = $shared.json } }
         "yt_videos" {
             # videos que aparecem na aba do YouTube, na ordem da pagina (titulo + id), pela acessibilidade do
             # navegador. So leitura: nao clica em nada. O navegador monta essa arvore na primeira consulta.

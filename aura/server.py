@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile, WebSocket
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
 
-from . import (access, actions, rotina, attachments, autostart, backup, metrics, brain, conversations, facts, gcal, homeassistant, hostbridge,
+from . import (access, actions, rotina, attachments, autostart, backup, brain, conversations, facts, gcal, homeassistant, hostbridge,
                instructions, live, spotify,
                llm, mcpclient, memory, scheduler, secrets, settings, telegram, workdir)
 from .tools import desktop
@@ -143,12 +143,6 @@ async def voice_http(path: str, request: Request):
         except httpx.HTTPError:
             raise HTTPException(503, "servico de voz indisponivel")
     return Response(r.content, status_code=r.status_code, media_type=r.headers.get("content-type"))
-
-
-@app.get("/api/metrics")
-def host_metrics():
-    """CPU/RAM/temperatura do servidor (Linux). No Windows a tela usa o agente do Windows."""
-    return metrics.snapshot()
 
 
 @app.on_event("startup")

@@ -15,7 +15,7 @@ DRYRUN = os.getenv("AURA_POWER_DRYRUN", "0") == "1"
 ALLOWED = {"shutdown", "restart", "sleep", "lock", "abort", "wifi_off", "wifi_on",
            # controle do computador
            "windows", "focus", "open", "open_in_tab", "ui", "click", "type", "keys", "screenshot", "media",
-           "clip_set", "find_files", "reveal", "desktop_scan", "desktop_organize", "desktop_undo", "metrics", "yt_videos",
+           "clip_set", "find_files", "reveal", "desktop_scan", "desktop_organize", "desktop_undo", "yt_videos",
            "aura_stop"}    # botao "Encerrar A.U.R.A." (para os containers e o agente)
 DRY_CMDS = {"shutdown", "restart", "sleep", "lock", "abort", "wifi_off", "wifi_on", "click", "type", "keys", "media",
             "desktop_organize", "desktop_undo",

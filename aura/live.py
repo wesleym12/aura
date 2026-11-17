@@ -17,6 +17,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 
 from fastapi import WebSocket, WebSocketDisconnect
 from google import genai
@@ -148,7 +149,9 @@ async def handle(sock: WebSocket):
     s = brain.get_session(sid)
     workdir.use_conversation(sid, start.get("project"))   # conversa de projeto = pasta do projeto
     s.ctx.update({k: str(v)[:120] for k, v in (start.get("context") or {}).items()})
-    pending: dict = {"confirm": None}
+    pending: dict = {"confirm": None, "heard": ""}
+    done_recent: dict[str, tuple[float, str]] = {}  # acoes sensiveis feitas ha pouco (nao pede Autorizar de novo)
+    calls_lock = asyncio.Lock()
     turn = {"in": [], "out": [], "trace": []}
     nudge = {"sent": False}         # um aviso por pedido: "voce disse que fez, mas nao chamou a ferramenta"
 
@@ -195,15 +198,25 @@ async def handle(sock: WebSocket):
                 acc: list = []
                 actions.current_conv.set(sid)
                 actions.turn_actions.set(acc)
+                key = f"{name}|{json.dumps(args, sort_keys=True, default=str)}"
+                if t and t.sensitive and key in done_recent and time.time() - done_recent[key][0] < 120:
+                    # o mesmo pedido de agora ha pouco (ex.: a pessoa repetiu enquanto esperava): nao pede de novo
+                    return types.FunctionResponse(id=fc.id, name=name, response={
+                        "result": "Isso ja foi feito agora ha pouco (nao repita): " + done_recent[key][1]})
                 if t and t.sensitive:
-                    # o modelo NAO confirma sozinho: espera o clique do usuario
+                    # o modelo NAO confirma sozinho: espera o clique em Autorizar ou a resposta falada ("sim", "pode")
                     pending["confirm"] = asyncio.get_running_loop().create_future()
+                    pending["heard"] = ""
                     conversations.add(sid, "notice", f"Autorizacao solicitada: {name} {args}")
                     await sock.send_json({"type": "confirm", "action": {"tool": name, "args": args}})
                     approve = await pending["confirm"]
                     conversations.add(sid, "notice", "Autorizado" if approve else "Recusado")
-                    result = await run_tool(name, args) if approve else \
-                        "O usuario NAO autorizou esta acao. Nao tente de novo sem ele pedir."
+                    if approve:
+                        result = await run_tool(name, args)
+                        done_recent[key] = (time.time(), str(result)[:300])
+                    else:
+                        result = \
+                        "O usuario clicou em Recusar: ELE decidiu nao fazer (nao foi erro nem bloqueio do sistema). Diga em uma frase que nao fez, sem culpar nada. Nao tente de novo sem ele pedir."
                 else:
                     await sock.send_json({"type": "tool", "tool": name, "slow": bool(t and t.slow)})
                     result = await run_tool(name, args)
@@ -211,6 +224,11 @@ async def handle(sock: WebSocket):
                 for a in acc:      # cada acao feita ganha um botao Desfazer na tela
                     await sock.send_json({"type": "action", **a})
                 return types.FunctionResponse(id=fc.id, name=name, response={"result": brain._clip(result)})
+
+            async def answer_calls(calls):
+                async with calls_lock:                     # um pedido de cada vez (nunca dois Autorizar juntos)
+                    responses = [await run_call(fc) for fc in calls]
+                    await session.send_tool_response(function_responses=responses)
 
             async def downstream():
                 while True:
@@ -229,6 +247,14 @@ async def handle(sock: WebSocket):
                             if sc.input_transcription and sc.input_transcription.text:
                                 turn["in"].append(sc.input_transcription.text)
                                 await sock.send_json({"type": "input", "text": sc.input_transcription.text})
+                                fut = pending.get("confirm")
+                                if fut and not fut.done():
+                                    # esperando o Autorizar: "sim, pode" aprova, "nao, cancela" recusa
+                                    pending["heard"] = (pending.get("heard", "") + sc.input_transcription.text)[-200:]
+                                    ans = brain.yes_no(pending["heard"])
+                                    if ans is not None:
+                                        fut.set_result(ans)
+                                        await sock.send_json({"type": "confirm_voice", "approve": ans})
                             if sc.output_transcription and sc.output_transcription.text:
                                 turn["out"].append(sc.output_transcription.text)
                                 await sock.send_json({"type": "output", "text": sc.output_transcription.text})
@@ -246,8 +272,8 @@ async def handle(sock: WebSocket):
                                     log.info("Gemini Live afirmou uma acao sem ferramenta: %r", bot[:120])
                                     await session.send_realtime_input(text=brain.NUDGE)
                         if m.tool_call and m.tool_call.function_calls:
-                            responses = [await run_call(fc) for fc in m.tool_call.function_calls]
-                            await session.send_tool_response(function_responses=responses)
+                            # em paralelo: enquanto espera o Autorizar, continua ouvindo (a resposta pode vir falada)
+                            asyncio.create_task(answer_calls(list(m.tool_call.function_calls)))
 
             up, down = asyncio.create_task(upstream()), asyncio.create_task(downstream())
             done, rest = await asyncio.wait({up, down}, return_when=asyncio.FIRST_COMPLETED)

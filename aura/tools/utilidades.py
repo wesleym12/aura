@@ -1,5 +1,5 @@
 """Utilidades rapidas: clima, cotacoes, contas, dias que faltam, noticias, senha, sorteio, textos prontos
-("copia meu pix"), procurar arquivo, organizar a area de trabalho e como esta o PC.
+("copia meu pix"), procurar arquivo e organizar a area de trabalho.
 
 Clima (Open-Meteo), cotacoes (AwesomeAPI) e noticias (Google Noticias) sao servicos gratuitos e sem chave: so
 recebem a cidade, as moedas ou o tema pedidos. O resto roda no PC (as do Windows, pelo agente).
@@ -303,15 +303,16 @@ async def mostrar_arquivo(caminho: str) -> str:
     return out if ok else f"Nao consegui: {out}"
 
 
-@tool("Ve quantos arquivos soltos ha na area de trabalho e de que tipo (antes de organizar).", available=_agent)
+@tool("So conta quantos arquivos soltos ha na area de trabalho e de que tipo. Use so quando o usuario quer SABER; "
+      "para organizar, chame organizar_area_de_trabalho direto.", available=_agent)
 async def ver_area_de_trabalho() -> str:
     ok, out = await hostbridge.run("desktop_scan")
     return out if ok else f"Nao consegui: {out}"
 
 
 @tool("Organiza a area de trabalho: move os arquivos soltos para pastas por tipo (Imagens, PDFs, Planilhas...) dentro "
-      "de 'Organizado pela AURA'. Atalhos e programas ficam. Pede Autorizar e pode ser desfeito "
-      "(desfazer_organizacao). Antes, use ver_area_de_trabalho e conte ao usuario o que vai mudar.",
+      "de 'Organizado pela AURA'. Atalhos e programas ficam. Chame DIRETO quando pedirem para organizar: a tela ja "
+      "pede Autorizar (nao pergunte antes no chat). Pode ser desfeito (desfazer_organizacao).",
       sensitive=True, available=_agent)
 async def organizar_area_de_trabalho() -> str:
     ok, out = await hostbridge.run("desktop_organize", timeout=60)
@@ -322,23 +323,3 @@ async def organizar_area_de_trabalho() -> str:
 async def desfazer_organizacao() -> str:
     ok, out = await hostbridge.run("desktop_undo", timeout=60)
     return out if ok else f"Nao consegui: {out}"
-
-
-@tool("Como esta o PC agora: uso de CPU, memoria (RAM), placa de video, temperatura e ha quanto tempo esta ligado.",
-      available=_agent)
-async def status_pc() -> str:
-    ok, out = await hostbridge.run("metrics")
-    if not ok:
-        return f"Nao consegui ler o PC: {out}"
-    try:
-        m = json.loads(out)
-    except ValueError:
-        return "O agente do Windows ainda nao mediu o PC; tente em alguns segundos."
-    up = int(m.get("uptime_s") or 0)
-    parts = [f"CPU {m.get('cpu')}%", f"memoria {m.get('ram')}%"]
-    if m.get("gpu") is not None:
-        parts.append(f"placa de video {m['gpu']}%" + (f" a {m['gpu_temp']}°C" if m.get("gpu_temp") is not None else ""))
-    parts.append(f"ligado ha {up // 86400}d {up % 86400 // 3600}h" if up >= 86400 else f"ligado ha {up // 3600}h{up % 3600 // 60:02d}")
-    alerts = [w for w, bad in (("memoria quase cheia", (m.get("ram") or 0) >= 90), ("CPU muito ocupada", (m.get("cpu") or 0) >= 90),
-                               ("placa de video quente", (m.get("gpu_temp") or 0) >= 85)) if bad]
-    return f"{m.get('os_name', 'PC')}: " + ", ".join(parts) + "." + (" Atencao: " + ", ".join(alerts) + "." if alerts else " Tudo tranquilo.")

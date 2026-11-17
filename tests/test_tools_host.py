@@ -15,8 +15,6 @@ async def fake_run(cmd, timeout=20, **args):
     sent.append((cmd, args))
     if cmd == "clip_set":
         assert len(args["text"]) == 20, "senha com tamanho errado"
-    if cmd == "metrics":
-        return True, '{"cpu": 12, "ram": 93, "gpu": 5, "gpu_temp": 50, "uptime_s": 90000, "os_name": "Windows 11"}'
     if cmd == "focus" and args.get("title") == "YouTube":
         return False, "nenhuma janela com 'YouTube'"
     return True, "ok"
@@ -46,7 +44,6 @@ CASES = [
     ("ver_area_de_trabalho", {}, "desktop_scan", {}),
     ("organizar_area_de_trabalho", {}, "desktop_organize", {}),
     ("desfazer_organizacao", {}, "desktop_undo", {}),
-    ("status_pc", {}, "metrics", {}),
 ]
 
 

@@ -60,7 +60,7 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
 | `ollama-pull` | Baixa os modelos na primeira subida e sai (modo local) |
 | `voice` | Palavra de ativação, transcrição (Whisper) e fala (Kokoro/Piper). CPU, offline; a tela fala com ele pela A.U.R.A. (`/voice`) |
 | `homeassistant` | Casa inteligente, porta 8123 (opcional: `COMPOSE_PROFILES=casa`) |
-| agente do Windows | `host-agent\agent.ps1` (fora do Docker): métricas, Ctrl+Espaço, controle do PC. Só em `127.0.0.1:8766` |
+| agente do Windows | `host-agent\agent.ps1` (fora do Docker): música e volume, Ctrl+Espaço, controle do PC. Só em `127.0.0.1:8766` |
 
 ## Voz
 
@@ -141,7 +141,7 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
 - **Textos prontos** (aba Textos do entalhe): salve Pix, endereço, assinatura… e peça "copia meu pix". **Histórico do que você copiou** é opcional, fica só na memória do PC e some ao reiniciar.
 - **Arquivos:** "procura o arquivo relatório" (pesquisa do Windows, mais recentes primeiro) e "mostra esse arquivo" (abre a pasta com ele selecionado).
 - **Organizar a área de trabalho:** conta os arquivos soltos, pede Autorizar e move para pastas por tipo em "Organizado pela AURA" (atalhos e programas ficam). "Desfaz a organização" devolve tudo.
-- **PC:** "como está meu PC?" (avisa se a memória ou a temperatura estão no limite), volume exato ("volume em 30") e "desliga o PC em 30 minutos" (com Autorizar e Cancelar).
+- **PC:** volume exato ("volume em 30") e "desliga o PC em 30 minutos" (com Autorizar e Cancelar).
 
 ### Imagens (Nano Banana)
 - "Cria uma imagem de...", ou anexe uma foto e peça uma edição. Usa a chave do Gemini.

@@ -10,7 +10,7 @@ Ela é distribuída **em código-fonte**: cada instalação baixa e monta os com
 
 | Componente | Uso | Licença |
 |---|---|---|
-| FastAPI, Uvicorn, httpx, websockets, psutil | servidor | MIT / BSD-3-Clause |
+| FastAPI, Uvicorn, httpx, websockets | servidor | MIT / BSD-3-Clause |
 | defusedxml | leitura segura do RSS de notícias | PSF-2.0 |
 | pypdf, python-docx, openpyxl, python-pptx, Pillow | leitura de documentos e imagens | BSD-3-Clause / MIT / MIT-CMU |
 | google-genai | Gemini / Gemini Live | Apache-2.0 |

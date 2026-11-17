@@ -158,7 +158,7 @@ NAME="$HOSTN.local"
 [ $AURA_PORT = 1 ] && ! "${DOCKER[@]}" compose ps aura 2>/dev/null | grep -q aura && warn "A porta 8765 já está em uso por outro programa."
 
 # ---------- grava o .env ----------
-FILES="docker-compose.yml:docker-compose.linux.yml"
+FILES="docker-compose.yml"
 [ $LOCAL = 1 ] && [ -n "$GPU_NAME" ] && [ $NV_RUNTIME = 1 ] && FILES="$FILES:docker-compose.gpu.yml"
 envset COMPOSE_FILE "$FILES"
 PROFILES="$([ $LOCAL = 1 ] && echo local)"                # "local" = Ollama; no so Gemini ele nem e instalado

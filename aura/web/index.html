@@ -189,25 +189,7 @@
   .icon-btn:hover { background: var(--glow); }
   .icon-btn svg { width: 18px; height: 18px; }
 
-  /* ===== Metricas na barra superior ===== */
-  .metrics { display: flex; align-items: center; gap: 20px; }
-  .metric { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-  .metric .k { font: 500 10px/1 "JetBrains Mono", monospace; letter-spacing: .16em; color: var(--dim); }
-  .metric .v { font: 600 14px/1 "JetBrains Mono", monospace; color: var(--text); font-variant-numeric: tabular-nums; min-width: 3.2ch; }
-  .metric .v.na { color: var(--dim); }
-  .metrics.down .metric { opacity: .45; }
   .sep { width: 1px; height: 22px; background: var(--line); }
-  /* medidor em arco */
-  .gauge { position: relative; width: 20px; height: 20px; flex: none; }
-  .gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
-  .gauge .bg { fill: none; stroke: var(--line); stroke-width: 4.5; }
-  .gauge .val { fill: none; stroke: var(--c); stroke-width: 4.5; stroke-linecap: round; transition: stroke-dasharray .8s ease; filter: drop-shadow(0 0 3px var(--c)); }
-  .gauge::before { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--c); filter: blur(6px); opacity: .4; }
-  /* bolinha de brilho (rede / temperatura) */
-  .orb { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); flex: none; }
-  .orb.pulse { animation: blink 1.6s infinite; }
-  .t-cpu { --c: var(--c-cpu); } .t-ram { --c: var(--c-ram); } .t-gpu { --c: var(--c-gpu); }
-  .t-net { --c: var(--c-net); } .t-temp { --c: var(--c-temp); }
 
   /* ===== Menu de configuracoes ===== */
   .settings { position: relative; }
@@ -851,12 +833,10 @@
     /* fundo escurecido atras da gaveta (clicar fora fecha) */
     .history.open { transform: none; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .55), 0 0 40px rgba(0,0,0,.5); }
   }
-  @media (max-width: 1100px) { .metrics { gap: 14px; } .metric .k { display: none; } }
   /* tablet e celular: orbe compacto em cima, conversa ocupando o resto, campo de texto colado no rodape */
   @media (max-width: 860px) {
     html, body { height: 100dvh; }
     .sep { display: none; }
-    .metrics { gap: 12px; } .metric .v { font-size: 12px; }
     header { padding: 10px 16px; gap: 12px; } footer { padding: 8px 16px; gap: 16px; }
     .stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
     .center { grid-template-rows: auto auto; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
@@ -871,7 +851,6 @@
     .f-wd i { max-width: 34vw; }
   }
   @media (max-width: 560px) {
-    .metrics { display: none; }
     header { padding: 10px 12px; } footer { padding: 6px 12px; font-size: 10px; }
     .center { padding: 8px 12px; } .chat { padding: 8px 12px 8px; }
     .core { width: min(150px, 40vw, 20dvh); }
@@ -946,7 +925,6 @@
   .wt-ok { color: var(--ok); font-weight: 600; } .wt-bad { color: var(--bad); }
   .wt-c { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; }
   .wt-c small { font-size: 11.5px; }
-  .metrics[hidden] { display: none !important; }
   .wx { display: flex; align-items: center; gap: 8px; margin-left: auto; font: 600 14px "Exo 2", sans-serif; color: var(--text); white-space: nowrap; }
   .wx[hidden] { display: none; }
   .wx .wx-ic { font-size: 20px; line-height: 1; }
@@ -982,13 +960,6 @@
   </div>
   <div class="spacer"></div>
   <div class="wx" id="wx" hidden></div>
-  <div class="metrics" id="metrics" title="Métricas do Windows" hidden>
-    <div class="metric t-cpu"><div class="gauge"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/><circle class="val" id="g-cpu" cx="18" cy="18" r="15" stroke-dasharray="0 100"/></svg></div><span class="k">CPU</span><span class="v" id="v-cpu">--</span></div>
-    <div class="metric t-ram"><div class="gauge"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/><circle class="val" id="g-ram" cx="18" cy="18" r="15" stroke-dasharray="0 100"/></svg></div><span class="k">RAM</span><span class="v" id="v-ram">--</span></div>
-    <div class="metric t-gpu"><div class="gauge"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/><circle class="val" id="g-gpu" cx="18" cy="18" r="15" stroke-dasharray="0 100"/></svg></div><span class="k">GPU</span><span class="v" id="v-gpu">--</span></div>
-    <div class="metric t-temp" title="Temperatura da GPU"><span class="orb"></span><span class="k">TEMP</span><span class="v" id="v-temp">--</span></div>
-    <div class="metric t-net"><span class="orb pulse"></span><span class="k">REDE</span><span class="v" id="v-net">--</span></div>
-  </div>
   <div class="sep"></div>
   <button class="icon-btn" id="notch-collapse" title="Recolher para o entalhe" aria-label="Recolher para o entalhe">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg>
@@ -1505,7 +1476,7 @@ const saveSid = () => { try { localStorage.auraSid = sid; } catch {} };
 const log = $('log'), t = $('t'), send = $('send');
 var hostAgent = true;                                   // agente do Windows conectado? (controle do PC depende dele)
 const hhmm = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-// aberta no proprio PC? (o agente do Windows so e alcancavel daqui; de outro aparelho/servidor Linux usa /api/metrics)
+// aberta no proprio PC? (o agente do Windows so e alcancavel daqui: musica, volume e o nome do Windows)
 const LOCAL_PAGE = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
 const WS_BASE = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
 const AGENT_METRICS = 'http://127.0.0.1:8766/metrics';
@@ -1517,7 +1488,7 @@ function setState(state, text) {
   $('core-status').textContent = text;
   document.body.dataset.state = state;
   document.body.toggleAttribute('data-sleep', state === 'idle' && /^Dormindo/.test(text));
-  if (text === 'Aguardando autorização') notchExpand(true);  // pedido de Autorizar: abre o entalhe e deixa aberto
+  if (/^Aguardando autoriza/.test(text)) notchExpand(true);  // pedido de Autorizar: abre o entalhe e deixa aberto
 }
 
 // ===== App de mesa (desktop/aura_app.py): modo janela ou entalhe =====
@@ -2153,7 +2124,7 @@ Object.assign(TOOL_LABELS, Object.fromEntries(Object.entries({
   dias_ate: 'Contar dias', noticias: 'Notícias', gerar_senha: 'Gerar senha', sortear: 'Sorteio', copiar_texto: 'Copiar texto',
   salvar_texto: 'Salvar texto', procurar_arquivo: 'Procurar arquivo', mostrar_arquivo: 'Mostrar arquivo',
   ver_area_de_trabalho: 'Área de trabalho', organizar_area_de_trabalho: 'Organizar área de trabalho', desfazer_organizacao: 'Desfazer organização',
-  status_pc: 'Estado do PC', bloquear_tela: 'Bloquear o PC', desligar_pc: 'Desligar o PC', reiniciar_pc: 'Reiniciar o PC',
+  bloquear_tela: 'Bloquear o PC', desligar_pc: 'Desligar o PC', reiniciar_pc: 'Reiniciar o PC',
   suspender_pc: 'Suspender o PC', cancelar_desligamento: 'Cancelar desligamento', wifi: 'Wi-Fi', alterar_configuracao: 'Configuração',
 }).filter(([k]) => !(k in TOOL_LABELS))));
 const toolLabel = (n) => TOOL_LABELS[n] || (n.charAt(0).toUpperCase() + n.slice(1)).replace(/_/g, ' ');
@@ -2708,10 +2679,17 @@ function pttUp() {
   refreshVoiceButtons();
 }
 
+// (captura + preventDefault em TODOS os eventos do Espaco com Ctrl, inclusive os repetidos de segurar a tecla e o
+// soltar: senao o Espaco "apertava" o botao que estivesse com o foco, como o Sempre ouvindo, e desligava ele)
 document.addEventListener('keydown', (e) => {
-  if (e.code === 'Space' && e.ctrlKey && !e.repeat) { e.preventDefault(); pttDown(); }
-});
-document.addEventListener('keyup', (e) => { if (voice.ptt && (e.code === 'Space' || e.key === 'Control')) pttUp(); });
+  if (e.code === 'Space' && e.ctrlKey) { e.preventDefault(); e.stopPropagation(); if (!e.repeat) pttDown(); }
+}, true);
+document.addEventListener('keyup', (e) => {
+  if (e.code === 'Space' && (e.ctrlKey || voice.ptt)) { e.preventDefault(); e.stopPropagation(); }
+  if (voice.ptt && (e.code === 'Space' || e.key === 'Control')) pttUp();
+}, true);
+// botoes de voz nao guardam o foco depois do clique (um Espaco depois nao liga/desliga eles sem querer)
+for (const b of [$('wake-btn'), $('mic-btn')]) b.addEventListener('click', () => setTimeout(() => b.blur(), 0));
 
 // atalho global: o agente do Windows avisa quando Ctrl+Espaco e pressionado em qualquer janela
 function connectGlobalPtt() {
@@ -3072,7 +3050,12 @@ function onLiveEvent(ev) {
     const go = (approve) => { ok.disabled = no.disabled = true; live.ws?.send(JSON.stringify({ type: 'confirm', approve })); };
     ok.onclick = () => go(true); no.onclick = () => go(false);
     box.append(lab, pre, ok, no); body.appendChild(box);
-    setState('idle', 'Aguardando autorização');
+    live.confirmCard = { ok, no, lab };            // se a resposta vier falada ("sim, pode"), o cartao mostra
+    setState('idle', 'Aguardando autorização · diga "sim" ou "não"');
+  } else if (ev.type === 'confirm_voice') {
+    const c = live.confirmCard;
+    if (c) { c.ok.disabled = c.no.disabled = true; c.lab.textContent = ev.approve ? '✓ Autorizado pela voz' : '✕ Recusado pela voz'; }
+    live.confirmCard = null;
   } else if (ev.type === 'reconnect') {
     // o Gemini pediu para trocar de conexao: reconecta continuando a mesma conversa
     const was = live.streaming; const ws = live.ws; liveReset(); try { ws?.close(); } catch {}
@@ -4106,37 +4089,10 @@ $('cfg-spk-test').onclick = async () => {
 
 // ===== Widget SISTEMA (dados do host-agent no Windows) =====
 const CIRC = 2 * Math.PI * 15; // circunferencia do arco (r=15)
-function gauge(id, pct) {
-  const v = Math.max(0, Math.min(100, pct || 0));
-  $('g-' + id).setAttribute('stroke-dasharray', `${(v / 100) * CIRC} ${CIRC}`);
-}
-function setV(id, text) { const el = $('v-' + id); el.textContent = text ?? 'N/D'; el.classList.toggle('na', text == null); }
-function fmtNet(kbs) { return kbs >= 1024 ? (kbs / 1024).toFixed(1) + 'MB/s' : Math.round(kbs) + 'KB/s'; }
-let hostOs = null;   // nome do sistema (vem do agente do Windows) — vai para o autoconhecimento
-let metricsFrom = LOCAL_PAGE ? 'agent' : 'server';   // Windows: agente; Linux/outro aparelho: o servidor
-async function loadMetrics() {
-  let m = null;
-  const get = async (url) => { try { const r = await fetch(url, { cache: 'no-store' }); return r.ok ? await r.json() : null; } catch { return null; } };
-  if (metricsFrom === 'agent') m = await get(AGENT_METRICS);
-  if (!m?.cpu && m?.cpu !== 0) {
-    const s = await get('/api/metrics');
-    if (s && (s.cpu || s.cpu === 0)) { m = s; if (s.os === 'LINUX') metricsFrom = 'server'; }   // servidor Linux: nao tenta mais o agente
-  }
-  if (m?.os_name) hostOs = m.os_name;
-  const down = !m || m.cpu == null;
-  $('metrics').classList.toggle('down', down);
-  $('metrics').title = down ? 'Métricas indisponíveis (no Windows, rode host-agent\\start.ps1)' : `Métricas de ${m.os_name || 'este computador'}`;
-  if (down) {
-    for (const id of ['cpu', 'ram', 'gpu', 'net', 'temp']) setV(id, '--');
-    for (const id of ['cpu', 'ram', 'gpu']) gauge(id, 0);
-    return;
-  }
-  setV('cpu', m.cpu + '%'); gauge('cpu', m.cpu);
-  setV('ram', m.ram + '%'); gauge('ram', m.ram);
-  setV('gpu', m.gpu == null ? null : m.gpu + '%'); gauge('gpu', m.gpu);
-  setV('net', fmtNet(m.net_kbs));
-  const temp = m.gpu_temp ?? m.cpu_temp;
-  setV('temp', temp == null ? null : temp + '°C');
+let hostOs = null;   // nome do Windows (vem do agente do Windows) — vai para o autoconhecimento
+async function loadHostOs() {
+  if (!LOCAL_PAGE || hostOs) return;
+  try { const m = await fetch(AGENT_METRICS, { cache: 'no-store' }).then(r => r.json()); if (m?.os_name) hostOs = m.os_name; } catch {}
 }
 
 async function loadStatus() {
@@ -5289,7 +5245,7 @@ document.addEventListener('keydown', (e) => {
 
 loadStatus(); setInterval(loadStatus, 15000);
 refreshAgendaSub(); setInterval(refreshAgendaSub, 5 * 60000);
-loadMetrics(); setInterval(loadMetrics, 2000);
+loadHostOs(); setInterval(loadHostOs, 30000);
 refreshVoiceButtons(); setInterval(checkVoice, 15000);
 connectGlobalPtt();
 (async () => {

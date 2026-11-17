@@ -88,7 +88,7 @@
   new MutationObserver(syncFresh).observe($('log'), { childList: true });
   // sugestoes clicaveis (cada fase acrescenta as suas em window.entSugs)
   window.entSugs = ['vai chover hoje?', 'quanto está o dólar?', 'timer de 5 minutos', 'me lembra de alongar em 1 hora',
-    'bebi um copo de água', 'notícias de hoje', 'como está meu PC?', 'toca uma música', 'quanto é 15% de 230?',
+    'bebi um copo de água', 'notícias de hoje', 'toca uma música', 'quanto é 15% de 230?',
     'organiza minha área de trabalho', 'cara ou coroa', 'quantos dias faltam pro Natal?'];
   function drawSugs() {
     const box = conv.querySelector('#e-hello');
@@ -142,7 +142,7 @@
   // ---------- telas ----------
   const R = {
     conversa() {
-      const wake = tool(ICON(I.ear), () => $('wake-btn').click(), 'e-btn e-icon');
+      const wake = tool(ICON(I.ear), () => { $('wake-btn').click(); wake.blur(); }, 'e-btn e-icon');
       wake.title = `Sempre ouvindo: atende quando você diz "${cfg.wake_word || 'Aura'}" (liga/desliga)`;
       const sync = () => wake.classList.toggle('on', $('wake-btn').getAttribute('aria-pressed') === 'true');
       sync();
@@ -150,7 +150,7 @@
       wakeWatch?.disconnect();
       wakeWatch = new MutationObserver(sync);
       wakeWatch.observe($('wake-btn'), { attributes: true, attributeFilter: ['aria-pressed'] });
-      const mic = tool(ICON(I.mic), () => $('mic-btn').click(), 'e-btn e-icon');
+      const mic = tool(ICON(I.mic), () => { $('mic-btn').click(); mic.blur(); }, 'e-btn e-icon');
       mic.title = 'Falar agora';
       // aceso enquanto ela esta ouvindo (o botao de verdade ganha a classe "rec")
       const syncMic = () => mic.classList.toggle('on', $('mic-btn').classList.contains('rec'));

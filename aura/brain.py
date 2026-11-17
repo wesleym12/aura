@@ -295,6 +295,24 @@ _CLAIM = re.compile(r"\b(criei|criado|salvei|salvo em|gravei|abri|foi abert[oa]|
                     r"i (?:have )?(?:created|saved|opened|deleted|wrote)|i'?m (?:checking|looking|searching))\b", re.I)
 
 
+# resposta a um pedido de Autorizar dita ou escrita ("sim, pode", "autorizo", "nao", "cancela").
+# O "nao" e conferido primeiro ("nao pode" e recusa). Frases longas que nao sao resposta ficam de fora (None).
+_YES = re.compile(r"\b(sim|pode|podes|autoriz\w*|confirm\w*|aprovad\w*|aprovo|manda ver|manda bala|bora|vai la|"
+                  r"faz|faca|faça|ok|okay|beleza|claro|com certeza|positivo|isso|yes|go ahead)\b", re.I)
+_NO = re.compile(r"\b(n[aã]o|nao|cancel\w*|recus\w*|negad\w*|nega|para|pare|deixa|esquece|nem|negativo|no)\b", re.I)
+
+
+def yes_no(text: str) -> bool | None:
+    t = (text or "").strip()
+    if not t or len(t.split()) > 8:
+        return None
+    if _NO.search(t):
+        return False
+    if _YES.search(t):
+        return True
+    return None
+
+
 # o mesmo aviso, para o modo de voz ao vivo (Gemini Live), onde a fala ja saiu: ou faz de verdade ou corrige
 NUDGE = ("[sistema] Atencao: voce disse que fez (ou esta fazendo) uma acao, mas NAO chamou nenhuma ferramenta para "
          "isso, entao nada foi feito. Se existe ferramenta para isso, chame agora. Se nao existe, diga em uma frase, "
@@ -342,6 +360,12 @@ async def chat(sid: str, text: str, emit: Emit = None, ctx: dict | None = None, 
     if files:
         text = text + await asyncio.to_thread(attachments.describe, attachments.current(), text)
     if s.pending:
+        ans = yes_no(text)          # respondeu o Autorizar falando ou escrevendo ("sim, pode" / "nao, cancela")
+        if ans is not None:
+            conversations.add(sid, "notice", ("Autorizado" if ans else "Recusado") + " (pela voz/texto)")
+            res = await confirm(sid, ans, emit)
+            res["voice_confirm"] = ans
+            return res
         return {"status": "confirm", "action": {"tool": s.pending["name"], "args": s.pending["args"]}, "trace": s.trace}
     s.trace = []
     s.turn_cfg = None                                  # pedido novo: o padrao escolhe o modelo de novo
@@ -374,7 +398,7 @@ async def confirm(sid: str, approve: bool, emit: Emit = None) -> dict:
         s.trace.append(p["name"])
         result = await run_tool(p["name"], p["args"])
     else:
-        result = "O usuario NAO autorizou esta acao. Nao tente de novo sem ele pedir."
+        result = "O usuario clicou em Recusar: ELE decidiu nao fazer (nao foi erro nem bloqueio do sistema). Diga em uma frase que nao fez, sem culpar nada. Nao tente de novo sem ele pedir."
     s.messages.append({"role": "tool", "tool_call_id": p["id"], "name": p["name"], "content": result})
     stop = await _run_calls(s, p["remaining"], emit)
     res = stop or await _loop(s, emit)
