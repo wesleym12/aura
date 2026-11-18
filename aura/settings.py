@@ -41,6 +41,7 @@ DEFAULTS = {
     "quiet_mode": False,        # modo so executar: faz o pedido e nao responde em voz alta
     "face_acc": "",             # acessorio do rostinho (vazio = nenhum)
     "face_color": "branco",     # cor da cabeca do rostinho
+    "face_shape": "classico",   # formato do rostinho: classico (cabecinha redonda) ou robo (tela com antena)
     "wake_aliases": [],         # como o Whisper ouve a palavra de ativacao na sua voz ("Ensinar a palavra")
     "agenda_alert": 10,         # avisar dos compromissos da Google Agenda X minutos antes (0 = nao avisa)
 }
@@ -128,6 +129,9 @@ def _validate(key, value):
     elif key == "face_acc":
         if value not in ("", 'coroa', 'fones', 'natal', 'festa', 'cartola', 'bone', 'aureola', 'chifres', 'laco', 'flor', 'oculos', 'bigode'):
             raise ValueError("acessorio desconhecido")
+    elif key == "face_shape":
+        if value not in ("classico", "robo"):
+            raise ValueError("formato desconhecido")
     elif key == "face_color":
         if value not in ('branco', 'grafite', 'azul', 'rosa', 'verde', 'lilas', 'amarelo'):
             raise ValueError("cor desconhecida")

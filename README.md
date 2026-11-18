@@ -70,7 +70,7 @@ O instalador faz a mesma análise e pergunta **como você vai usar**:
 - **Modo conversa** (Configurações → Microfone e som, **desligado por padrão**):
   - Desligado: a cada pedido ela responde e volta a esperar "Aura", então não pega a conversa de quem está por perto.
   - Ligado: continua ouvindo por 2 minutos sem precisar do nome.
-- `Esc` ou o botão do microfone interrompem a fala. Tarefas demoradas recebem na hora um aviso curto ("Já vou colocar para tocar").
+- `Esc`, o botão do microfone ou dizer "Aura" no meio da resposta interrompem a fala (com "Sempre ouvindo" ligado; no Gemini Live basta falar por cima). Tarefas demoradas recebem na hora um aviso curto ("Já vou colocar para tocar").
 - **Português fixo** (padrão): silêncio e ruído não viram texto, e as frases-fantasma do Whisper ("Thanks for watching"...) são descartadas.
 - **A voz te segue** (desligada por padrão; Configurações → Modelos): ela responde na língua em que você falou, com uma voz nativa dela.
 - **Vozes** (Voz e jeito): locais `pf_dora` (padrão), `pm_alex` e `pm_santa`; com o Gemini Live, as vozes do Gemini (padrão `Kore`).

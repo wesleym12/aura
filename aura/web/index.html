@@ -871,7 +871,7 @@
   html.notch.mini #notch-pill { display: flex; position: fixed; inset: 0; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
   /* rostinho (desenho proprio da A.U.R.A.): cabeca branca arredondada com dois olhinhos; o brilho em volta mostra o estado */
   .np-face { --np: transparent; position: relative; display: block; flex: none; width: 36px; height: 24px; border-radius: 50% / 58%;
-    background: radial-gradient(120% 90% at 35% 25%, #ffffff 0%, #f1f3f6 55%, #d9dde4 100%);
+    --head: radial-gradient(120% 90% at 35% 25%, #ffffff 0%, #f1f3f6 55%, #d9dde4 100%); background: var(--head);
     box-shadow: 0 0 0 2px var(--np), 0 0 12px var(--np); transition: box-shadow .25s; }
   .np-face i { position: absolute; background: #14161a; transition: height .2s, top .2s, width .2s; }
   .np-face .eye { top: 9px; width: 6px; height: 7px; border-radius: 50%; animation: np-blink 5s infinite; }
@@ -910,12 +910,34 @@
   html[data-acc='flor'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='flor'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Ccircle cx=%2233%22 cy=%222.8%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2236%22 cy=%225%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2235%22 cy=%228.6%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2231%22 cy=%228.6%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2230%22 cy=%225%22 r=%222.8%22 fill=%22%23ffd0e0%22/%3E%3Ccircle cx=%2233%22 cy=%226%22 r=%222%22 fill=%22%23ffcb3d%22/%3E%3C/svg%3E"); }
   html[data-acc='oculos'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='oculos'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Crect x=%2210%22 y=%2217%22 width=%2211%22 height=%228%22 rx=%223%22 fill=%22%2314161a%22/%3E%3Crect x=%2223%22 y=%2217%22 width=%2211%22 height=%228%22 rx=%223%22 fill=%22%2314161a%22/%3E%3Cpath d=%22M21 20h2%22 stroke=%22%2314161a%22 stroke-width=%221.6%22/%3E%3Cpath d=%22M12 19.2l3-1M25 19.2l3-1%22 stroke=%22%23fff%22 stroke-width=%22.9%22 stroke-linecap=%22round%22 opacity=%22.7%22/%3E%3C/svg%3E"); }
   html[data-acc='bigode'] .np-face:not([data-acc]) .np-acc, .np-face[data-acc='bigode'] .np-acc { background-image: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 44 36%22%3E%3Cpath d=%22M22 27q-5-3-10 1 4 3 10 0 6 3 10 0-5-4-10-1z%22 fill=%22%233a2a1c%22/%3E%3C/svg%3E"); }
-  html[data-face='grafite'] .np-face { --np-ink: #eef2f7; background: radial-gradient(120% 90% at 35% 25%, #5b6170 0%, #3d4250 55%, #2a2e38 100%); }
-  html[data-face='azul'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #eef6ff 0%, #cfe3ff 55%, #a9c9f5 100%); }
-  html[data-face='rosa'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #fff2f7 0%, #ffd3e4 55%, #f5aac7 100%); }
-  html[data-face='verde'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #f0fff5 0%, #cdf3dc 55%, #9fe0b8 100%); }
-  html[data-face='lilas'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #f6f1ff 0%, #e0d5ff 55%, #c3b2f5 100%); }
-  html[data-face='amarelo'] .np-face { --np-ink: #14161a; background: radial-gradient(120% 90% at 35% 25%, #fffbe8 0%, #fff0b8 55%, #f5d97e 100%); }
+  html[data-face='grafite'] .np-face { --np-ink: #eef2f7; --head: radial-gradient(120% 90% at 35% 25%, #5b6170 0%, #3d4250 55%, #2a2e38 100%); }
+  html[data-face='azul'] .np-face { --np-ink: #14161a; --head: radial-gradient(120% 90% at 35% 25%, #eef6ff 0%, #cfe3ff 55%, #a9c9f5 100%); }
+  html[data-face='rosa'] .np-face { --np-ink: #14161a; --head: radial-gradient(120% 90% at 35% 25%, #fff2f7 0%, #ffd3e4 55%, #f5aac7 100%); }
+  html[data-face='verde'] .np-face { --np-ink: #14161a; --head: radial-gradient(120% 90% at 35% 25%, #f0fff5 0%, #cdf3dc 55%, #9fe0b8 100%); }
+  html[data-face='lilas'] .np-face { --np-ink: #14161a; --head: radial-gradient(120% 90% at 35% 25%, #f6f1ff 0%, #e0d5ff 55%, #c3b2f5 100%); }
+  html[data-face='amarelo'] .np-face { --np-ink: #14161a; --head: radial-gradient(120% 90% at 35% 25%, #fffbe8 0%, #fff0b8 55%, #f5d97e 100%); }
+  /* formato robo: a cabeca vira moldura de uma tela escura, olhos verdes e antena (a bolinha muda de cor com o estado) */
+  .np-face .ant { display: none; }
+  html[data-shape='robo'] .np-face { --np-ink: #8be04e; --ant: #8be04e; box-sizing: border-box; border: 3px solid transparent; border-radius: 9px;
+    background: linear-gradient(#1b1e28, #0d0f15) padding-box, var(--head) border-box; }
+  html[data-shape='robo'] .np-face i, html[data-shape='robo'] .np-face::before, html[data-shape='robo'] .np-face::after { translate: 0 -3px; }
+  html[data-shape='robo'] .np-face .eye { filter: drop-shadow(0 0 2px rgba(139, 224, 78, .6)); }
+  html[data-shape='robo'] .np-face .l { left: 6px; } html[data-shape='robo'] .np-face .r { right: 6px; }
+  html[data-shape='robo'] .np-face .np-acc { translate: -3px -3px; }
+  html[data-shape='robo'] .np-face .ant { display: block; position: absolute; left: 26px; top: -10px; width: 1.6px; height: 7px; border-radius: 1px; background: #aab2c8; }
+  html[data-shape='robo'] .np-face .ant::after { content: ""; position: absolute; left: -2px; top: -4px; width: 5.6px; height: 5.6px; border-radius: 50%;
+    background: var(--ant); box-shadow: 0 0 4px var(--ant); transition: background .25s, box-shadow .25s; }
+  body[data-state="listening"] .np-face { --ant: #ff5a5a; }
+  body[data-state="thinking"] .np-face { --ant: #ffcb3d; }
+  body[data-state="speaking"] .np-face { --ant: #4fc3ff; }
+  html[data-shape='robo'] #notch-pill .np-face { margin-top: 7px; }
+  html[data-shape='robo'] #notch-pill .np-face .ant { top: -6px; height: 3px; }      /* a pilula tem 34 px: antena curta */
+  /* oculos e bigode sao escuros: um contorno claro para aparecerem na tela */
+  html[data-shape='robo']:is([data-acc='oculos'], [data-acc='bigode']) .np-face:not([data-acc]) .np-acc,
+  html[data-shape='robo'] .np-face:is([data-acc='oculos'], [data-acc='bigode']) .np-acc { filter: drop-shadow(0 0 .7px #dfe5f5) drop-shadow(0 0 .7px #dfe5f5); }
+  html[data-shape='robo'] body[data-mood="surpreso"] .np-face .mouth { top: 15.5px; }
+  /* chapeus ficam no lugar da antena */
+  html[data-shape='robo']:is([data-acc='coroa'], [data-acc='natal'], [data-acc='festa'], [data-acc='cartola'], [data-acc='bone']) .np-face:not([data-acc]) .ant, html[data-shape='robo'] .np-face:is([data-acc='coroa'], [data-acc='natal'], [data-acc='festa'], [data-acc='cartola'], [data-acc='bone']) .ant { display: none; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   .wt-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: -4px 0 12px; }
   .wt-row .btn { margin: 0; }
@@ -936,6 +958,9 @@
   .cfg-tile-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .cfg-tile .hint { margin: 0; }
   .cfg-tile .with-btn .btn { margin: 0; padding: 6px 12px; }
+  .face-shapes { display: inline-flex; gap: 4px; padding: 3px; margin: 0 0 12px 4px; border: 1px solid var(--line); border-radius: 10px; }
+  .face-shapes button { padding: 6px 14px; border: 0; border-radius: 7px; background: none; color: var(--dim); font: 600 12.5px "Exo 2", sans-serif; cursor: pointer; }
+  .face-shapes button.on { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--text); }
   .face-colors { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px; margin-bottom: 12px; }
   .face-sw { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
   .face-sw.on { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
@@ -948,7 +973,7 @@
 </style>
 </head>
 <body>
-<div id="notch-pill" title="A.U.R.A."><span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i><b class="np-acc"></b></span><span class="np-time" id="np-time">--:--</span></div>
+<div id="notch-pill" title="A.U.R.A."><span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i><em class="ant"></em><b class="np-acc"></b></span><span class="np-time" id="np-time">--:--</span></div>
 <header>
   <button class="icon-btn" id="history-btn" title="Conversas" aria-label="Abrir conversas">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -1133,7 +1158,8 @@
     <section class="pane" data-pane="aparencia" hidden>
       <!-- so o que vale para o modo atual: entalhe = rostinho; janela = tema e orbe -->
       <div id="ap-notch" hidden>
-      <h3 class="sub"><b>Rostinho</b> · cor e acessório (no entalhe e no Mascote; as expressões continuam automáticas)</h3>
+      <h3 class="sub"><b>Rostinho</b> · formato, cor e acessório (no entalhe e no Mascote; as expressões continuam automáticas)</h3>
+      <div class="face-shapes" id="face-shapes"></div>
       <div class="face-colors" id="face-colors"></div>
       <div class="face-grid" id="face-grid"></div>
       </div>
@@ -2468,7 +2494,7 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') histEl.classList.remove('open'); });
 
 async function run(fn, { speak = false, lang = null } = {}) {
-  send.disabled = true; voice.busy = true;
+  send.disabled = true; voice.busy = true; voice.cut = false;
   setState('thinking', 'Processando');
   const wait = entry('wait', 'Processando...');
   let res = null, ackSpeech = null;
@@ -2493,8 +2519,8 @@ async function run(fn, { speak = false, lang = null } = {}) {
     if (speak && quiet && res.status === 'done') { try { beep(); } catch {} }
     if (ackSpeech) await ackSpeech;                             // nao fala por cima do aviso
     await render(res);
-    if (audio) await playSpeech(audio);
-    if (res.status !== 'confirm') setState('idle', idleText());
+    if (audio && !voice.cut) await playSpeech(audio);
+    if (res.status !== 'confirm' && !voice.recording) setState('idle', idleText());
   }
   catch (e) { wait.parentElement.remove(); entry('err', 'Erro: ' + e.message); setState('idle', 'Falha na última operação'); }
   finally { send.disabled = false; voice.busy = false; t.focus(); loadHistory(); }
@@ -2587,7 +2613,9 @@ function micOpen() {
       // conectando ao Gemini Live logo depois do "Aura": guarda o que a pessoa ja esta falando (senao o comeco se perde)
       const hold = !toLive && live.pending;
       if (!toLive && !hold) {
-        if (voice.ws?.readyState !== 1 || voice.busy) return;        // nao escuta enquanto pensa ou fala
+        if (voice.ws?.readyState !== 1) return;
+        // nao escuta enquanto pensa; enquanto fala, so presta atencao no "Aura" (para interromper)
+        if (voice.busy && !(voice.speakingSrc && voice.wakeOn) && !voice.recording) return;
         if (!voice.wakeOn && !voice.recording) return;
       }
       const f = e.data, pcm = new Int16Array(f.length);
@@ -2627,6 +2655,7 @@ function afterVoice() { if (!voice.wakeOn && !voice.recording && !voice.ptt) mic
 // depois de responder por voz: com o "modo conversa" ligado continua ouvindo sem precisar da palavra;
 // desligado (padrao), volta a esperar "Aura" (nao pega a conversa de quem esta por perto)
 function afterReply() {
+  if (voice.recording) return;                      // interrompida com "Aura": ja esta ouvindo o novo pedido
   const left = voice.awakeUntil - Date.now();
   if (cfg.conversation_mode !== true) {
     if (voice.wakeOn && voice.awakeUntil) goSleep();
@@ -2730,6 +2759,7 @@ function onVoiceEvent(ev) {
     return;
   }
   if (ev.event === 'wake') {
+    if (voice.speakingSrc) { voice.cut = true; stopSpeech(); }   // "Aura" no meio da fala: ela para e ouve
     voice.recording = true; voice.awakeUntil = Date.now() + AWAKE_MS;
     beep(); setState('listening', 'Ouvindo...');
   } else if (ev.event === 'listening') {
@@ -2746,7 +2776,7 @@ function onVoiceEvent(ev) {
   } else if (ev.event === 'transcript') {
     voice.recording = false;
     if (voice.wakeOn && voice.awakeUntil) voice.awakeUntil = Date.now() + AWAKE_MS;   // conversa renova o prazo
-    sendText(ev.text, true, ev.lang);
+    whenFree().then(() => sendText(ev.text, true, ev.lang));
   }
   refreshVoiceButtons();
 }
@@ -2758,13 +2788,14 @@ const geminiSpeaks = () => cfg.engine === 'live' && live.available;
 function fetchSpeech(text, voiceId = null, lang = null) {
   text = String(text).replace(/\bA\.\s?U\.\s?R\.\s?A\.?/g, 'Aura');   // a sigla se fala "Aura", nao letra por letra
   const gem = isGeminiVoice(voiceId) || (!voiceId && geminiSpeaks());
-  if (gem) {
-    return fetch('/api/tts/gemini', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                     body: JSON.stringify({ text, voice: voiceId || cfg.live_voice }) })
+  const p = gem
+    ? fetch('/api/tts/gemini', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ text, voice: voiceId || cfg.live_voice }) })
       .then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
-      .catch(() => fetchLocalSpeech(text, cfg.voice, lang));       // Gemini fora do ar: fala com a voz local
-  }
-  return fetchLocalSpeech(text, voiceId || cfg.voice, lang);
+      .catch(() => fetchLocalSpeech(text, cfg.voice, lang))        // Gemini fora do ar: fala com a voz local
+    : fetchLocalSpeech(text, voiceId || cfg.voice, lang);
+  if (p) p.text = text;                             // o servico de voz usa para nao confundir a propria fala com um chamado
+  return p;
 }
 function fetchLocalSpeech(text, voiceId, lang) {
   if (!voice.available) return null;
@@ -2786,7 +2817,7 @@ async function playSpeech(promise, { status = true } = {}) {
   const src = voice.playCtx.createBufferSource(); src.buffer = audio;
   const an = voice.playCtx.createAnalyser(); an.fftSize = 512;
   src.connect(an); an.connect(voice.playCtx.destination);
-  voice.speakingSrc = src; refreshVoiceButtons();
+  voice.speakingSrc = src; refreshVoiceButtons(); speakingCmd(promise.text);
   if (status) setState('speaking', 'Falando');
   const d = new Float32Array(an.fftSize);
   const level = () => {
@@ -2795,8 +2826,13 @@ async function playSpeech(promise, { status = true } = {}) {
     orb.level = Math.min(1, Math.sqrt(s / d.length) * 6); requestAnimationFrame(level);
   };
   await new Promise(ok => { src.onended = ok; src.start(); level(); });
-  voice.speakingSrc = null; orb.level = 0; refreshVoiceButtons();
+  if (voice.speakingSrc === src) { voice.speakingSrc = null; speakingCmd(''); }
+  orb.level = 0; refreshVoiceButtons();
 }
+// o que ela esta falando agora (vazio = calou): o servico de voz ignora o "Aura" que vier da propria caixa de som
+function speakingCmd(text) { if (voice.ws?.readyState === 1) voice.ws.send(JSON.stringify({ cmd: 'speaking', text: text || '' })); }
+// espera a resposta anterior terminar de fechar (depois de interrompida) antes de mandar o pedido novo
+async function whenFree() { for (let i = 0; i < 80 && voice.busy; i++) await new Promise(r => setTimeout(r, 25)); }
 
 function stopSpeech() { try { voice.speakingSrc?.stop(); } catch {} }
 
@@ -3300,6 +3336,7 @@ function applySettings() {
   orb.setStyle(cfg.orb_style || 'esfera'); orb.setColor(cfg.orb_color || '');    // modelo e cor do orbe
   document.documentElement.dataset.acc = cfg.face_acc || '';                      // rostinho: acessorio e cor
   document.documentElement.dataset.face = cfg.face_color || 'branco';
+  document.documentElement.dataset.shape = cfg.face_shape || 'classico';
   document.title = `${cfg.assistant_name.toUpperCase()} · Command Center`;
   $('cfg-name').textContent = cfg.assistant_name.toUpperCase();
   t.placeholder = `Fale com a ${cfg.assistant_name}`;
@@ -3440,12 +3477,15 @@ const FACE_ACC = {"coroa": "Coroa", "fones": "Fones", "natal": "Natal", "festa":
 const FACE_COLORS = {"branco": ["Branco", "#f1f3f6"], "grafite": ["Grafite", "#3d4250"], "azul": ["Azul", "#cfe3ff"], "rosa": ["Rosa", "#ffd3e4"], "verde": ["Menta", "#cdf3dc"], "lilas": ["Lilás", "#e0d5ff"], "amarelo": ["Amarelo", "#fff0b8"]};
 function renderFace() {
   const cols = $('face-colors'), grid = $('face-grid'); if (!cols || !grid) return;
-  const cur = cfg.face_acc || '', col = cfg.face_color || 'branco';
+  const cur = cfg.face_acc || '', col = cfg.face_color || 'branco', shape = cfg.face_shape || 'classico';
+  $('face-shapes').innerHTML = [['classico', 'Clássico'], ['robo', 'Robô']].map(([k, n]) =>
+    `<button type="button" class="${k === shape ? 'on' : ''}" data-shape="${k}" aria-pressed="${k === shape}">${n}</button>`).join('');
+  $('face-shapes').querySelectorAll('[data-shape]').forEach(b => b.onclick = async () => { await saveSettings({ face_shape: b.dataset.shape }); renderFace(); });
   cols.innerHTML = Object.entries(FACE_COLORS).map(([k, [n, c]]) =>
     `<button type="button" class="face-sw${k === col ? ' on' : ''}" data-col="${k}" title="${n}" aria-label="Cor ${n}" style="background:${c}"></button>`).join('');
   grid.innerHTML = [['', 'Nenhum'], ...Object.entries(FACE_ACC)].map(([k, n]) =>
     `<button type="button" class="face-card${k === cur ? ' on' : ''}" data-acc="${k}"><span class="np-face" data-acc="${k}" aria-hidden="true">` +
-    `<i class="eye l"></i><i class="eye r"></i><i class="mouth"></i><b class="np-acc"></b></span>${n}</button>`).join('');
+    `<i class="eye l"></i><i class="eye r"></i><i class="mouth"></i><em class="ant"></em><b class="np-acc"></b></span>${n}</button>`).join('');
   cols.querySelectorAll('[data-col]').forEach(b => b.onclick = async () => { await saveSettings({ face_color: b.dataset.col }); renderFace(); });
   grid.querySelectorAll('.face-card').forEach(b => b.onclick = async () => { await saveSettings({ face_acc: b.dataset.acc }); renderFace(); });
 }

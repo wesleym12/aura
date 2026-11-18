@@ -49,7 +49,7 @@
   const open = (k) => { const g = groupOf(k); if (g) { tab[g] = k; show(g); } else show(k); };
   let cur = 'conversa';
   const TITLES = Object.fromEntries([...VIEWS, ['ajustes', 'Ajustes']]);
-  const FACE = '<span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i><b class="np-acc"></b></span>';
+  const FACE = '<span class="np-face" aria-hidden="true"><i class="eye l"></i><i class="eye r"></i><i class="mouth"></i><em class="ant"></em><b class="np-acc"></b></span>';
 
   // ---------- esqueleto ----------
   const root = E('div', { id: 'ent' });

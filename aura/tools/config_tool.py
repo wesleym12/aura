@@ -18,6 +18,7 @@ EDITABLE = {
     "city": "cidade do clima",
     "face_acc": "acessorio do rostinho: coroa, oculos, chapeu, fones...",
     "face_color": "cor do rostinho: rosa, azul...",
+    "face_shape": "formato do rostinho: classico ou robo",
 }
 BOOLS = {"quiet_mode", "conversation_mode"}
 # valores aceitos: so aparecem para o modelo se ele errar (na mensagem de erro), nao em todo pedido
@@ -27,13 +28,14 @@ OPTIONS = {
     "live_voice": "Orus, Kore, Puck, Charon, Fenrir, Leda...",
     "face_acc": "nenhum, coroa, fones, natal, festa, cartola, bone, aureola, chifres, laco, flor, oculos, bigode",
     "face_color": "branco, grafite, azul, rosa, verde, lilas, amarelo",
+    "face_shape": "classico ou robo",
 }
 
 
 @tool(
     "Muda uma configuracao dela quando o usuario pedir (pode ser desfeito). chave: "
     + "; ".join(f"{k} ({v})" for k, v in EDITABLE.items())
-    + ". Ex.: 'poe uma coroa' -> face_acc=coroa; 'fica rosa' -> face_color=rosa; 'fica sarcastica' -> personality=sarcastico.",
+    + ". Ex.: 'poe uma coroa' -> face_acc=coroa; 'fica rosa' -> face_color=rosa; 'vira robo' -> face_shape=robo; 'fica sarcastica' -> personality=sarcastico.",
     {
         "chave": {"type": "string", "enum": list(EDITABLE), "description": "Qual configuracao"},
         "valor": {"type": "string", "description": "Novo valor"},
@@ -54,6 +56,9 @@ def alterar_configuracao(chave: str, valor: str) -> str:
             import unicodedata
             valor = "".join(c for c in unicodedata.normalize("NFD", str(valor).lower()) if unicodedata.category(c) != "Mn").strip()
             valor = {"branca": "branco", "cinza": "grafite", "preto": "grafite", "verde": "verde", "menta": "verde", "roxo": "lilas"}.get(valor, valor)
+        if chave == "face_shape":
+            v = str(valor).lower().strip()
+            valor = "robo" if v.startswith("rob") else "classico" if v in ("normal", "padrao", "redondo", "classica") else v
         if chave in BOOLS:      # "ligado"/"sim"/"true" -> True (bool("false") seria True)
             valor = str(valor).strip().lower() in ("ligado", "liga", "ligar", "sim", "true", "1", "on", "ativado", "ativa")
         new = settings.update({chave: float(valor) if chave == "voice_speed" else valor})[chave]

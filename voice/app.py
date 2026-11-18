@@ -172,6 +172,16 @@ def match_wake(text: str, word: str) -> tuple[bool, str]:
     return False, ""
 
 
+def is_echo(heard: str, spoken: str, words: list[str]) -> bool:
+    """Ela mesma dizendo o proprio nome: o microfone pega a caixa de som e o Whisper ouve "Aura".
+    E eco quando ela esta falando a palavra e o que se ouviu e quase todo o texto dela."""
+    said = set(norm(spoken).split())
+    if not any(norm(w) in said or norm(w).replace(" ", "") in said for w in words):
+        return False                          # ela nao esta dizendo o nome: qualquer "Aura" e de verdade
+    toks = [t for t in norm(heard).split() if len(t) > 2]
+    return len(toks) >= 3 and sum(t in said for t in toks) >= .6 * len(toks)
+
+
 @app.get("/health")
 def health():
     return {"ok": True, "wake": "whisper", "stt": WHISPER_MODEL, "tts": TTS_VOICE}
@@ -191,6 +201,7 @@ async def ws(sock: WebSocket):
     spotter: Recorder | None = None          # trechos falados que o Whisper confere se comecam com a palavra
     rec: Recorder | None = None
     probe: Recorder | None = None            # "Ensinar a palavra": ouve UMA frase e conta o que o Whisper entendeu
+    speaking = ""                            # o que ela esta falando agora (a tela avisa): da para interromper com "Aura"
 
     def wake_match(text: str) -> tuple[bool, str]:
         for w in [word, *aliases]:
@@ -233,6 +244,9 @@ async def ws(sock: WebSocket):
                     probe = Recorder(end_silence=.9, max_sec=6, nospeech_sec=8)
                     _teaching["until"] = time.time() + 25
                     await sock.send_json({"event": "listening", "probe": True})
+                elif cmd.get("cmd") == "speaking":
+                    speaking = str(cmd.get("text") or "")[:4000]
+                    spotter = Recorder(.6, 8, None, spot=True)    # comeca do zero: nada da fala anterior
                 elif cmd.get("cmd") == "cancel":
                     rec = probe = None
                 continue
@@ -281,6 +295,9 @@ async def ws(sock: WebSocket):
                 found, rest = wake_match(text)
                 if not found:
                     log.debug("sem palavra de ativacao em: %r", text)
+                    continue
+                if speaking and is_echo(text, speaking, [word, *aliases]):
+                    log.debug("eco da propria fala: %r", text)
                     continue
                 log.info("'%s' detectado em: %r", word, text)
                 await sock.send_json({"event": "wake", "word": word})
