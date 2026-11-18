@@ -23,7 +23,7 @@ EDITABLE = {
 BOOLS = {"quiet_mode", "conversation_mode"}
 # valores aceitos: so aparecem para o modelo se ele errar (na mensagem de erro), nao em todo pedido
 OPTIONS = {
-    "voice": "pf_dora, pm_alex ou pm_santa",
+    "voice": "pf_dora, pm_alex, pm_santa, pt_BR-faber-medium, pt_BR-cadu-medium, pt_BR-jeff-medium ou pt_BR-edresson-low",
     "personality": ", ".join(settings.PERSONALITIES),
     "live_voice": "Orus, Kore, Puck, Charon, Fenrir, Leda...",
     "face_acc": "nenhum, coroa, fones, natal, festa, cartola, bone, aureola, chifres, laco, flor, oculos, bigode",
@@ -56,6 +56,12 @@ def alterar_configuracao(chave: str, valor: str) -> str:
             import unicodedata
             valor = "".join(c for c in unicodedata.normalize("NFD", str(valor).lower()) if unicodedata.category(c) != "Mn").strip()
             valor = {"branca": "branco", "cinza": "grafite", "preto": "grafite", "verde": "verde", "menta": "verde", "roxo": "lilas"}.get(valor, valor)
+        if chave == "voice":                      # pelo nome: "usa a voz do Faber"
+            names = {"dora": "pf_dora", "alex": "pm_alex", "santa": "pm_santa", "faber": "pt_BR-faber-medium",
+                     "cadu": "pt_BR-cadu-medium", "jeff": "pt_BR-jeff-medium", "edresson": "pt_BR-edresson-low"}
+            valor = names.get(str(valor).lower().strip(), valor)
+            if valor not in settings.NATIVE_VOICES:
+                raise ValueError("voz desconhecida")
         if chave == "face_shape":
             v = str(valor).lower().strip()
             valor = "robo" if v.startswith("rob") else "classico" if v in ("normal", "padrao", "redondo", "classica") else v

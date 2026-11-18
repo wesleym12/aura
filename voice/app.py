@@ -319,6 +319,14 @@ VOICES = [
     ("pf_dora", "Dora", "F", "Feminina, suave e próxima."),
 ]
 VOICE_IDS = {v[0] for v in VOICES} & set(kokoro.get_voices())
+# vozes do Piper em portugues do Brasil (licencas abertas): baixadas na primeira vez que forem usadas (~60 MB cada)
+PIPER_PT = [
+    ("pt_BR-faber-medium", "Faber", "M", "Masculina, voz aberta do Piper."),
+    ("pt_BR-cadu-medium", "Cadu", "M", "Masculina, voz aberta do Piper."),
+    ("pt_BR-jeff-medium", "Jeff", "M", "Masculina, voz aberta do Piper."),
+    ("pt_BR-edresson-low", "Edresson", "M", "Masculina, voz aberta do Piper (mais leve, qualidade menor)."),
+]
+PIPER_IDS = {v[0] for v in PIPER_PT}
 
 
 @app.post("/stt")
@@ -339,7 +347,8 @@ async def stt(request: Request, follow: bool = False):
 
 @app.get("/voices")
 def voices():
-    return [{"id": i, "name": n, "gender": g, "desc": d, "kind": "nativa"} for i, n, g, d in VOICES if i in VOICE_IDS]
+    return ([{"id": i, "name": n, "gender": g, "desc": d, "kind": "nativa"} for i, n, g, d in VOICES if i in VOICE_IDS]
+            + [{"id": i, "name": n, "gender": g, "desc": d, "kind": "piper"} for i, n, g, d in PIPER_PT])
 
 
 class TTSIn(BaseModel):
@@ -372,7 +381,7 @@ KOKORO_LANGS = {
     "es": ("es", "em_alex", "ef_dora"), "fr": ("fr-fr", "ff_siwis", "ff_siwis"),
     "it": ("it", "im_nicola", "if_sara"), "hi": ("hi", "hm_omega", "hf_alpha"),
 }
-GENDER = {i: g for i, _, g, _ in VOICES}
+GENDER = {i: g for i, _, g, _ in VOICES + PIPER_PT}
 
 
 def _wav(samples: np.ndarray, sr: int) -> bytes:
@@ -387,13 +396,15 @@ def _wav(samples: np.ndarray, sr: int) -> bytes:
 
 
 def synth(text: str, voice: str | None = None, speed: float | None = None, lang: str | None = None) -> bytes:
-    voice = voice if voice in VOICE_IDS else (TTS_VOICE if TTS_VOICE in VOICE_IDS else "pm_alex")
     speed = min(1.5, max(0.7, speed)) if speed else TTS_SPEED
     lang = (lang or "pt").lower()[:2]
+    if voice in PIPER_IDS and lang == "pt":
+        return piper_say(voice, text, speed)
+    voice = voice if voice in VOICE_IDS | PIPER_IDS else (TTS_VOICE if TTS_VOICE in VOICE_IDS else "pm_alex")
     if lang != "pt" and lang not in KOKORO_LANGS:
         return piper_synth(text, lang, speed)              # alemao, russo, holandes... (Piper)
     code, male, female = KOKORO_LANGS.get(lang, KOKORO_LANGS["pt"])
-    if lang != "pt":
+    if lang != "pt" or voice in PIPER_IDS:
         voice = male if GENDER.get(voice, "M") == "M" else female   # voz nativa da lingua, mesmo genero
     samples, sr = kokoro.create(text, voice=voice, speed=speed, lang=code)
     return _wav(samples, sr)
@@ -406,7 +417,7 @@ _piper_index: dict | None = None
 _piper_voices: dict = {}
 
 
-def _piper_pick(lang: str) -> str | None:
+def _piper_catalog() -> dict:
     global _piper_index
     if _piper_index is None:
         idx = PIPER_DIR / "voices.json"
@@ -414,6 +425,11 @@ def _piper_pick(lang: str) -> str | None:
             PIPER_DIR.mkdir(parents=True, exist_ok=True)
             idx.write_bytes(httpx.get(f"{PIPER_BASE}/voices.json", timeout=60, follow_redirects=True).content)
         _piper_index = json.loads(idx.read_text(encoding="utf-8"))
+    return _piper_index
+
+
+def _piper_pick(lang: str) -> str | None:
+    _piper_catalog()
     cands = [k for k, v in _piper_index.items() if v.get("language", {}).get("family") == lang]
     rank = {"medium": 0, "high": 1, "low": 2, "x_low": 3}
     # vozes de varios locutores (ex.: "mls") soam embaralhadas sem escolher o locutor: ficam por ultimo
@@ -425,8 +441,12 @@ def piper_synth(text: str, lang: str, speed: float) -> bytes:
     key = _piper_pick(lang)
     if not key:
         raise ValueError(f"sem voz para a lingua '{lang}'")
+    return piper_say(key, text, speed)
+
+
+def piper_say(key: str, text: str, speed: float) -> bytes:
     if key not in _piper_voices:
-        files = _piper_index[key]["files"]
+        files = _piper_catalog()[key]["files"]
         onnx = next(p for p in files if p.endswith(".onnx"))
         for rel in (onnx, onnx + ".json"):
             dst = PIPER_DIR / Path(rel).name

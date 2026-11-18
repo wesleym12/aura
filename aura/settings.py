@@ -9,7 +9,7 @@ from .config import DB_PATH
 DEFAULTS = {
     "assistant_name": "A.U.R.A.",
     "user_name": "Usuário",     # troque em Configuracoes -> Geral
-    "voice": "pf_dora",         # voz local (so as nativas do portugues: pm_alex, pm_santa, pf_dora)
+    "voice": "pf_dora",         # voz local em portugues: Kokoro (pm_alex, pm_santa, pf_dora) ou Piper (pt_BR-...)
     "voice_speed": 1.05,
     "voice_names": {},          # apelidos que voce deu para as vozes: {"pm_alex": "Meu Aura"}
     "personality": "equilibrado",
@@ -46,7 +46,8 @@ DEFAULTS = {
     "agenda_alert": 10,         # avisar dos compromissos da Google Agenda X minutos antes (0 = nao avisa)
 }
 
-NATIVE_VOICES = {"pm_alex", "pm_santa", "pf_dora"}
+NATIVE_VOICES = {"pm_alex", "pm_santa", "pf_dora",                   # Kokoro
+                 "pt_BR-faber-medium", "pt_BR-cadu-medium", "pt_BR-jeff-medium", "pt_BR-edresson-low"}   # Piper
 
 # instalacao "so Gemini": o cerebro padrao e o Gemini (o usuario ainda pode trocar em Configuracoes -> Modelos)
 from .config import LOCAL_LLM  # noqa: E402
@@ -106,7 +107,8 @@ def _validate(key, value):
         if not value:
             raise ValueError(f"{key} nao pode ficar vazio")
     elif key == "voice":
-        value = str(value)[:40]
+        if value not in NATIVE_VOICES:
+            raise ValueError("voz desconhecida")
     elif key == "voice_speed":
         value = min(1.5, max(0.7, round(float(value), 2)))
     elif key == "voice_names":
