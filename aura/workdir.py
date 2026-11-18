@@ -1,7 +1,7 @@
 """Pasta de trabalho ("cowork"): a pasta do seu Windows onde a Aura trabalha.
 
 A pasta de usuario do Windows fica montada em /host. Dentro dela voce escolhe, pela tela, qual
-pasta e a de trabalho. Tudo que mexe em arquivos (ferramentas, Claude, Codex, anexos) fica preso
+pasta e a de trabalho. Tudo que mexe em arquivos (ferramentas e anexos) fica preso
 dentro da pasta escolhida; pastas sensiveis (AppData, .ssh, credenciais...) nunca podem ser escolhidas.
 """
 import contextvars

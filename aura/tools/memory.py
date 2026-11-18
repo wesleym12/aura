@@ -16,8 +16,7 @@ def lembrar(titulo: str, conteudo: str) -> str:
 
 
 @tool(
-    "Busca na memoria da Aura por significado: fatos sobre o usuario, anotacoes e resultados de pesquisas "
-    "anteriores do Claude e do Codex. Use quando o que voce ja sabe (no prompt) nao bastar.",
+    "Busca na memoria da Aura por significado: fatos sobre o usuario e anotacoes. Use quando o que voce ja sabe (no prompt) nao bastar.",
     {"consulta": {"type": "string", "description": "O que procurar, em palavras naturais"}},
 )
 def buscar_memoria(consulta: str) -> str:

@@ -186,7 +186,7 @@ def ler_documento(caminho: str, pergunta: str = "") -> str:
 
 
 @tool(
-    "Desfaz a ultima acao que o assistente fez (arquivo criado/alterado/movido/apagado, tarefa do Codex, "
+    "Desfaz a ultima acao que o assistente fez (arquivo criado/alterado/movido/apagado, "
     "anotacao ou configuracao alterada). Use quando o usuario pedir para desfazer ou voltar atras.",
 )
 def desfazer_ultima_acao() -> str:

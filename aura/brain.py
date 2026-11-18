@@ -90,7 +90,7 @@ def recall_block(query: str) -> str:
     total = memory.count()
     if not hits:
         return f"\n\nMemoria: nada guardado parece relacionado a esta pergunta ({total} itens no total; use buscar_memoria se precisar)."
-    label = {"fato": "fato sobre o usuario", "nota": "anotacao", "claude": "pesquisa", "codex": "tarefa de codigo"}
+    label = {"fato": "fato sobre o usuario", "nota": "anotacao"}
     lines = [f"- [{label.get(h['kind'], h['kind'])}, {h['created'][:10]}] {h['content'][:300]}" for h in hits]
     return ("\n\nO que voce lembra e pode ajudar agora (da sua memoria; fatos sobre o usuario sao sobre ELE, nao sobre voce;"
             " use se for relevante, nao invente alem disso):\n"
@@ -265,10 +265,10 @@ def _normalize_calls(calls: list) -> list:
 
 
 def _clip(text: str, limit: int = 4000) -> str:
-    # o contexto do modelo local e pequeno; a resposta completa do Claude/Codex fica na memoria
+    # o contexto do modelo local e pequeno: resultado de ferramenta muito grande vai cortado
     if len(text) <= limit:
         return text
-    return text[:limit] + "\n\n[...cortado; resposta completa salva na memoria da Aura]"
+    return text[:limit] + "\n\n[...cortado]"
 
 
 # "criei o arquivo", "salvei", "abri"... sem ter chamado ferramenta nenhuma = o modelo inventou
@@ -355,7 +355,7 @@ async def chat(sid: str, text: str, emit: Emit = None, ctx: dict | None = None, 
     if ctx:
         s.ctx.update({k: str(v)[:120] for k, v in ctx.items()})
     s.lang = lang if lang in LANG_NAMES else None      # lingua que o Whisper ouviu (so vale para este turno)
-    # anexos: ficam valendo para as ferramentas deste turno (Claude/Codex recebem os caminhos)
+    # anexos: ficam valendo para as ferramentas deste turno (ex.: criar imagem a partir da foto enviada)
     attachments.set_current(files or [])
     if files:
         text = text + await asyncio.to_thread(attachments.describe, attachments.current(), text)

@@ -1003,7 +1003,7 @@
       <h2 id="fs-title">Pasta de trabalho</h2>
       <button class="x" id="fs-close" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
-    <p class="modal-sub" id="fs-sub">Onde a Aura, o Claude e o Codex vão criar e editar arquivos. Eles não conseguem mexer fora dela.</p>
+    <p class="modal-sub" id="fs-sub">Onde a Aura vai criar e editar arquivos. Ela não consegue mexer fora dela.</p>
     <label class="field" id="fs-name-wrap" hidden><span class="label">Nome do projeto</span>
       <input id="fs-name" maxlength="60" autocomplete="off" placeholder="ex.: Portal Intranet"></label>
     <div class="fs-path"><button class="btn ghost" id="fs-up" type="button">↑ Subir</button><code id="fs-where"></code>
@@ -2529,7 +2529,7 @@ async function run(fn, { speak = false, lang = null } = {}) {
 async function sendText(text, viaVoice = false, lang = null) {
   voice.lastVoice = viaVoice;
   voice.lastLang = lang;          // a voz te segue: a resposta sai na lingua que voce falou
-  // anexos: sobem antes, e a mensagem leva os caminhos (o Claude/Codex recebem junto)
+  // anexos: sobem antes, e a mensagem leva os caminhos (as ferramentas leem por eles)
   let files = [];
   if (pendingFiles.length) {
     try { files = await uploadPending(); }
@@ -3192,7 +3192,7 @@ async function loadWorkdir() {
   $('cowork-sub').textContent = name;
   $('cowork-btn').title = w.project
     ? `Projeto ${name}: ${w.win}\nClique para trocar a pasta do projeto.`
-    : `Pasta de trabalho: ${w.win}\nO Aura, o Claude e o Codex só mexem em arquivos aqui dentro. Clique para trocar.`;
+    : `Pasta de trabalho: ${w.win}\nA Aura só mexe em arquivos aqui dentro. Clique para trocar.`;
   workdirWin = w.win;
 }
 let workdirWin = '';
@@ -3222,7 +3222,7 @@ async function openProjectPicker(p = null, sectionId = null) {
 function openGeneralPicker() {
   fsMode = { kind: 'general' };
   $('fs-title').textContent = 'Pasta de trabalho';
-  $('fs-sub').textContent = 'Onde a Aura, o Claude e o Codex vão criar e editar arquivos (nas conversas fora de projetos).';
+  $('fs-sub').textContent = 'Onde a Aura vai criar e editar arquivos (nas conversas fora de projetos).';
   $('fs-name-wrap').hidden = true; $('fs-default').hidden = false;
   $('fs-back').hidden = false;
 }

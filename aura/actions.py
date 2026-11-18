@@ -5,7 +5,6 @@ Toda ferramenta que MUDA algo registra aqui o que fez e como voltar atras:
   file_move    -> movido/renomeado (volta para o lugar)
   file_delete  -> apagado (foi para a lixeira interna; volta de la)
   dir_create   -> pasta criada (remove se ainda estiver vazia)
-  snapshot     -> varias mudancas de uma vez (ex.: tarefa do Codex na pasta workspace)
   note         -> anotacao salva na memoria
   settings     -> configuracoes que o assistente alterou
 
@@ -15,7 +14,6 @@ Se mudou, nao sobrescreve sem confirmacao (Conflict).
 import contextvars
 import hashlib
 import json
-import os
 import shutil
 import sqlite3
 from contextlib import closing
@@ -106,61 +104,6 @@ def last_undoable(conv_id: str | None) -> dict | None:
     return dict(r) if r else None
 
 
-# ---------- foto de uma pasta (para tarefas que mexem em varios arquivos, ex.: Codex) ----------
-SNAP_LIMIT = 200 * 1024 * 1024   # acima disso nao tira foto (avisa que nao da para desfazer)
-# pastas pesadas e geradas automaticamente: ficam fora da foto (os agentes quase nunca as editam)
-SKIP_DIRS = {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", ".cache",
-             ".idea", ".vs", "target", "bin", "obj"}
-
-
-def _files(root: Path):
-    for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
-        for f in filenames:
-            yield Path(dirpath) / f
-
-
-def _walk(root: Path) -> dict[str, str]:
-    return {str(p.relative_to(root)).replace("\\", "/"): file_hash(p) for p in _files(root)}
-
-
-def snapshot_before(root: Path) -> dict | None:
-    root = Path(root)
-    size = 0
-    for p in _files(root):
-        size += p.stat().st_size
-        if size > SNAP_LIMIT:
-            return None
-    slot = new_slot()
-    before = _walk(root)
-    for rel in before:
-        dst = slot / "antes" / rel
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(root / rel, dst)
-    return {"root": str(root), "slot": str(slot), "before": before}
-
-
-def snapshot_after(snap: dict | None, tool: str, summary: str) -> int | None:
-    if not snap:
-        return None
-    root, slot = Path(snap["root"]), Path(snap["slot"])
-    after = _walk(root)
-    before = snap["before"]
-    created = [r for r in after if r not in before]
-    modified = [r for r in after if r in before and after[r] != before[r]]
-    deleted = [r for r in before if r not in after]
-    # so guarda as copias do que mudou
-    for rel in set(before) - set(modified) - set(deleted):
-        (slot / "antes" / rel).unlink(missing_ok=True)
-    if not (created or modified or deleted):
-        shutil.rmtree(slot, ignore_errors=True)
-        return None
-    parts = [f"{len(x)} {n}" for x, n in ((created, "criado(s)"), (modified, "alterado(s)"), (deleted, "apagado(s)")) if x]
-    return record(tool, f"{summary} ({', '.join(parts)})", "snapshot",
-                  {"root": str(root), "slot": str(slot), "created": created, "restore": modified + deleted,
-                   "after": {r: after[r] for r in created + modified}})
-
-
 # ---------- desfazer ----------
 def _check(path: Path, expected: str | None, force: bool, what: str):
     if not force and file_hash(path) != expected:
@@ -214,21 +157,6 @@ def _undo_dir_create(d: dict, force: bool):
         if any(p.iterdir()):
             raise Conflict(f"A pasta '{d['rel']}' nao esta vazia; nao vou apaga-la.")
         p.rmdir()
-
-
-def _undo_snapshot(d: dict, force: bool):
-    root = Path(d["root"])
-    if not force:
-        changed = [r for r, h in d["after"].items() if file_hash(root / r) != h]
-        if changed:
-            raise Conflict("Arquivos mudaram depois dessa acao: " + ", ".join(changed[:5]))
-    slot = Path(d["slot"])
-    for rel in d["created"]:
-        _trash(root / rel, slot)
-    for rel in d["restore"]:
-        dst = root / rel
-        dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(slot / "antes" / rel, dst)
 
 
 def _undo_note(d: dict, force: bool):
@@ -298,7 +226,7 @@ def _undo_ha_state(d: dict, force: bool):
 
 
 HANDLERS = {"ha_state": _undo_ha_state,"file_write": _undo_file_write, "file_move": _undo_file_move, "file_delete": _undo_file_delete,
-            "dir_create": _undo_dir_create, "snapshot": _undo_snapshot, "note": _undo_note, "settings": _undo_settings,
+            "dir_create": _undo_dir_create, "note": _undo_note, "settings": _undo_settings,
             "gcal_create": _undo_gcal_create, "gcal_patch": _undo_gcal_patch, "gcal_delete": _undo_gcal_delete,
             "gmail_draft": _undo_gmail_draft, "gdrive_create": _undo_gdrive_create}
 

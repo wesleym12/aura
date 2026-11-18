@@ -3,7 +3,6 @@
 Tipos (kind):
   fato   -> algo duradouro sobre o usuario, aprendido sozinho nas conversas ("Ana torce para o Flamengo")
   nota   -> o que o usuario pediu para anotar (ferramenta `lembrar`)
-  claude / codex -> resultados de pesquisas e tarefas delegadas
 
 Busca hibrida: por significado (embeddings) + por palavra (SQLite FTS5). Os embeddings vem do Ollama local
 (modelo multilingue) ou, na instalacao "so Gemini" (sem Ollama), do Gemini. Sem nenhum dos dois, fica so a busca
@@ -32,7 +31,7 @@ CUTS = {"ollama": {"recall": 0.24, "list": 0.25, "search": 0.30, "dup": 0.86, "s
         # duplicatas 0,99 x parecidas-mas-diferentes ate 0,94; skill certa 0,85-0,86 x errada ate 0,75)
         "gemini": {"recall": 0.755, "list": 0.755, "search": 0.76, "dup": 0.97, "skill": 0.80}}[PROVIDER]
 _warned = {"t": 0.0}
-KINDS = {"fato": "Fatos sobre você", "nota": "Anotações", "claude": "Pesquisas (Claude)", "codex": "Tarefas (Codex)"}
+KINDS = {"fato": "Fatos sobre você", "nota": "Anotações"}
 
 
 def _conn() -> sqlite3.Connection:

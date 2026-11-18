@@ -1,6 +1,6 @@
 """Autoconhecimento: a Aura descreve a si mesmo a partir do sistema real, a cada chamada.
 
-Renomeou nas configuracoes, instalou um plugin, fez login no Claude, desligou o
+Renomeou nas configuracoes, instalou um plugin, conectou o Google, desligou o
 container de voz? Ele passa a saber disso sem ninguem editar prompt.
 """
 import time

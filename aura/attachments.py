@@ -1,7 +1,7 @@
 """Anexos: arquivos que voce manda junto com a mensagem (clipe, arrastar ou colar).
 
-Ficam em <pasta de trabalho>/anexos/, onde o Claude e o Codex conseguem ler. O conteudo de arquivos
-de texto pequenos tambem vai direto para o modelo local; os demais vao como caminho.
+Ficam em <pasta de trabalho>/anexos/. O conteudo de arquivos de texto pequenos vai direto para o
+modelo; os demais vao como caminho, para as ferramentas lerem.
 """
 import contextvars
 import re
