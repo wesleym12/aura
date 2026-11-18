@@ -290,6 +290,7 @@ class App:
         self._win = None
         self._switched = False    # a janela atual veio de uma troca de modo (nao da abertura do app)
         self._pill_w = PILL[0]    # a pilula cresce para mostrar a musica, um timer ou o volume
+        self._pill_h = PILL[1]    # e fica mais alta com o rostinho de robo (antena)
         self._hwnd = 0            # janela do entalhe no Windows (achada quando aparece)
         self._expanded = False
         self._hidden = False
@@ -329,7 +330,7 @@ class App:
                 save_conf(monitor=[x, y])
         finally:
             self._dragging = False
-            self._place(self._pill_w, PILL[1])
+            self._place(self._pill_w, self._pill_h)
         return self.info()
 
     def expand(self):
@@ -338,13 +339,14 @@ class App:
             self._place(*PANEL)
         return self.info()
 
-    def set_pill(self, width):
-        """A pagina pede a largura da pilula recolhida (cabe o que ela esta mostrando)."""
+    def set_pill(self, width, height=None):
+        """A pagina pede o tamanho da pilula recolhida (cabe o que ela esta mostrando)."""
         w = max(PILL[0], min(460, int(width or 0)))
-        if w != self._pill_w:
-            self._pill_w = w
+        h = max(PILL[1], min(60, int(height or PILL[1])))
+        if (w, h) != (self._pill_w, self._pill_h):
+            self._pill_w, self._pill_h = w, h
             if self._mode == "entalhe" and not self._expanded and self._win:
-                self._place(w, PILL[1])
+                self._place(w, h)
         return self.info()
 
     def open_url(self, url):
@@ -364,7 +366,7 @@ class App:
     def collapse(self):
         if self._mode == "entalhe" and self._expanded:
             self._expanded = self._pinned = self._focused = False
-            self._place(self._pill_w, PILL[1])
+            self._place(self._pill_w, self._pill_h)
         return self.info()
 
     def quit(self):
@@ -408,7 +410,7 @@ class App:
 
             def shown():
                 self._hwnd = find_hwnd(self._title)
-                self._place(self._pill_w, PILL[1])           # o tamanho inicial de janela sem moldura sai torto no Windows
+                self._place(self._pill_w, self._pill_h)           # o tamanho inicial de janela sem moldura sai torto no Windows
                 style_window(self._hwnd, taskbar=False)
                 if prev:
                     u32.SetForegroundWindow(prev)    # aparecer nao rouba o foco de quem voce estava usando

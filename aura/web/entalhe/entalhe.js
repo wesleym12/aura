@@ -667,7 +667,7 @@
   const pill = $('notch-pill');
   const actEl = E('span', { className: 'np-act', id: 'np-act' });
   pill.insertBefore(actEl, $('np-time'));
-  let lastW = 0;
+  let lastW = 0, lastH = 0;
   function drawPill() {
     const now = Date.now();
     const top = Object.entries(act).filter(([, a]) => !a.until || a.until > now).sort((x, y) => y[1].prio - x[1].prio)[0];
@@ -678,7 +678,8 @@
     // largura que cabe tudo: rosto + atividade + relogio + margens
     const vis = [...pill.children].filter(c => !c.hidden);
     const w = Math.ceil(vis.reduce((t, c) => t + c.getBoundingClientRect().width, 0) + 10 * (vis.length - 1) + 30);
-    if (Math.abs(w - lastW) > 2) { lastW = w; desk.api?.set_pill(w); }
+    const h = document.documentElement.dataset.shape === 'robo' ? 42 : 34;     // o robo tem antena: pilula mais alta
+    if (Math.abs(w - lastW) > 2 || h !== lastH) { lastW = w; lastH = h; desk.api?.set_pill(w, h); }
   }
   window.entAct = (key, html, prio = 1, ms = 0) => {   // html vazio apaga; ms = some sozinho depois desse tempo
     if (!html) delete act[key]; else act[key] = { html, prio, until: ms ? Date.now() + ms : 0 };
